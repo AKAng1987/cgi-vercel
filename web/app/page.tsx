@@ -1,38 +1,23 @@
 import { apiFetch } from "@/lib/api";
-
-interface HealthResponse {
-  status: string;
-  service: string;
-  version: string;
-}
+import { LiveResponse } from "@/lib/types";
+import { DateHeader } from "./components/DateHeader";
+import { RegimeCard } from "./components/RegimeCard";
+import { LiveDashboardClient } from "./components/LiveDashboardClient";
 
 export default async function Home() {
-  let health: HealthResponse | null = null;
-  let error: string | null = null;
-
-  try {
-    health = await apiFetch<HealthResponse>("/api/health");
-  } catch (e) {
-    error = e instanceof Error ? e.message : "Unknown error";
-  }
+  const data = await apiFetch<LiveResponse>("/api/live");
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-3xl font-bold">CGI Dashboard</h1>
+    <main className="mx-auto max-w-6xl p-6">
+      <h1 className="mb-3 text-2xl font-bold">CGI Dashboard</h1>
+      <DateHeader asOf={data.as_of} generatedAt={data.generated_at} />
 
-      {health ? (
-        <div className="w-full rounded-lg border border-emerald-800 bg-emerald-950/50 p-4 text-sm">
-          <span className="font-medium text-emerald-400">
-            API status: {health.status.toUpperCase()}
-          </span>
-          <span className="text-slate-400"> · {health.service} v{health.version}</span>
-        </div>
-      ) : (
-        <div className="w-full rounded-lg border border-red-800 bg-red-950/50 p-4 text-sm">
-          <span className="font-medium text-red-400">API status: ERROR</span>
-          <p className="mt-1 text-slate-400">{error}</p>
-        </div>
-      )}
+      <section className="mb-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <RegimeCard kind="compass" data={data.compass} />
+        <RegimeCard kind="grid" data={data.grid} />
+      </section>
+
+      <LiveDashboardClient data={data} />
     </main>
   );
 }
