@@ -18,3 +18,6 @@ Thumbs.db
 # Secrets
 .env
 **/.env
+
+# Local Lambda-deploy scratch space (unrelated to this app)
+.deploy-tmp/

@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import dashboard_data
+import macro_data
 
 load_dotenv()
 
@@ -48,3 +49,18 @@ def live(date: Optional[str] = None):
         return dashboard_data.build_live_response(date_str=date)
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.get("/api/macro/rates", dependencies=[Depends(require_bearer_token)])
+def macro_rates():
+    return macro_data.build_rates_response()
+
+
+@app.get("/api/macro/growth", dependencies=[Depends(require_bearer_token)])
+def macro_growth():
+    return macro_data.build_growth_response()
+
+
+@app.get("/api/macro/dot-plot", dependencies=[Depends(require_bearer_token)])
+def macro_dot_plot():
+    return macro_data.build_dot_plot_response()
