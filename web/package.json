@@ -11,12 +11,16 @@
   "dependencies": {
     "next": "^15",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "plotly.js-dist-min": "^2.35.2",
+    "react-plotly.js": "^2.6.0"
   },
   "devDependencies": {
     "typescript": "^5",
     "@types/react": "^19",
     "@types/node": "^22",
+    "@types/react-plotly.js": "^2.6.3",
+    "@types/plotly.js": "^2.35.2",
     "tailwindcss": "^4",
     "@tailwindcss/postcss": "^4",
     "postcss": "^8",
