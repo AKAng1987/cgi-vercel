@@ -36,7 +36,8 @@ export interface FomcProbabilities {
   probabilities: FomcProbabilityRow[];
 }
 
-export interface TreasuryCurvePoint {
+export interface TreasuryCurveSnapshotRow {
+  label: "Latest" | "6M Ago" | "1Y Ago";
   date: string;
   "1M"?: number | null;
   "3M"?: number | null;
@@ -50,6 +51,22 @@ export interface TreasuryCurvePoint {
   "30Y"?: number | null;
 }
 
+export interface TreasuryCurveHistoryPoint {
+  date: string;
+  value: number;
+}
+
+/**
+ * Trimmed at the API layer (2026-09-07, Task 1b) -- backend only ships
+ * the 3 snapshot rows + 10Y history line that YieldCurvePanel.tsx
+ * actually renders, not the full 20-year x 10-tenor wide table. See
+ * api/macro_data.py's _trim_treasury_curve.
+ */
+export interface TreasuryCurveResponse {
+  snapshot: TreasuryCurveSnapshotRow[];
+  history_10y: TreasuryCurveHistoryPoint[];
+}
+
 export interface SpreadPoint {
   date: string;
   T10Y2Y: number | null;
@@ -60,7 +77,7 @@ export interface RatesResponse {
   fed_funds_range: FedFundsPoint[];
   fomc_meeting_calendar: FomcMeeting[];
   fomc_probabilities: FomcProbabilities;
-  treasury_curve: TreasuryCurvePoint[];
+  treasury_curve: TreasuryCurveResponse;
   spreads: SpreadPoint[];
 }
 

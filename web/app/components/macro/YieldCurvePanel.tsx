@@ -1,65 +1,53 @@
 import { PlotlyChart } from "./PlotlyChart";
 import { DARK_LAYOUT, GRID_COLOR } from "@/lib/macroConstants";
-import type { TreasuryCurvePoint } from "@/lib/macroTypes";
+import type { TreasuryCurveResponse, TreasuryCurveSnapshotRow } from "@/lib/macroTypes";
 import type { Data, Layout } from "plotly.js";
 
 const TENOR_ORDER = ["1M", "3M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"] as const;
 
-function monthsAgo(dateStr: string, months: number): string {
-  const d = new Date(dateStr);
-  d.setMonth(d.getMonth() - months);
-  return d.toISOString().slice(0, 10);
-}
+const SNAPSHOT_COLORS: Record<TreasuryCurveSnapshotRow["label"], string> = {
+  Latest: "#60A5FA",
+  "6M Ago": "#F59E0B",
+  "1Y Ago": "#9CA3AF",
+};
 
 /**
  * Treasury Yield Curve -- 2-subplot layout ported from app.py:2308-2352:
  * left = curve snapshot (latest / 6M ago / 1Y ago), right = 10Y history.
  * Plotly.js subplots need explicit xaxis2/yaxis2 domains rather than
  * make_subplots' automatic layout -- hand-rolled here via `domain`.
+ *
+ * As of 2026-09-07 (Task 1b), the snapshot-row-selection and 10Y-history
+ * filtering this component used to do client-side (monthsAgo/findAsOf
+ * over the full 20-year x 10-tenor table) now happens server-side in
+ * api/macro_data.py's _trim_treasury_curve -- this component just plots
+ * what it's given. Cuts the wire payload from ~730KB to ~70KB without
+ * changing what's rendered (same rows, same algorithm, just moved).
  */
-export function YieldCurvePanel({ points }: { points: TreasuryCurvePoint[] }) {
-  if (points.length === 0) return null;
+export function YieldCurvePanel({ data }: { data: TreasuryCurveResponse }) {
+  if (data.snapshot.length === 0) return null;
 
-  const avail = TENOR_ORDER.filter((t) => points.some((p) => p[t] != null));
-  const sorted = [...points].sort((a, b) => a.date.localeCompare(b.date));
-  const latest = sorted[sorted.length - 1];
-  const ago6mCutoff = monthsAgo(latest.date, 6);
-  const ago1yCutoff = monthsAgo(latest.date, 12);
+  const avail = TENOR_ORDER.filter((t) => data.snapshot.some((p) => p[t] != null));
 
-  const findAsOf = (cutoff: string) => {
-    const candidates = sorted.filter((p) => p.date <= cutoff);
-    return candidates.length > 0 ? candidates[candidates.length - 1] : null;
-  };
-  const ago6m = findAsOf(ago6mCutoff);
-  const ago1y = findAsOf(ago1yCutoff);
+  const snapshotTraces: Data[] = data.snapshot.map(
+    (row): Data => ({
+      type: "scatter",
+      mode: "lines+markers",
+      name: row.label,
+      x: avail,
+      y: avail.map((t) => row[t] ?? null),
+      line: { color: SNAPSHOT_COLORS[row.label], width: 2 },
+      xaxis: "x",
+      yaxis: "y",
+    })
+  );
 
-  const snapshotSpecs: { row: TreasuryCurvePoint | null; label: string; color: string }[] = [
-    { row: latest, label: "Latest", color: "#60A5FA" },
-    { row: ago6m, label: "6M Ago", color: "#F59E0B" },
-    { row: ago1y, label: "1Y Ago", color: "#9CA3AF" },
-  ];
-  const snapshotTraces: Data[] = snapshotSpecs
-    .filter((s) => s.row !== null)
-    .map(
-      (s): Data => ({
-        type: "scatter",
-        mode: "lines+markers",
-        name: s.label,
-        x: avail,
-        y: avail.map((t) => s.row![t] ?? null),
-        line: { color: s.color, width: 2 },
-        xaxis: "x",
-        yaxis: "y",
-      })
-    );
-
-  const hist10y = sorted.filter((p) => p["10Y"] != null);
   const historyTrace = {
     type: "scatter",
     mode: "lines",
     name: "10Y Yield",
-    x: hist10y.map((p) => p.date),
-    y: hist10y.map((p) => p["10Y"]),
+    x: data.history_10y.map((p) => p.date),
+    y: data.history_10y.map((p) => p.value),
     line: { color: "#60A5FA", width: 1.5 },
     showlegend: false,
     xaxis: "x2",

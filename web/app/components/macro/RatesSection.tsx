@@ -61,7 +61,7 @@ export async function RatesSection() {
 
       <section>
         <SectionHeader>Treasury Yield Curve (FRED DGS)</SectionHeader>
-        <YieldCurvePanel points={data.treasury_curve} />
+        <YieldCurvePanel data={data.treasury_curve} />
       </section>
 
       <section>

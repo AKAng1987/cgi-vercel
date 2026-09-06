@@ -126,6 +126,57 @@ def fetch_treasury_curve() -> list[dict]:
     return _df_to_records(wide)
 
 
+def _months_ago(d: datetime.date, months: int) -> datetime.date:
+    """Port of JS `Date.setMonth(d.getMonth() - months)` semantics used
+    by YieldCurvePanel.tsx's monthsAgo(): day is NOT clamped to the
+    target month's length, it overflows forward exactly like JS's Date
+    normalization does. Implemented by walking to day 1 of the target
+    month and adding (day-1) days, which reproduces the same overflow."""
+    total_months = d.year * 12 + (d.month - 1) - months
+    year, month0 = divmod(total_months, 12)
+    return datetime.date(year, month0 + 1, 1) + datetime.timedelta(days=d.day - 1)
+
+
+def _trim_treasury_curve(records: list[dict]) -> dict:
+    """Endpoint-layer trim (2026-09-07, Task 1b): the frontend
+    (YieldCurvePanel.tsx) only ever reads 3 snapshot rows (latest/6M
+    ago/1Y ago, all tenors) plus the 10Y tenor's full history for its
+    two-panel chart -- it never uses the other 9 tenors' full 20-year
+    history that fetch_treasury_curve() produces. That unused shape was
+    ~730KB of the ~1.2MB /macro payload (overnight-report-20260907.md
+    Task 1). This mirrors YieldCurvePanel.tsx's own snapshot/history
+    logic exactly (same monthsAgo/find-as-of algorithm, see
+    _months_ago) so the rendered chart is byte-for-byte unchanged --
+    only what crosses the wire shrinks. The full wide table is still
+    fetched and cached as before (fetch_treasury_curve is unchanged);
+    this only trims what build_rates_response returns."""
+    if not records:
+        return {"snapshot": [], "history_10y": []}
+
+    sorted_records = sorted(records, key=lambda r: r["date"])
+    latest = sorted_records[-1]
+    latest_date = datetime.date.fromisoformat(latest["date"])
+
+    def find_as_of(cutoff: datetime.date) -> Optional[dict]:
+        candidates = [r for r in sorted_records if datetime.date.fromisoformat(r["date"]) <= cutoff]
+        return candidates[-1] if candidates else None
+
+    ago_6m = find_as_of(_months_ago(latest_date, 6))
+    ago_1y = find_as_of(_months_ago(latest_date, 12))
+
+    snapshot = [
+        {"label": label, **row}
+        for label, row in [("Latest", latest), ("6M Ago", ago_6m), ("1Y Ago", ago_1y)]
+        if row is not None
+    ]
+    history_10y = [
+        {"date": r["date"], "value": r["10Y"]}
+        for r in sorted_records
+        if r.get("10Y") is not None
+    ]
+    return {"snapshot": snapshot, "history_10y": history_10y}
+
+
 # ── spreads (12h TTL) ─────────────────────────────────────────────────
 
 def fetch_spreads() -> list[dict]:
@@ -614,7 +665,7 @@ def build_rates_response() -> dict:
         "fomc_probabilities": cache.get_or_fetch(
             "fomc_probabilities", lambda: build_fomc_probabilities(meetings_iso)
         ),
-        "treasury_curve": cache.get_or_fetch("treasury_curve", fetch_treasury_curve),
+        "treasury_curve": _trim_treasury_curve(cache.get_or_fetch("treasury_curve", fetch_treasury_curve)),
         "spreads": cache.get_or_fetch("spreads", fetch_spreads),
     }
 
