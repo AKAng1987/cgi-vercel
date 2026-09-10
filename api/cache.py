@@ -41,14 +41,44 @@ TTL_HOURS: dict[str, float] = {
     "dot_plot": 168.0,  # 7d
 }
 
+# Bump a key's entry whenever the fetch/compute logic feeding that
+# cache key changes shape or fixes a correctness bug -- forces an
+# immediate refetch on next read regardless of remaining TTL, so a
+# deployed fix isn't masked by an already-cached bad value for up to
+# TTL_HOURS[key] more hours. Added 2026-09-11 after a bug class (Core
+# PCE, then fetch_spreads) where a code fix alone didn't change what
+# was being served until the stale cache object happened to expire.
+CACHE_SCHEMA_VERSIONS: dict[str, int] = {
+    "fed_funds_range": 1,
+    "fomc_probabilities": 1,
+    "fomc_meeting_calendar": 1,
+    "treasury_curve": 1,
+    "spreads": 1,
+    "lending_standards": 1,
+    "gdp": 1,
+    "gdp_nowcast": 1,
+    "inflation": 1,
+    "pce": 1,
+    "dot_plot": 1,
+}
+
 
 def _key(cache_key: str) -> str:
     return f"{PREFIX}{cache_key}.json"
 
 
 def get(cache_key: str) -> Optional[dict]:
-    """Return the cached payload if it exists and is within its TTL,
-    else None (caller should fetch fresh and call set())."""
+    """Return the cached payload if it exists, is within its TTL, AND
+    matches CACHE_SCHEMA_VERSIONS[cache_key] -- else None (caller
+    should fetch fresh and call set()).
+
+    cache_version travels as S3 object metadata, not inside the JSON
+    body -- a version check piggybacks on the existing head_object()
+    staleness check at no extra GetObject cost, and the cached
+    payload's own shape stays exactly what callers already expect (no
+    envelope wrapping). An object written before this field existed,
+    or under a since-bumped version, has no matching metadata and is
+    correctly treated as a miss."""
     ttl_hours = TTL_HOURS[cache_key]
     s3_key = _key(cache_key)
 
@@ -64,13 +94,24 @@ def get(cache_key: str) -> Optional[dict]:
     if age_hours > ttl_hours:
         return None
 
+    cached_version = head.get("Metadata", {}).get("cache_version")
+    expected_version = str(CACHE_SCHEMA_VERSIONS[cache_key])
+    if cached_version != expected_version:
+        _logger.info(
+            "[cache] version mismatch for %r (cached=%r, expected=%r) -- "
+            "treating as a miss, forcing a fresh fetch",
+            cache_key, cached_version, expected_version,
+        )
+        return None
+
     obj = _s3.get_object(Bucket=BUCKET, Key=s3_key)
     body = obj["Body"].read().decode("utf-8")
     return json.loads(body)
 
 
 def set(cache_key: str, value: dict) -> None:
-    """Write the finished response payload for cache_key to S3.
+    """Write the finished response payload for cache_key to S3, tagged
+    with its current CACHE_SCHEMA_VERSIONS entry.
 
     allow_nan=False deliberately: json.dumps defaults to allow_nan=True,
     which silently writes non-compliant NaN/Infinity tokens that round-trip
@@ -87,13 +128,22 @@ def set(cache_key: str, value: dict) -> None:
         Key=s3_key,
         Body=json.dumps(value, allow_nan=False).encode("utf-8"),
         ContentType="application/json",
+        Metadata={"cache_version": str(CACHE_SCHEMA_VERSIONS[cache_key])},
     )
 
 
 def _get_raw(cache_key: str) -> Optional[dict]:
     """Read whatever is in S3 for cache_key regardless of TTL -- used as
     the stale-but-known-good fallback when a fresh fetch fails its
-    sanity check. Returns None if nothing has ever been cached."""
+    sanity check. Returns None if nothing has ever been cached.
+
+    Deliberately bypasses the cache_version check in get(): this is a
+    last-resort "serve anything rather than nothing" path, called only
+    after a fresh fetch already failed its sanity check. Refusing a
+    same-shape-but-lower-version object here would remove the one
+    fallback this path exists to provide, for no benefit -- if the
+    version bumped because the fetch logic changed, whatever's here
+    was still produced by the last known-good run of some version."""
     s3_key = _key(cache_key)
     try:
         obj = _s3.get_object(Bucket=BUCKET, Key=s3_key)
