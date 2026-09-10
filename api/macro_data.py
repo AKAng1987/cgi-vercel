@@ -180,13 +180,23 @@ def _trim_treasury_curve(records: list[dict]) -> dict:
 # ── spreads (12h TTL) ─────────────────────────────────────────────────
 
 def fetch_spreads() -> list[dict]:
-    """FRED T10Y2Y + BAMLH0A0HYM2, 20-year lookback."""
+    """FRED T10Y2Y (%) + BAMLH0A0HYM2 (bp), 20-year lookback.
+
+    BAMLH0A0HYM2 is published by FRED in percent, not bp (verified
+    live 2026-09-10: series units="Percent"). Converted here (x100)
+    to match the "(bp)" label the frontend (RatesSection.tsx) and the
+    market-dashboard Streamlit twin have always used -- see the
+    matching fix + full rationale in market-dashboard/macro_data.py's
+    fetch_spreads()."""
     start = (datetime.datetime.now() - datetime.timedelta(days=365 * 20)).strftime("%Y-%m-%d")
     dfs: dict = {}
     for sid, label in [("T10Y2Y", "T10Y2Y"), ("BAMLH0A0HYM2", "HY_Spread")]:
         df_s = _fred_get(sid, observation_start=start)
         if not df_s.empty:
-            dfs[label] = df_s.set_index("date")["value"]
+            series = df_s.set_index("date")["value"]
+            if label == "HY_Spread":
+                series = series * 100.0  # FRED percent -> bp
+            dfs[label] = series
     wide = pd.DataFrame(dfs).sort_index().reset_index().rename(columns={"index": "date"})
     return _df_to_records(wide)
 

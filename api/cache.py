@@ -53,7 +53,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "fomc_probabilities": 1,
     "fomc_meeting_calendar": 1,
     "treasury_curve": 1,
-    "spreads": 1,
+    "spreads": 2,  # 2026-09-11: fetch_spreads bp/percent fix (see macro_data.py)
     "lending_standards": 1,
     "gdp": 1,
     "gdp_nowcast": 1,
