@@ -51,7 +51,7 @@ TTL_HOURS: dict[str, float] = {
 CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "fed_funds_range": 1,
     "fomc_probabilities": 1,
-    "fomc_meeting_calendar": 1,
+    "fomc_meeting_calendar": 2,  # 2026-09-12: now caches unfiltered dates; filtering moved to read-time
     "treasury_curve": 1,
     "spreads": 2,  # 2026-09-11: fetch_spreads bp/percent fix (see macro_data.py)
     "lending_standards": 1,

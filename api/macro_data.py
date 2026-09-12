@@ -222,13 +222,12 @@ def _scrape_fomc_dates() -> list[datetime.date]:
         return []
 
 
-def get_upcoming_meetings(today: Optional[datetime.date] = None, horizon_months: int = 12) -> list[dict]:
-    """Returns [{"date": "YYYY-MM-DD"}, ...] for meetings from today through
-    today+horizon_months."""
-    if today is None:
-        today = datetime.date.today()
-    cutoff = today + datetime.timedelta(days=horizon_months * 31)
-
+def _fetch_fomc_meeting_calendar() -> list[dict]:
+    """All known FOMC meeting dates as ISO strings, sorted. Deliberately
+    NOT filtered by today -- filtering happens at read time in
+    build_rates_response so the 7d cache doesn't strand a meeting that
+    just passed as still 'upcoming' for up to a week (get_upcoming_meetings
+    used to run date.today() at fetch time, then cache the filtered list)."""
     candidates = list(FOMC_2026)
     scraped = _scrape_fomc_dates()
     known = set(candidates)
@@ -236,9 +235,30 @@ def get_upcoming_meetings(today: Optional[datetime.date] = None, horizon_months:
         if d.year > 2026 and d not in known:
             candidates.append(d)
             known.add(d)
+    return [{"date": d.isoformat()} for d in sorted(candidates)]
 
-    meetings = sorted(d for d in candidates if today <= d <= cutoff)
-    return [{"date": d.isoformat()} for d in meetings]
+
+def _filter_meetings_by_horizon(
+    meetings_iso: list[dict],
+    today: Optional[datetime.date] = None,
+    horizon_months: int = 12,
+) -> list[dict]:
+    if today is None:
+        today = datetime.date.today()
+    cutoff = today + datetime.timedelta(days=horizon_months * 31)
+    return [
+        m for m in meetings_iso
+        if today <= datetime.date.fromisoformat(m["date"]) <= cutoff
+    ]
+
+
+def get_upcoming_meetings(today: Optional[datetime.date] = None, horizon_months: int = 12) -> list[dict]:
+    """Returns [{"date": "YYYY-MM-DD"}, ...] for meetings from today through
+    today+horizon_months. Kept for callers that want a one-shot fresh
+    filter without going through the S3 cache."""
+    return _filter_meetings_by_horizon(
+        _fetch_fomc_meeting_calendar(), today=today, horizon_months=horizon_months
+    )
 
 
 # ── fomc_probabilities (6h TTL, yfinance-dependent) ───────────────────
@@ -667,7 +687,8 @@ def fetch_dot_plot() -> list[dict]:
 def build_rates_response() -> dict:
     import cache
 
-    meetings_iso = cache.get_or_fetch("fomc_meeting_calendar", get_upcoming_meetings)
+    all_meetings_iso = cache.get_or_fetch("fomc_meeting_calendar", _fetch_fomc_meeting_calendar)
+    meetings_iso = _filter_meetings_by_horizon(all_meetings_iso)
 
     return {
         "fed_funds_range": cache.get_or_fetch("fed_funds_range", fetch_fed_funds_range),

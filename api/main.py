@@ -1,4 +1,6 @@
+import logging
 import os
+import threading
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -13,7 +15,32 @@ load_dotenv()
 
 API_TOKEN = os.environ.get("API_TOKEN")
 
+_logger = logging.getLogger("cgi_api")
+
 app = FastAPI(title="CGI API", version="0.1.0")
+
+
+@app.on_event("startup")
+def _warm_up_caches() -> None:
+    """Post-deploy self-warm: fire the three biggest cache-fed endpoints
+    off-thread on boot so the first real visitor doesn't eat the cold-
+    start GetObject latency (~1-2s per S3 client init + first fetch).
+    Free-tier Render cold-boot alone is ~75s of Python/boto3 import;
+    this doesn't fix that, only ensures once we're up we're actually hot.
+    All failures swallowed -- a failed pre-warm must not fail startup."""
+    def _run() -> None:
+        for name, fn in [
+            ("macro/rates", macro_data.build_rates_response),
+            ("macro/growth", macro_data.build_growth_response),
+            ("live", lambda: dashboard_data.build_live_response(date_str=None)),
+        ]:
+            try:
+                fn()
+                _logger.info("[warm-up] %s primed", name)
+            except Exception as exc:  # noqa: BLE001
+                _logger.warning("[warm-up] %s failed: %s", name, exc)
+
+    threading.Thread(target=_run, name="cgi-warmup", daemon=True).start()
 
 app.add_middleware(
     CORSMiddleware,
