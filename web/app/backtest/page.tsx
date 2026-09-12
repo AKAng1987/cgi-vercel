@@ -52,6 +52,17 @@ export default async function BacktestPage({
     `/api/backtest/${compassQ}/${gridQ}?${qs}`
   );
 
+  // Refresh Lambda runs 03:30 UTC daily; >30h since last write means it
+  // missed at least one cycle -- worth surfacing rather than silently
+  // serving day-old numbers. Clock skew a few hours either side is fine.
+  let stalenessHours: number | null = null;
+  if (data.last_refreshed_at) {
+    const refreshed = new Date(data.last_refreshed_at).getTime();
+    if (!Number.isNaN(refreshed)) {
+      stalenessHours = (Date.now() - refreshed) / 3_600_000;
+    }
+  }
+
   return (
     <main className="mx-auto max-w-6xl p-6">
       <h1 className="mb-1 text-2xl font-bold">BACKTEST</h1>
@@ -59,6 +70,15 @@ export default async function BacktestPage({
         Historical performance of every ETF during a specific Compass × Grid
         regime. Entry = close on signal date. Edge = Avg High% ÷ |Avg Low%|.
       </p>
+
+      {stalenessHours !== null && stalenessHours > 30 && (
+        <div className="mb-4 rounded border border-yellow-800 bg-yellow-950/40 px-3 py-2 text-xs text-yellow-300">
+          ⚠ Backtest data is {Math.round(stalenessHours)}h old (last refreshed{" "}
+          {new Date(data.last_refreshed_at!).toISOString().replace("T", " ").slice(0, 16)} UTC).
+          Daily refresh runs at 03:30 UTC; if this keeps growing, check the
+          cmon-stage-backend-backtest-refresher Lambda.
+        </div>
+      )}
 
       <BacktestClient
         compassQ={compassQ}

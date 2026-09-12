@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BacktestRow } from "@/lib/types";
 import { pctColor } from "@/lib/regimeConstants";
 import { OccurrenceDetail } from "./OccurrenceDetail";
@@ -35,10 +35,56 @@ export function BacktestTable({
   gridQ: number;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const grouped = groupRows(rows);
+
+  // Available groups derived from the current result -- so if a regime
+  // combo has zero occurrences in one asset class, that group's chip
+  // simply doesn't appear rather than showing as "no data".
+  const availableGroups = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.group))),
+    [rows]
+  );
+
+  const [hiddenGroups, setHiddenGroups] = useState<Set<string>>(new Set());
+  const filteredRows = useMemo(
+    () => rows.filter((r) => !hiddenGroups.has(r.group)),
+    [rows, hiddenGroups]
+  );
+
+  const grouped = groupRows(filteredRows);
+
+  function toggleGroup(g: string) {
+    setHiddenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g);
+      else next.add(g);
+      return next;
+    });
+  }
 
   return (
     <div>
+      {availableGroups.length > 1 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500">Show groups:</span>
+          {availableGroups.map((g) => {
+            const active = !hiddenGroups.has(g);
+            return (
+              <button
+                key={g}
+                onClick={() => toggleGroup(g)}
+                className={`rounded border px-2 py-0.5 text-[0.68rem] uppercase tracking-wide transition ${
+                  active
+                    ? "border-[#3b4f8a] bg-[#1a1f35] text-[#8b9dc3]"
+                    : "border-slate-800 bg-slate-950 text-slate-600 line-through"
+                }`}
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {Array.from(grouped.entries()).map(([group, rowsInGroup]) => (
         <div key={group} className="mt-4">
           <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
