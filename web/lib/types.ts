@@ -47,3 +47,44 @@ export interface LiveResponse {
   hud_groups: HudGroup[];
   hud_group_order: string[];
 }
+
+export interface BacktestRow {
+  ticker: string;
+  group: string;
+  occurrences: number;
+  avg_high_pct: number;
+  avg_low_pct: number;
+  hit_rate: number;
+  edge: number | null;
+  avg_return_pct: number;
+}
+
+export interface BacktestTableResponse {
+  schema_version: number;
+  last_refreshed_at: string | null;
+  compass_q: number;
+  grid_q: number;
+  min_occ: number;
+  lookback: string;
+  rows: BacktestRow[];
+  error?: string;
+}
+
+export interface BacktestOccurrence {
+  start_date: string;
+  end_date: string;
+  duration_days: number;
+  high_pct: number;
+  low_pct: number;
+  return_pct: number;
+}
+
+export interface BacktestOccurrencesResponse {
+  schema_version: number;
+  last_refreshed_at: string | null;
+  ticker: string;
+  compass_q: number;
+  grid_q: number;
+  occurrences: BacktestOccurrence[];
+  error?: string;
+}

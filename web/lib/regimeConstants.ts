@@ -66,3 +66,23 @@ export function pctColor(v: number | null | undefined): string {
   if (v < 0) return "#FF4444";
   return "#9CA3AF";
 }
+
+/**
+ * BACKTEST tab quadrant labels, ported verbatim from app.py's
+ * GRID_Q_LABELS / COMPASS_Q_LABELS (lines 36-47). Kept as full labels
+ * (not just "C2" / "G4") because the Streamlit tab uses these directly
+ * in the info line "Regime {compass} × {grid} has occurred N times".
+ */
+export const GRID_Q_LABELS: Record<number, string> = {
+  1: "G1 — Goldilocks",
+  2: "G2 — Reflation",
+  3: "G3 — Inflation",
+  4: "G4 — Deflation",
+};
+
+export const COMPASS_Q_LABELS: Record<number, string> = {
+  1: "C1 — Liquidity↑ Credit↓",
+  2: "C2 — Liquidity↑ Credit↑",
+  3: "C3 — Liquidity↓ Credit↑",
+  4: "C4 — Liquidity↓ Credit↓",
+};
