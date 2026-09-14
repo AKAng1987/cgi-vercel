@@ -52,6 +52,17 @@ export function BacktestTable({
 
   const grouped = groupRows(filteredRows);
 
+  // Top-N by Edge across all shown groups. Shown above the grouped
+  // tables so users can see the global winners without scrolling.
+  // Uses the same filteredRows (respects group chip toggles), so
+  // hiding a group also removes its tickers from the leaderboard.
+  const topByEdge = useMemo(() => {
+    return filteredRows
+      .filter((r) => r.edge !== null && !Number.isNaN(r.edge))
+      .sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0))
+      .slice(0, 10);
+  }, [filteredRows]);
+
   function toggleGroup(g: string) {
     setHiddenGroups((prev) => {
       const next = new Set(prev);
@@ -82,6 +93,70 @@ export function BacktestTable({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {topByEdge.length > 0 && (
+        <div className="mb-4 rounded border border-[#3b4f8a] bg-[#0f1425]">
+          <div className="border-b border-[#1a2340] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+            Top {topByEdge.length} by Edge — across all shown groups
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[0.76rem]">
+              <thead>
+                <tr>
+                  {["#", "Ticker", "Group", "Occ", "Edge", "Avg High%", "Avg Low%", "Hit Rate"].map(
+                    (h, i) => (
+                      <th
+                        key={h}
+                        className={`bg-[#131a2e] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
+                          i <= 2 ? "text-left" : "text-right"
+                        }`}
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {topByEdge.map((r, i) => (
+                  <tr
+                    key={r.ticker}
+                    onClick={() => setSelected(r.ticker)}
+                    className={`cursor-pointer hover:bg-slate-800/50 ${
+                      selected === r.ticker ? "bg-slate-800/70" : ""
+                    }`}
+                  >
+                    <td className="px-1.5 py-0.5 text-slate-500">{i + 1}</td>
+                    <td className="px-1.5 py-0.5 font-medium text-slate-100">{r.ticker}</td>
+                    <td className="px-1.5 py-0.5 text-[0.68rem] uppercase tracking-wide text-slate-500">
+                      {r.group}
+                    </td>
+                    <td className="px-1.5 py-0.5 text-right text-slate-300">{r.occurrences}</td>
+                    <td className="px-1.5 py-0.5 text-right font-bold text-slate-100">
+                      {fmtEdge(r.edge)}
+                    </td>
+                    <td
+                      className="px-1.5 py-0.5 text-right"
+                      style={{ color: pctColor(r.avg_high_pct) }}
+                    >
+                      {fmtPct(r.avg_high_pct)}
+                    </td>
+                    <td
+                      className="px-1.5 py-0.5 text-right"
+                      style={{ color: pctColor(r.avg_low_pct) }}
+                    >
+                      {fmtPct(r.avg_low_pct)}
+                    </td>
+                    <td className="px-1.5 py-0.5 text-right text-slate-300">
+                      {r.hit_rate.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
