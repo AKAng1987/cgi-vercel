@@ -151,6 +151,13 @@ export interface FlipBasis {
   dwell_days: number;
 }
 
+export interface MarketRead {
+  p_flip: number;
+  source: string;
+  detail: string;
+  experimental: boolean;
+}
+
 export interface UpcomingRelease {
   date: string;
   type: ReleaseType;
@@ -161,6 +168,9 @@ export interface UpcomingRelease {
   p_flip: number;
   if_flip_quadrant: number;
   basis: FlipBasis;
+  market: MarketRead | null;
+  gap: number | null;
+  context: { gdpnow: number | null; as_of: string | null } | null;
 }
 
 export interface MarkovEvent {

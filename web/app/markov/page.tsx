@@ -21,9 +21,11 @@ export default async function MarkovPage() {
       <h1 className="mb-1 text-2xl font-bold">MARKOV — event-driven regime forecast</h1>
       <p className="mb-4 text-xs text-slate-400">
         The regime only moves on data releases, and each release moves one axis: FOMC → Liquidity,
-        SLOOS → Credit, CPI → Inflation, GDP → Growth. Each upcoming release gets one probability —
-        that its axis flips — estimated from every prior release of that type while in the same state.
-        Each release is scored once it lands.
+        SLOOS → Credit, CPI → Inflation, GDP → Growth. Each upcoming release gets two probabilities
+        that its axis flips, shown unmixed: <span className="text-slate-300">History</span> (every prior
+        release of that type while in the same state) and <span className="text-slate-300">Market</span>{" "}
+        (what&apos;s priced — fed funds futures for the Fed; the experimental classifier for credit and
+        inflation). The gap between them is the signal. Each release is scored once it lands.
       </p>
 
       <UpcomingReleases current={data.current} upcoming={data.upcoming} asOf={data.as_of} />

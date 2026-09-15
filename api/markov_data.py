@@ -32,6 +32,8 @@ from typing import Optional
 
 import boto3
 
+import cache
+import macro_data
 import release_calendar as cal
 import signals_data
 
@@ -113,6 +115,60 @@ def _flip_rates(events: list[dict], dwell: dict) -> dict:
     return out
 
 
+# ── market-implied P(flip) per axis ──────────────────────────────────────────
+# The historical rate is the print-confirmed prior. The market-implied read
+# is the other half of the thesis; the gap between them is the signal. Only
+# Liquidity has a direct market price of the exact event (fed funds futures,
+# same FedWatch computation the MACRO tab caches). Credit and Inflation use
+# the experimental Phase 2 classifier's daily P(axis up); Growth has no
+# market read yet (GDPNow is shown as context, not as a probability).
+
+def _market_liquidity(fomc_date: str, state: int) -> Optional[dict]:
+    try:
+        meetings = macro_data._filter_meetings_by_horizon(
+            cache.get_or_fetch("fomc_meeting_calendar", macro_data._fetch_fomc_meeting_calendar)
+        )
+        probs = cache.get_or_fetch("fomc_probabilities", lambda: macro_data.build_fomc_probabilities(meetings))
+    except Exception:  # noqa: BLE001 -- market read is additive; never break the page
+        return None
+    for p in probs.get("probabilities", []):
+        if p.get("date") == fomc_date:
+            # Liquidity up = easing trend. A hike flips it; a hold or cut keeps it.
+            p_flip = p["p_hike"] if state == 1 else p["p_cut"]
+            return {
+                "p_flip": round(float(p_flip), 3),
+                "source": "fed funds futures (FedWatch method)",
+                "detail": f"{p.get('most_likely')} {round(float(p.get('prob_most_likely', 0)) * 100)}% · hike {round(p['p_hike']*100)} / hold {round(p['p_hold']*100)} / cut {round(p['p_cut']*100)}",
+                "experimental": False,
+            }
+    return None
+
+
+def _market_from_classifier(latest_daily: Optional[dict], axis: str, state: int) -> Optional[dict]:
+    d = (latest_daily or {}).get("divergence") or {}
+    a = (d.get("axes") or {}).get(axis)
+    if not a or a.get("p_up") is None:
+        return None
+    p_up = float(a["p_up"])
+    return {
+        "p_flip": round(1.0 - p_up if state == 1 else p_up, 3),
+        "source": f"experimental classifier ({d.get('model_version')}, as of {d.get('features_as_of')})",
+        "detail": f"P(up)={p_up:.2f}",
+        "experimental": True,
+    }
+
+
+def _gdpnow_context() -> Optional[dict]:
+    try:
+        rows = cache.get_or_fetch("gdp_nowcast", macro_data.fetch_gdp_nowcast)
+    except Exception:  # noqa: BLE001
+        return None
+    if not rows:
+        return None
+    last = rows[-1]
+    return {"gdpnow": last.get("gdpnow"), "as_of": last.get("date")}
+
+
 # ── public ───────────────────────────────────────────────────────────────────
 
 def build_markov_response() -> dict:
@@ -127,13 +183,23 @@ def build_markov_response() -> dict:
         current[m] = rows[-1][1] if rows else None
     events.sort(key=lambda e: e["date"])
 
-    # ── upcoming: one forecast per next release ─────────────────────────
+    daily = signals_data.build_signals_response()["signals"]
+    latest = daily[0] if daily else None
+
+    # ── upcoming: one forecast per next release, history + market side by side
     upcoming = []
     for r in cal.next_releases(after=today):
         axis, model = r["axis"], r["model"]
         q = current[model]
         s = _axis_state(q, axis)
         p = rates[axis][s]["p_flip"]
+        if axis == "liquidity":
+            market = _market_liquidity(r["date"], s)
+        elif axis in ("credit", "inflation"):
+            market = _market_from_classifier(latest, axis, s)
+        else:
+            market = None
+        gap = round(market["p_flip"] - p, 3) if market else None
         upcoming.append({
             "date": r["date"],
             "type": r["type"],
@@ -144,6 +210,9 @@ def build_markov_response() -> dict:
             "p_flip": round(p, 3),
             "if_flip_quadrant": _quadrant_with(q, axis, 1 - s),
             "basis": rates[axis][s],
+            "market": market,
+            "gap": gap,
+            "context": _gdpnow_context() if axis == "growth" else None,
         })
 
     # ── event log since track-record start ──────────────────────────────
@@ -207,7 +276,6 @@ def build_markov_response() -> dict:
     }
 
     # ── daily audit collapsed into runs ─────────────────────────────────
-    daily = signals_data.build_signals_response()["signals"]
     daily_asc = list(reversed(daily))
     runs: list[dict] = []
     for s in daily_asc:
@@ -220,7 +288,6 @@ def build_markov_response() -> dict:
     for r in runs:
         del r["key"]
     runs.reverse()
-    latest = daily[0] if daily else None
 
     return {
         "as_of": today,
