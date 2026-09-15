@@ -42,7 +42,7 @@ BLOB_KEY = f"{PREFIX}occurrences.json"
 # Compared against the blob's own schema_version by callers that care;
 # bump alongside cmon-stage-backend-backtest-refresher's handler.py if
 # the occurrence/stat computation logic ever changes.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # 2: trend-at-entry fields per occurrence
 
 BACKTEST_EXCLUDE_GROUPS = frozenset({
     "US INTEREST RATES", "SPREADS", "RATES", "FOREIGN RATES"
@@ -115,11 +115,31 @@ def _read_blob() -> Optional[dict]:
     return _s3_get_json(BLOB_KEY)
 
 
+# Trend-at-entry buckets (BACKTEST v2 step 1). Percentile is of the
+# ticker's OWN 20-row return distribution, so "extended" means extended
+# for that instrument. Occurrences from before the ticker had 20 rows of
+# history carry None and only appear under trend="all".
+TREND_BUCKETS = ("all", "extended", "neutral", "oversold")
+EXTENDED_PCTILE, OVERSOLD_PCTILE = 80.0, 20.0
+
+
+def trend_bucket(o: dict) -> Optional[str]:
+    p = o.get("pre_entry_ret_20d_pctile")
+    if p is None:
+        return None
+    if p >= EXTENDED_PCTILE:
+        return "extended"
+    if p <= OVERSOLD_PCTILE:
+        return "oversold"
+    return "neutral"
+
+
 def build_table_response(
     compass_q: int,
     grid_q: int,
     min_occ: int = 5,
     lookback: Optional[str] = None,
+    trend: Optional[str] = None,
 ) -> dict:
     """Read the single blob once and return the aggregated per-ticker
     stats table for one (compass_q, grid_q) combo, sorted by Edge
@@ -150,6 +170,8 @@ def build_table_response(
         occ = entry["combos"].get(combo_key, [])
         if cutoff:
             occ = [o for o in occ if o["start_date"] >= cutoff]
+        if trend and trend != "all":
+            occ = [o for o in occ if trend_bucket(o) == trend]
         stats = compute_stats(occ)
         if stats is None or stats["count"] < min_occ:
             continue
@@ -173,6 +195,7 @@ def build_table_response(
         "grid_q": grid_q,
         "min_occ": min_occ,
         "lookback": lookback or "all",
+        "trend": trend or "all",
         "rows": rows,
     }
 

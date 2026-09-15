@@ -70,7 +70,7 @@ export function OccurrenceDetail({
           <table className="w-full border-collapse text-[0.76rem]">
             <thead className="sticky top-0">
               <tr>
-                {["Start Date", "End Date", "Days", "High%", "Low%", "Close%"].map((h, i) => (
+                {["Start Date", "End Date", "Days", "Entry 20d%", "Pctile", ">SMA50", "High%", "Low%", "Close%"].map((h, i) => (
                   <th
                     key={h}
                     className={`bg-[#1F2937] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
@@ -88,6 +88,15 @@ export function OccurrenceDetail({
                   <td className="px-1.5 py-0.5 text-slate-300">{o.start_date}</td>
                   <td className="px-1.5 py-0.5 text-slate-300">{o.end_date}</td>
                   <td className="px-1.5 py-0.5 text-right text-slate-300">{o.duration_days}</td>
+                  <td className="px-1.5 py-0.5 text-right" style={{ color: pctColor(o.pre_entry_ret_20d ?? null) }}>
+                    {o.pre_entry_ret_20d == null ? "—" : fmtPct(o.pre_entry_ret_20d)}
+                  </td>
+                  <td className={`px-1.5 py-0.5 text-right ${o.pre_entry_ret_20d_pctile == null ? "text-slate-600" : o.pre_entry_ret_20d_pctile >= 80 ? "font-bold text-[#FCD34D]" : o.pre_entry_ret_20d_pctile <= 20 ? "font-bold text-[#60A5FA]" : "text-slate-400"}`}>
+                    {o.pre_entry_ret_20d_pctile == null ? "—" : o.pre_entry_ret_20d_pctile.toFixed(0)}
+                  </td>
+                  <td className="px-1.5 py-0.5 text-right text-slate-400">
+                    {o.above_sma50_at_entry == null ? "—" : o.above_sma50_at_entry ? "yes" : "no"}
+                  </td>
                   <td
                     className="px-1.5 py-0.5 text-right font-medium"
                     style={{ color: pctColor(o.high_pct) }}

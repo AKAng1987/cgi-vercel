@@ -77,6 +77,9 @@ export interface BacktestOccurrence {
   high_pct: number;
   low_pct: number;
   return_pct: number;
+  pre_entry_ret_20d?: number | null;
+  pre_entry_ret_20d_pctile?: number | null;
+  above_sma50_at_entry?: boolean | null;
 }
 
 export interface SignalAxis {

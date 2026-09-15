@@ -16,11 +16,13 @@ export function BacktestClient({
   gridQ,
   minOcc,
   lookback,
+  trend,
 }: {
   compassQ: number;
   gridQ: number;
   minOcc: number;
   lookback: string;
+  trend: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,7 +38,7 @@ export function BacktestClient({
 
   return (
     <div
-      className={`mb-4 grid grid-cols-1 gap-3 rounded border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-4 ${
+      className={`mb-4 grid grid-cols-1 gap-3 rounded border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-5 ${
         isPending ? "opacity-60" : ""
       }`}
     >
@@ -93,6 +95,20 @@ export function BacktestClient({
           <option value="all">All history</option>
           <option value="10y">Last 10 years</option>
           <option value="5y">Last 5 years</option>
+        </select>
+      </label>
+
+      <label className="flex flex-col text-xs text-slate-400" title="Where the ticker was when the regime began: its 20-day return ranked against its own history. Extended = top 20%, oversold = bottom 20%.">
+        Entry trend
+        <select
+          value={trend}
+          onChange={(e) => updateParam("trend", e.target.value)}
+          className="mt-1 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+        >
+          <option value="all">Any</option>
+          <option value="extended">Extended (already ran)</option>
+          <option value="neutral">Neutral</option>
+          <option value="oversold">Oversold (already fell)</option>
         </select>
       </label>
     </div>

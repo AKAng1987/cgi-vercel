@@ -13,6 +13,7 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * (03:30 UTC ap-southeast-1).
  */
 type Lookback = "all" | "10y" | "5y";
+type Trend = "all" | "extended" | "neutral" | "oversold";
 
 function parseQuadrant(v: string | string[] | undefined): number | null {
   const raw = Array.isArray(v) ? v[0] : v;
@@ -49,6 +50,12 @@ function parseLookback(v: string | string[] | undefined): Lookback {
   return "all";
 }
 
+function parseTrend(v: string | string[] | undefined): Trend {
+  const raw = Array.isArray(v) ? v[0] : v;
+  if (raw === "extended" || raw === "neutral" || raw === "oversold") return raw;
+  return "all";
+}
+
 export default async function BacktestPage({
   searchParams,
 }: {
@@ -64,10 +71,12 @@ export default async function BacktestPage({
   }
   const minOcc = parseMinOcc(sp.min_occ);
   const lookback = parseLookback(sp.lookback);
+  const trend = parseTrend(sp.trend);
 
   const qs = new URLSearchParams({
     min_occ: String(minOcc),
     lookback,
+    trend,
   });
   const data = await apiFetch<BacktestTableResponse>(
     `/api/backtest/${compassQ}/${gridQ}?${qs}`
@@ -106,6 +115,7 @@ export default async function BacktestPage({
         gridQ={gridQ}
         minOcc={minOcc}
         lookback={lookback}
+        trend={trend}
       />
 
       <div className="mb-3 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
@@ -116,6 +126,11 @@ export default async function BacktestPage({
         (C{compassQ}×G{gridQ}) has {data.rows.length}{" "}
         {data.rows.length === 1 ? "ticker" : "tickers"} meeting the min-occurrences
         threshold ({minOcc}).
+        {trend !== "all" && (
+          <span className="ml-1 text-[#FCD34D]">
+            Entries only where the ticker was <b>{trend}</b> going in (20-day return vs. its own history).
+          </span>
+        )}
         {data.last_refreshed_at && (
           <span className="ml-2 text-slate-500">
             Data as of {new Date(data.last_refreshed_at).toISOString().slice(0, 10)}
