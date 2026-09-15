@@ -20,8 +20,11 @@ export default function RootLayout({
           <a href="/macro" className="mr-4 text-slate-300 hover:text-slate-100">
             MACRO
           </a>
-          <a href="/backtest" className="text-slate-300 hover:text-slate-100">
+          <a href="/backtest" className="mr-4 text-slate-300 hover:text-slate-100">
             BACKTEST
+          </a>
+          <a href="/track-record" className="text-slate-300 hover:text-slate-100">
+            TRACK RECORD
           </a>
         </nav>
         {children}

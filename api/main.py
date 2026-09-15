@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import backtest_data
 import dashboard_data
 import macro_data
+import signals_data
 
 load_dotenv()
 
@@ -113,3 +114,10 @@ def backtest_occurrences(compass_q: int, grid_q: int, ticker: str):
     if compass_q not in (1, 2, 3, 4) or grid_q not in (1, 2, 3, 4):
         raise HTTPException(status_code=400, detail="compass_q and grid_q must each be 1-4")
     return backtest_data.build_occurrences_response(ticker, compass_q, grid_q)
+
+
+@app.get("/api/signals", dependencies=[Depends(require_bearer_token)])
+def signals(limit: Optional[int] = None):
+    if limit is not None and limit < 1:
+        raise HTTPException(status_code=400, detail="limit must be >= 1")
+    return signals_data.build_signals_response(limit=limit)

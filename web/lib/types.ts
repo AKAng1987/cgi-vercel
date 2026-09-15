@@ -79,6 +79,68 @@ export interface BacktestOccurrence {
   return_pct: number;
 }
 
+export interface SignalAxis {
+  current: number | null;
+  top1_next_probability: number | null;
+  transition_entropy: number | null;
+  next_top3: { quadrant: number; probability: number }[];
+}
+
+export interface SignalOutcomeAxis {
+  actual: number | null;
+  changed: boolean;
+  top3_hit: boolean | null;
+}
+
+export interface SignalOutcome {
+  check_date: string | null;
+  spx_return_pct: number | null;
+  axes: { compass: SignalOutcomeAxis; grid: SignalOutcomeAxis };
+}
+
+export interface SignalDivergenceAxis {
+  p_up: number | null;
+  discrete_up: number | null;
+  discrete_quadrant: number | null;
+  divergence_score: number | null;
+  direction: "market_up" | "market_down" | null;
+}
+
+export interface SignalDivergence {
+  model_version: string | null;
+  features_as_of: string | null;
+  axes: { credit?: SignalDivergenceAxis; inflation?: SignalDivergenceAxis };
+}
+
+export interface SignalRow {
+  signal_date: string;
+  signal_id: string;
+  timestamp_utc: string | null;
+  spx_close_at_signal: number | null;
+  compass: SignalAxis;
+  grid: SignalAxis;
+  outcomes: { "1w": SignalOutcome | null; "1m": SignalOutcome | null; "3m": SignalOutcome | null };
+  divergence: SignalDivergence | null;
+}
+
+export interface SignalHorizonAxisSummary {
+  n_scored: number;
+  n_changed: number;
+  n_top3_hit: number;
+  hit_rate_on_changed: number | null;
+}
+
+export interface SignalsResponse {
+  summary: {
+    n_signals: number;
+    first_signal_date: string | null;
+    last_signal_date: string | null;
+    n_with_divergence: number;
+    horizons: Record<"1w" | "1m" | "3m", { compass: SignalHorizonAxisSummary; grid: SignalHorizonAxisSummary }>;
+  };
+  signals: SignalRow[];
+}
+
 export interface BacktestOccurrencesResponse {
   schema_version: number;
   last_refreshed_at: string | null;

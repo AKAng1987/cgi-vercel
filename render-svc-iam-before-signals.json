@@ -1,0 +1,40 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ListDashboardAndCachePrefixes",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::cmon-stage-backend-369568916817-ap-southeast-1-reports",
+            "Condition": {
+                "StringLike": {
+                    "s3:prefix": [
+                        "Dashboard/*",
+                        "Cache/*"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "ReadDashboardReports",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::cmon-stage-backend-369568916817-ap-southeast-1-reports/Dashboard/*"
+        },
+        {
+            "Sid": "ReadWriteMacroCache",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::cmon-stage-backend-369568916817-ap-southeast-1-reports/Cache/*"
+        },
+        {
+            "Sid": "QueryModelHistoryFallback",
+            "Effect": "Allow",
+            "Action": "dynamodb:Query",
+            "Resource": "arn:aws:dynamodb:ap-southeast-1:369568916817:table/cmon-stage-backend-model-history"
+        }
+    ]
+}

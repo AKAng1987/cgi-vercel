@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import { BacktestTableResponse } from "@/lib/types";
+import { BacktestTableResponse, SignalsResponse } from "@/lib/types";
 import { BacktestClient } from "../components/backtest/BacktestClient";
 import { BacktestTable } from "../components/backtest/BacktestTable";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
@@ -14,10 +14,26 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  */
 type Lookback = "all" | "10y" | "5y";
 
-function parseQuadrant(v: string | string[] | undefined, fallback: number): number {
+function parseQuadrant(v: string | string[] | undefined): number | null {
   const raw = Array.isArray(v) ? v[0] : v;
   const n = Number(raw);
-  return n >= 1 && n <= 4 ? n : fallback;
+  return n >= 1 && n <= 4 ? n : null;
+}
+
+// Default the selectors to today's regime (from the latest Markov signal
+// row, which Phase 1 derives from model-history at 00:55 UTC) so the tab
+// opens on the combo that matters right now. Hardcoded fallback only if
+// that lookup fails -- never block the page on it.
+async function currentRegime(): Promise<{ cq: number; gq: number }> {
+  try {
+    const r = await apiFetch<SignalsResponse>("/api/signals?limit=1");
+    const s = r.signals[0];
+    const cq = s?.compass.current, gq = s?.grid.current;
+    if (cq && gq) return { cq, gq };
+  } catch {
+    /* fall through */
+  }
+  return { cq: 2, gq: 4 };
 }
 
 function parseMinOcc(v: string | string[] | undefined): number {
@@ -39,8 +55,13 @@ export default async function BacktestPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const compassQ = parseQuadrant(sp.cq, 2);
-  const gridQ = parseQuadrant(sp.gq, 4);
+  let compassQ = parseQuadrant(sp.cq);
+  let gridQ = parseQuadrant(sp.gq);
+  if (compassQ === null || gridQ === null) {
+    const cur = await currentRegime();
+    compassQ ??= cur.cq;
+    gridQ ??= cur.gq;
+  }
   const minOcc = parseMinOcc(sp.min_occ);
   const lookback = parseLookback(sp.lookback);
 
