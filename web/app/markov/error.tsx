@@ -10,7 +10,7 @@ export default function Error({
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-4 p-8">
       <div className="w-full rounded-lg border border-red-800 bg-red-950/50 p-4 text-sm">
-        <span className="font-medium text-red-400">Failed to load TRACK RECORD page</span>
+        <span className="font-medium text-red-400">Failed to load MARKOV page</span>
         <p className="mt-1 text-slate-400">{error.message}</p>
       </div>
       <button

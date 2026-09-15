@@ -23,8 +23,8 @@ export default function RootLayout({
           <a href="/backtest" className="mr-4 text-slate-300 hover:text-slate-100">
             BACKTEST
           </a>
-          <a href="/track-record" className="text-slate-300 hover:text-slate-100">
-            TRACK RECORD
+          <a href="/markov" className="text-slate-300 hover:text-slate-100">
+            MARKOV
           </a>
         </nav>
         {children}

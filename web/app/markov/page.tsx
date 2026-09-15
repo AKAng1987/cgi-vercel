@@ -1,10 +1,10 @@
 import { apiFetch } from "@/lib/api";
 import { SignalsResponse } from "@/lib/types";
-import { SummaryStrip } from "../components/track-record/SummaryStrip";
-import { SignalsTable } from "../components/track-record/SignalsTable";
+import { SummaryStrip } from "../components/markov/SummaryStrip";
+import { SignalsTable } from "../components/markov/SignalsTable";
 
 /**
- * TRACK RECORD tab. Renders the Markov signal log exactly as the Lambdas
+ * MARKOV tab. Renders the Markov signal log exactly as the Lambdas
  * wrote it to cmon-stage-backend-regime-signals -- one row per day since
  * 2026-09-06, outcomes filling in at 1w / 1m / 3m as they land, plus the
  * experimental Phase 2 divergence read from 2026-09-14. No computation
@@ -12,12 +12,12 @@ import { SignalsTable } from "../components/track-record/SignalsTable";
  * are defined there (hit rate is over days where the regime actually
  * changed, because the top-3 list only holds next-states).
  */
-export default async function TrackRecordPage() {
+export default async function MarkovPage() {
   const data = await apiFetch<SignalsResponse>("/api/signals");
 
   return (
     <main className="mx-auto max-w-7xl p-6">
-      <h1 className="mb-1 text-2xl font-bold">TRACK RECORD</h1>
+      <h1 className="mb-1 text-2xl font-bold">MARKOV — track record</h1>
       <p className="mb-4 text-xs text-slate-400">
         Dated, immutable Markov signal log. Each row is written at 00:55 UTC and never
         edited; outcomes are appended 1w / 1m / 3m later. Divergence (experimental) is the
