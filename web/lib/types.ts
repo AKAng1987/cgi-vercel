@@ -121,6 +121,7 @@ export interface SignalRow {
   grid: SignalAxis;
   outcomes: { "1w": SignalOutcome | null; "1m": SignalOutcome | null; "3m": SignalOutcome | null };
   divergence: SignalDivergence | null;
+  upcoming_releases: unknown[] | null;
 }
 
 export interface SignalHorizonAxisSummary {
@@ -182,10 +183,15 @@ export interface MarkovEvent {
   quadrant_before: number | null;
   state_before: 0 | 1;
   p_flip: number | null;
+  p_market: number | null;
+  market_source: string | null;
+  pre_registered_on: string | null;
   flipped: boolean;
   quadrant_after: number | null;
   brier: number | null;
+  brier_market: number | null;
   hit: boolean | null;
+  hit_market: boolean | null;
 }
 
 export interface MarkovRun {
@@ -206,8 +212,12 @@ export interface MarkovResponse {
     n_events: number;
     n_unscheduled: number;
     n_flips: number;
+    n_pre_registered: number;
     brier: number | null;
     hit_rate: number | null;
+    n_market_scored: number;
+    brier_market: number | null;
+    hit_rate_market: number | null;
     track_start: string;
   };
   runs: MarkovRun[];

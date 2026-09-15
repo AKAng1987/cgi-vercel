@@ -229,6 +229,19 @@ def build_markov_response() -> dict:
         return q
 
     flips_by_date_axis = {(e["date"], e["axis"]): e for e in events}
+
+    def stored_call(release_date: str, rtype: str) -> Optional[dict]:
+        """Most recent daily row written BEFORE the release that pre-registered
+        this exact release. Rows are latest-first in `daily`."""
+        for s in daily:
+            if s["signal_date"] >= release_date:
+                continue
+            for u in s.get("upcoming_releases") or []:
+                if u.get("date") == release_date and u.get("type") == rtype:
+                    return {"row_date": s["signal_date"], **u}
+            return None  # the nearest prior row didn't carry it -> not pre-registered
+        return None
+
     log = []
     for r in cal.releases_between(TRACK_START, today):
         if r["date"] < TRACK_START:
@@ -238,9 +251,16 @@ def build_markov_response() -> dict:
         if q0 is None:
             continue
         s0 = _axis_state(q0, axis)
-        p = rates[axis][s0]["p_flip"]
         flipped = (r["date"], axis) in flips_by_date_axis
         y = 1 if flipped else 0
+        stored = stored_call(r["date"], r["type"])
+        if stored:
+            p_hist = float(stored["history"]["p_flip"])
+            p_mkt = float(stored["market"]["p_flip"]) if stored.get("market") else None
+            mkt_src = stored["market"]["source"] if stored.get("market") else None
+            registered = stored["row_date"]
+        else:
+            p_hist, p_mkt, mkt_src, registered = rates[axis][s0]["p_flip"], None, None, None
         log.append({
             "date": r["date"],
             "type": r["type"],
@@ -249,11 +269,16 @@ def build_markov_response() -> dict:
             "scheduled": True,
             "quadrant_before": q0,
             "state_before": s0,
-            "p_flip": round(p, 3),
+            "p_flip": round(p_hist, 3),
+            "p_market": round(p_mkt, 3) if p_mkt is not None else None,
+            "market_source": mkt_src,
+            "pre_registered_on": registered,  # null = history recomputed after the fact
             "flipped": flipped,
             "quadrant_after": _quadrant_with(q0, axis, 1 - s0) if flipped else q0,
-            "brier": round((p - y) ** 2, 4),
-            "hit": (p >= 0.5) == flipped,
+            "brier": round((p_hist - y) ** 2, 4),
+            "brier_market": round((p_mkt - y) ** 2, 4) if p_mkt is not None else None,
+            "hit": (p_hist >= 0.5) == flipped,
+            "hit_market": ((p_mkt >= 0.5) == flipped) if p_mkt is not None else None,
         })
     scheduled_keys = {(e["date"], e["axis"]) for e in log}
     for e in events:
@@ -261,17 +286,24 @@ def build_markov_response() -> dict:
             log.append({
                 "date": e["date"], "type": TYPE_OF_AXIS[e["axis"]], "axis": e["axis"], "model": e["model"],
                 "scheduled": False, "quadrant_before": None, "state_before": e["from"],
-                "p_flip": None, "flipped": True, "quadrant_after": None, "brier": None, "hit": None,
+                "p_flip": None, "p_market": None, "market_source": None, "pre_registered_on": None,
+                "flipped": True, "quadrant_after": None, "brier": None, "brier_market": None,
+                "hit": None, "hit_market": None,
             })
     log.sort(key=lambda x: x["date"], reverse=True)
 
     scored = [x for x in log if x["brier"] is not None]
+    mkt_scored = [x for x in scored if x["brier_market"] is not None]
     summary = {
         "n_events": len(scored),
         "n_unscheduled": len(log) - len(scored),
         "n_flips": sum(1 for x in scored if x["flipped"]),
+        "n_pre_registered": sum(1 for x in scored if x["pre_registered_on"]),
         "brier": round(sum(x["brier"] for x in scored) / len(scored), 4) if scored else None,
         "hit_rate": round(sum(1 for x in scored if x["hit"]) / len(scored), 3) if scored else None,
+        "n_market_scored": len(mkt_scored),
+        "brier_market": round(sum(x["brier_market"] for x in mkt_scored) / len(mkt_scored), 4) if mkt_scored else None,
+        "hit_rate_market": round(sum(1 for x in mkt_scored if x["hit_market"]) / len(mkt_scored), 3) if mkt_scored else None,
         "track_start": TRACK_START,
     }
 

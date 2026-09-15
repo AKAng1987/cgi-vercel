@@ -12,6 +12,12 @@ function qTitle(model: "compass" | "grid", n: number | null): string {
   if (n === null) return "";
   return model === "compass" ? COMPASS_Q_LABELS[n] : GRID_Q_LABELS[n];
 }
+function pct(p: number | null): string {
+  return p === null ? "—" : `${Math.round(p * 100)}%`;
+}
+function brier(b: number | null): string {
+  return b === null ? "—" : b.toFixed(3);
+}
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -23,19 +29,26 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   );
 }
 
+function HitCell({ hit }: { hit: boolean | null }) {
+  if (hit === null) return <span className="text-slate-700">—</span>;
+  return <span className={`font-bold ${hit ? "text-[#00C851]" : "text-[#FF4444]"}`}>{hit ? "HIT" : "MISS"}</span>;
+}
+
 export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: MarkovResponse["summary"] }) {
-  const brier = summary.brier === null ? "—" : summary.brier.toFixed(3);
-  const hit = summary.hit_rate === null ? "—" : `${Math.round(summary.hit_rate * 100)}%`;
   return (
     <section className="mb-6">
       <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
         Event log · since {summary.track_start}
       </div>
-      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Releases scored" value={String(summary.n_events)} sub={summary.n_unscheduled ? `+${summary.n_unscheduled} unscheduled` : undefined} />
+      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <Stat label="Releases scored" value={String(summary.n_events)}
+          sub={`${summary.n_pre_registered} pre-registered${summary.n_unscheduled ? ` · +${summary.n_unscheduled} unscheduled` : ""}`} />
         <Stat label="Flips" value={`${summary.n_flips}/${summary.n_events}`} />
-        <Stat label="Brier score" value={brier} sub="0 perfect · 0.25 coin-flip" />
-        <Stat label="Hit at 0.5" value={hit} sub="coarse companion to Brier" />
+        <Stat label="Brier · history" value={brier(summary.brier)} sub={`hit ${pct(summary.hit_rate)} at 0.5`} />
+        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`${summary.n_market_scored} scored · hit ${pct(summary.hit_rate_market)}`} />
+        <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-[0.68rem] leading-snug text-slate-500">
+          0 = perfect, 0.25 = coin-flip. Lower wins. History vs. market on the same events is the experiment.
+        </div>
       </div>
 
       {events.length === 0 ? (
@@ -50,11 +63,13 @@ export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: 
                 <th className={`${TH} text-left`}>Release</th>
                 <th className={`${TH} text-left`}>Axis</th>
                 <th className={`${TH} text-left`}>Before</th>
-                <th className={`${TH} text-right`}>P(flip) quoted</th>
+                <th className={`${TH} text-right`}>History</th>
+                <th className={`${TH} text-right`}>Market</th>
                 <th className={`${TH} text-left`}>Outcome</th>
                 <th className={`${TH} text-left`}>After</th>
-                <th className={`${TH} text-right`}>Brier</th>
-                <th className={`${TH} text-left`}>Hit</th>
+                <th className={`${TH} text-right`}>Brier H / M</th>
+                <th className={`${TH} text-left`}>Hit H / M</th>
+                <th className={`${TH} text-left`}>Registered</th>
               </tr>
             </thead>
             <tbody>
@@ -69,12 +84,16 @@ export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: 
                     {e.axis} <span className="text-slate-500">{e.state_before ? "↑" : "↓"}</span>
                   </td>
                   <td className={`${TD} text-slate-300`} title={qTitle(e.model, e.quadrant_before)}>{q(e.model, e.quadrant_before)}</td>
-                  <td className={`${TD} text-right text-slate-200`}>{e.p_flip === null ? "—" : `${Math.round(e.p_flip * 100)}%`}</td>
+                  <td className={`${TD} text-right text-slate-200`}>{pct(e.p_flip)}</td>
+                  <td className={`${TD} text-right text-slate-200`} title={e.market_source ?? ""}>{pct(e.p_market)}</td>
                   <td className={`${TD} font-bold ${e.flipped ? "text-[#FCD34D]" : "text-slate-400"}`}>{e.flipped ? "FLIP" : "hold"}</td>
                   <td className={`${TD} text-slate-200`} title={qTitle(e.model, e.quadrant_after)}>{q(e.model, e.quadrant_after)}</td>
-                  <td className={`${TD} text-right text-slate-300`}>{e.brier === null ? "—" : e.brier.toFixed(3)}</td>
-                  <td className={`${TD} font-bold ${e.hit === null ? "text-slate-600" : e.hit ? "text-[#00C851]" : "text-[#FF4444]"}`}>
-                    {e.hit === null ? "—" : e.hit ? "HIT" : "MISS"}
+                  <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)}</td>
+                  <td className={TD}><HitCell hit={e.hit} /> <span className="text-slate-600">/</span> <HitCell hit={e.hit_market} /></td>
+                  <td className={`${TD} text-[0.68rem]`}>
+                    {e.pre_registered_on
+                      ? <span className="text-[#00C851]" title="both probabilities were in DynamoDB before the release">{e.pre_registered_on}</span>
+                      : e.scheduled ? <span className="text-slate-600" title="history recomputed from model-history after the fact; no market number was stored">recomputed</span> : <span className="text-slate-700">—</span>}
                   </td>
                 </tr>
               ))}

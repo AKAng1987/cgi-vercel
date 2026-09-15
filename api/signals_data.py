@@ -135,6 +135,8 @@ def _shape(row: dict) -> dict:
         "grid": _axis_block(row, "grid"),
         "outcomes": {h: _outcome_block(row, h) for h in HORIZONS},
         "divergence": _divergence_block(row),
+        # Phase 1.5 pre-registration (from 2026-09-16): stored verbatim.
+        "upcoming_releases": row.get("upcoming_releases"),
     }
 
 
