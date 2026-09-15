@@ -1,46 +1,50 @@
 import { apiFetch } from "@/lib/api";
-import { SignalsResponse } from "@/lib/types";
-import { SummaryStrip } from "../components/markov/SummaryStrip";
-import { SignalsTable } from "../components/markov/SignalsTable";
+import { MarkovResponse } from "@/lib/types";
+import { UpcomingReleases } from "../components/markov/UpcomingReleases";
+import { EventLog } from "../components/markov/EventLog";
+import { DailyRuns } from "../components/markov/DailyRuns";
 
 /**
- * MARKOV tab. Renders the Markov signal log exactly as the Lambdas
- * wrote it to cmon-stage-backend-regime-signals -- one row per day since
- * 2026-09-06, outcomes filling in at 1w / 1m / 3m as they land, plus the
- * experimental Phase 2 divergence read from 2026-09-14. No computation
- * happens here beyond formatting; the summary counts come from the API and
- * are defined there (hit rate is over days where the regime actually
- * changed, because the top-3 list only holds next-states).
+ * MARKOV tab -- event-driven (Phase 1.5).
+ *
+ * The discrete regime only moves on data releases, and each release moves
+ * exactly one axis. So the forecast is one probability per upcoming
+ * release ("does its axis flip?"), and the track record is one row per
+ * release as it lands, scored by Brier. The daily Phase 1 rows remain the
+ * pre-registered audit trail and are shown collapsed into runs below.
  */
 export default async function MarkovPage() {
-  const data = await apiFetch<SignalsResponse>("/api/signals");
+  const data = await apiFetch<MarkovResponse>("/api/markov");
 
   return (
     <main className="mx-auto max-w-7xl p-6">
-      <h1 className="mb-1 text-2xl font-bold">MARKOV — track record</h1>
+      <h1 className="mb-1 text-2xl font-bold">MARKOV — event-driven regime forecast</h1>
       <p className="mb-4 text-xs text-slate-400">
-        Dated, immutable Markov signal log. Each row is written at 00:55 UTC and never
-        edited; outcomes are appended 1w / 1m / 3m later. Divergence (experimental) is the
-        market-implied read vs. the print-confirmed regime.
+        The regime only moves on data releases, and each release moves one axis: FOMC → Liquidity,
+        SLOOS → Credit, CPI → Inflation, GDP → Growth. Each upcoming release gets one probability —
+        that its axis flips — estimated from every prior release of that type while in the same state.
+        Each release is scored once it lands.
       </p>
 
-      <SummaryStrip summary={data.summary} />
+      <UpcomingReleases current={data.current} upcoming={data.upcoming} asOf={data.as_of} />
 
-      <SignalsTable signals={data.signals} />
+      <EventLog events={data.event_log} summary={data.summary} />
+
+      <DailyRuns runs={data.runs} latest={data.latest_daily} nDaily={data.n_daily_rows} />
 
       <div className="mt-6 text-[0.68rem] leading-relaxed text-slate-600">
         <p>
-          <span className="text-slate-500">Hit:</span> the regime the model was in at the check date
-          appeared in that day&apos;s top-3 next-regime list. Only meaningful on days the regime
-          changed — a day that stayed in the same regime can never be a hit, so those are shown as
-          &ldquo;same&rdquo; and excluded from the hit rate.
+          <span className="text-slate-500">P(flip):</span> flips ÷ expected releases while in that
+          state, where expected = dwell-days ÷ 365 × releases-per-year (FOMC 8, SLOOS 4, CPI 12,
+          GDP 12 — advance, second and third estimates all count). Clamped to [0.02, 0.98].
+          {" "}<span className="text-slate-500">Brier:</span> (p − outcome)², 0 is perfect, 0.25 is
+          coin-flip. <span className="text-slate-500">Hit</span> is the coarse companion at the 0.5 line.
         </p>
         <p className="mt-1">
-          <span className="text-slate-500">Entropy:</span> Shannon bits over the next-regime
-          distribution. Lower = more concentrated call.{" "}
-          <span className="text-slate-500">Divergence:</span> 1 − P(market agrees with the print);
-          direction shows when the market is leaning the other way at 0.5. Experimental — logged
-          from day one so it can be evaluated, not because it has been.
+          Daily rows are written 00:55 UTC — <em>before</em> that day&apos;s releases — so a release-day
+          row still shows the prior regime; the flip appears on the next day&apos;s row. Unscheduled
+          transitions (an emergency FOMC move) show in the event log without a prior probability.
+          Calendar dates are hardcoded from the official BLS / BEA / Fed schedules.
         </p>
       </div>
     </main>

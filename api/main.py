@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import backtest_data
 import dashboard_data
 import macro_data
+import markov_data
 import signals_data
 
 load_dotenv()
@@ -121,3 +122,8 @@ def signals(limit: Optional[int] = None):
     if limit is not None and limit < 1:
         raise HTTPException(status_code=400, detail="limit must be >= 1")
     return signals_data.build_signals_response(limit=limit)
+
+
+@app.get("/api/markov", dependencies=[Depends(require_bearer_token)])
+def markov():
+    return markov_data.build_markov_response()

@@ -141,6 +141,70 @@ export interface SignalsResponse {
   signals: SignalRow[];
 }
 
+export type MarkovAxis = "liquidity" | "credit" | "growth" | "inflation";
+export type ReleaseType = "FOMC" | "SLOOS" | "CPI" | "GDP";
+
+export interface FlipBasis {
+  p_flip: number;
+  n_flips: number;
+  expected_releases: number;
+  dwell_days: number;
+}
+
+export interface UpcomingRelease {
+  date: string;
+  type: ReleaseType;
+  axis: MarkovAxis;
+  model: "compass" | "grid";
+  current_quadrant: number;
+  current_state: 0 | 1;
+  p_flip: number;
+  if_flip_quadrant: number;
+  basis: FlipBasis;
+}
+
+export interface MarkovEvent {
+  date: string;
+  type: ReleaseType;
+  axis: MarkovAxis;
+  model: "compass" | "grid";
+  scheduled: boolean;
+  quadrant_before: number | null;
+  state_before: 0 | 1;
+  p_flip: number | null;
+  flipped: boolean;
+  quadrant_after: number | null;
+  brier: number | null;
+  hit: boolean | null;
+}
+
+export interface MarkovRun {
+  compass: number;
+  grid: number;
+  start: string;
+  end: string;
+  days: number;
+}
+
+export interface MarkovResponse {
+  as_of: string;
+  current: { compass: number; grid: number };
+  upcoming: UpcomingRelease[];
+  flip_rates: Record<MarkovAxis, Record<"0" | "1", FlipBasis>>;
+  event_log: MarkovEvent[];
+  summary: {
+    n_events: number;
+    n_unscheduled: number;
+    n_flips: number;
+    brier: number | null;
+    hit_rate: number | null;
+    track_start: string;
+  };
+  runs: MarkovRun[];
+  latest_daily: SignalRow | null;
+  n_daily_rows: number;
+}
+
 export interface BacktestOccurrencesResponse {
   schema_version: number;
   last_refreshed_at: string | null;
