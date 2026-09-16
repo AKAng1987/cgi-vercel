@@ -158,6 +158,25 @@ def _market_from_classifier(latest_daily: Optional[dict], axis: str, state: int)
     }
 
 
+def _market_from_drivers(drv: Optional[dict], axis: str) -> Optional[dict]:
+    """Driver-conditioned flip rate from axis_drivers (see that module):
+    mean of P(flip | current tercile) across the axis's leading drivers.
+    A table you can read, not a fitted model."""
+    a = ((drv or {}).get("axes") or {}).get(axis)
+    if not a or a["current"].get("conditioned_p_flip") is None:
+        return None
+    c = a["current"]
+    top = [d for d in c["drivers"] if d.get("p_current") is not None]
+    top.sort(key=lambda d: abs((d["p_current"] or 0) - (c["base_rate"] or 0)), reverse=True)
+    lead = top[0] if top else None
+    return {
+        "p_flip": c["conditioned_p_flip"],
+        "source": f"nowcast: flip rate conditioned on current driver terciles ({c['n_drivers_used']} drivers, {c['n_windows']} windows)",
+        "detail": (f"{lead['name']} {lead['current_value']:+g} → {round(lead['p_current']*100)}% vs base {round(c['base_rate']*100)}%" if lead else f"base {round(c['base_rate']*100)}%"),
+        "experimental": True,
+    }
+
+
 def _gdpnow_context() -> Optional[dict]:
     try:
         rows = cache.get_or_fetch("gdp_nowcast", macro_data.fetch_gdp_nowcast)
@@ -185,6 +204,11 @@ def build_markov_response() -> dict:
 
     daily = signals_data.build_signals_response()["signals"]
     latest = daily[0] if daily else None
+    try:
+        import axis_drivers
+        drivers = cache.get_or_fetch("axis_drivers", axis_drivers.compute_axis_drivers)
+    except Exception:  # noqa: BLE001 -- additive; never break the page
+        drivers = None
 
     # ── upcoming: one forecast per next release, history + market side by side
     upcoming = []
@@ -195,10 +219,8 @@ def build_markov_response() -> dict:
         p = rates[axis][s]["p_flip"]
         if axis == "liquidity":
             market = _market_liquidity(r["date"], s)
-        elif axis in ("credit", "inflation"):
-            market = _market_from_classifier(latest, axis, s)
         else:
-            market = None
+            market = _market_from_drivers(drivers, axis) or _market_from_classifier(latest, axis, s)
         gap = round(market["p_flip"] - p, 3) if market else None
         upcoming.append({
             "date": r["date"],
@@ -234,11 +256,12 @@ def build_markov_response() -> dict:
         """Most recent daily row written BEFORE the release that pre-registered
         this exact release. Rows are latest-first in `daily`."""
         for s in daily:
-            if s["signal_date"] >= release_date:
+            if s["signal_date"] > release_date:  # same-day 00:55 row is before the print
                 continue
             for u in s.get("upcoming_releases") or []:
                 if u.get("date") == release_date and u.get("type") == rtype:
-                    return {"row_date": s["signal_date"], **u}
+                    return {"row_date": s["signal_date"], "written_at": s.get("upcoming_releases_written_at"),
+                            "note": s.get("upcoming_releases_note"), **u}
             return None  # the nearest prior row didn't carry it -> not pre-registered
         return None
 
@@ -258,7 +281,7 @@ def build_markov_response() -> dict:
             p_hist = float(stored["history"]["p_flip"])
             p_mkt = float(stored["market"]["p_flip"]) if stored.get("market") else None
             mkt_src = stored["market"]["source"] if stored.get("market") else None
-            registered = stored["row_date"]
+            registered = stored.get("written_at") or stored["row_date"]
         else:
             p_hist, p_mkt, mkt_src, registered = rates[axis][s0]["p_flip"], None, None, None
         log.append({
@@ -273,6 +296,7 @@ def build_markov_response() -> dict:
             "p_market": round(p_mkt, 3) if p_mkt is not None else None,
             "market_source": mkt_src,
             "pre_registered_on": registered,  # null = history recomputed after the fact
+            "pre_registration_note": stored.get("note") if stored else None,
             "flipped": flipped,
             "quadrant_after": _quadrant_with(q0, axis, 1 - s0) if flipped else q0,
             "brier": round((p_hist - y) ** 2, 4),
@@ -331,4 +355,5 @@ def build_markov_response() -> dict:
         "runs": runs,
         "latest_daily": latest,
         "n_daily_rows": len(daily),
+        "drivers": drivers,
     }

@@ -137,6 +137,8 @@ def _shape(row: dict) -> dict:
         "divergence": _divergence_block(row),
         # Phase 1.5 pre-registration (from 2026-09-16): stored verbatim.
         "upcoming_releases": row.get("upcoming_releases"),
+        "upcoming_releases_written_at": row.get("upcoming_releases_written_at") or row.get("timestamp_utc"),
+        "upcoming_releases_note": row.get("upcoming_releases_note"),
     }
 
 

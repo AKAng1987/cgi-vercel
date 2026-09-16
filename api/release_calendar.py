@@ -77,7 +77,7 @@ def next_releases(after: Optional[str] = None, one_per_type: bool = True) -> lis
     after = after or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     out, seen = [], set()
     for r in RELEASES:
-        if r["date"] <= after:
+        if r["date"] < after:  # same-day counts: at 00:55 UTC every US release is still ahead
             continue
         if one_per_type and r["type"] in seen:
             continue

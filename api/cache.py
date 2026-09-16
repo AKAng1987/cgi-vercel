@@ -39,6 +39,7 @@ TTL_HOURS: dict[str, float] = {
     "inflation": 24.0,
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d
+    "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
 }
 
 # Bump a key's entry whenever the fetch/compute logic feeding that
@@ -60,6 +61,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
+    "axis_drivers": 1,
 }
 
 

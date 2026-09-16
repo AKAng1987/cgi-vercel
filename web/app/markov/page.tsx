@@ -3,6 +3,7 @@ import { MarkovResponse } from "@/lib/types";
 import { UpcomingReleases } from "../components/markov/UpcomingReleases";
 import { EventLog } from "../components/markov/EventLog";
 import { DailyRuns } from "../components/markov/DailyRuns";
+import { AxisDriversPanel } from "../components/markov/AxisDriversPanel";
 
 /**
  * MARKOV tab -- event-driven (Phase 1.5).
@@ -29,6 +30,8 @@ export default async function MarkovPage() {
       </p>
 
       <UpcomingReleases current={data.current} upcoming={data.upcoming} asOf={data.as_of} />
+
+      <AxisDriversPanel drivers={data.drivers} />
 
       <EventLog events={data.event_log} summary={data.summary} />
 

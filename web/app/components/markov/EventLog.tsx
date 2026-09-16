@@ -92,7 +92,7 @@ export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: 
                   <td className={TD}><HitCell hit={e.hit} /> <span className="text-slate-600">/</span> <HitCell hit={e.hit_market} /></td>
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.pre_registered_on
-                      ? <span className="text-[#00C851]" title="both probabilities were in DynamoDB before the release">{e.pre_registered_on}</span>
+                      ? <span className={e.pre_registration_note ? "text-[#FCD34D]" : "text-[#00C851]"} title={e.pre_registration_note ?? "both probabilities were in DynamoDB before the release"}>{e.pre_registered_on.replace("T", " ").replace("Z", "Z")}</span>
                       : e.scheduled ? <span className="text-slate-600" title="history recomputed from model-history after the fact; no market number was stored">recomputed</span> : <span className="text-slate-700">—</span>}
                   </td>
                 </tr>

@@ -35,6 +35,7 @@ def _warm_up_caches() -> None:
             ("macro/rates", macro_data.build_rates_response),
             ("macro/growth", macro_data.build_growth_response),
             ("live", lambda: dashboard_data.build_live_response(date_str=None)),
+            ("markov/axis_drivers", lambda: __import__("cache").get_or_fetch("axis_drivers", __import__("axis_drivers").compute_axis_drivers)),
         ]:
             try:
                 fn()

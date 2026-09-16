@@ -1,0 +1,286 @@
+"""
+axis_drivers.py -- "What moves each axis." Event study + conditional flip
+rates for the four Tesseract axes, from price-history and model-history.
+
+For each axis, history is cut into consecutive release-cadence windows
+(CPI/GDP ~30 days, FOMC ~45, SLOOS ~91). At the start of each window we
+record the axis state and a handful of leading "driver" readings (30-day
+moves in commodities, yields, spreads, relative strength). The window is
+a "flip" if the axis changed inside it.
+
+Per axis, per starting state, per driver:
+  - mean reading in flip windows vs. non-flip windows
+  - terciles of the reading over all windows in that state
+  - P(flip | reading in low / mid / high tercile)
+  - today's reading, its tercile, and P(flip | that tercile)
+
+conditioned_p_flip = mean of the per-driver P(flip | current tercile).
+Equal-weight, no fitting -- deliberately a table you can read, not a
+model you have to trust. The unconditional base rate is shown next to it.
+
+Windows are fixed-length and anchored to the first available date, not
+to actual historical release dates (those aren't stored before 2026).
+That is an approximation: a flip is credited to the window it fell in,
+which is the release window to within a few days. Good enough for
+tercile-level conditional rates; not for anything finer.
+
+Result is cached in S3 (Cache/macro/axis_drivers.json, 24h) because it
+needs ~14 full-history DynamoDB pulls.
+"""
+
+from __future__ import annotations
+
+import bisect
+import datetime as dt
+from typing import Optional
+
+import boto3
+
+import markov_data as md
+import release_calendar as cal
+
+REGION = "ap-southeast-1"
+PRICE_TABLE = "cmon-stage-backend-price-history"
+LOOKBACK_ROWS = 21  # ~30 calendar days of trading rows
+MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
+
+CADENCE_DAYS = {"inflation": 30, "growth": 30, "liquidity": 45, "credit": 91}
+
+# (label, symbol or (num, den), kind)  kind: pct | diff | ratio_pct
+DRIVERS: dict[str, list[tuple]] = {
+    "inflation": [
+        ("DBC 30d %", "DBC", "pct"),
+        ("DBA 30d %", "DBA", "pct"),
+        ("USO 30d %", "USO", "pct"),
+        ("Copper 30d %", "COPPER", "pct"),
+        ("10y breakeven 30d chg", "T10YIE", "diff"),
+    ],
+    "growth": [
+        ("Copper 30d %", "COPPER", "pct"),
+        ("XLY/XLP 30d %", ("XLY", "XLP"), "ratio_pct"),
+        ("SPY 30d %", "SPY", "pct"),
+        ("KRE/SPY 30d %", ("KRE", "SPY"), "ratio_pct"),
+        ("2s10s 30d chg", "T10Y2Y", "diff"),
+    ],
+    "liquidity": [
+        ("2y yield 30d chg", "US02Y", "diff"),
+        ("2s10s 30d chg", "T10Y2Y", "diff"),
+        ("DXY 30d %", "DXY", "pct"),
+        ("10y breakeven 30d chg", "T10YIE", "diff"),
+        ("Copper 30d %", "COPPER", "pct"),
+    ],
+    "credit": [
+        ("Baa-10y 30d chg", "BAA10Y", "diff"),
+        ("KRE/SPY 30d %", ("KRE", "SPY"), "ratio_pct"),
+        ("XLF/SPY 30d %", ("XLF", "SPY"), "ratio_pct"),
+        ("2s10s 30d chg", "T10Y2Y", "diff"),
+        ("SPY 30d %", "SPY", "pct"),
+    ],
+}
+
+_ddb = boto3.client("dynamodb", region_name=REGION)
+
+
+# ── data ─────────────────────────────────────────────────────────────────────
+
+def _load_close(symbol: str) -> tuple[list[str], list[float]]:
+    dates, closes = [], []
+    kwargs = dict(
+        TableName=PRICE_TABLE,
+        KeyConditionExpression="#s = :s",
+        ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
+        ExpressionAttributeValues={":s": {"S": symbol}},
+        ProjectionExpression="#d, #c",
+    )
+    rows = []
+    while True:
+        page = _ddb.query(**kwargs)
+        for it in page["Items"]:
+            if "close" in it and "N" in it["close"]:
+                rows.append((it["date"]["S"], float(it["close"]["N"])))
+        if "LastEvaluatedKey" not in page:
+            break
+        kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    rows.sort()
+    for d, c in rows:
+        dates.append(d)
+        closes.append(c)
+    return dates, closes
+
+
+class _Series:
+    def __init__(self, dates: list[str], values: list[float]):
+        self.dates, self.values = dates, values
+
+    def at(self, date: str) -> Optional[tuple[int, float]]:
+        """Last row on or before date -> (index, value)."""
+        i = bisect.bisect_right(self.dates, date) - 1
+        return (i, self.values[i]) if i >= 0 else None
+
+    def move(self, date: str, kind: str) -> Optional[float]:
+        r = self.at(date)
+        if r is None:
+            return None
+        i, v = r
+        j = i - LOOKBACK_ROWS
+        if j < 0:
+            return None
+        prev = self.values[j]
+        if kind == "diff":
+            return v - prev
+        if not prev:
+            return None
+        return (v / prev - 1.0) * 100.0
+
+
+def _build_driver_series(spec: tuple, loaded: dict[str, _Series]) -> _Series:
+    label, sym, kind = spec
+    if kind == "ratio_pct":
+        a, b = loaded[sym[0]], loaded[sym[1]]
+        bd = {d: v for d, v in zip(b.dates, b.values)}
+        dates, vals = [], []
+        for d, v in zip(a.dates, a.values):
+            if d in bd and bd[d]:
+                dates.append(d)
+                vals.append(v / bd[d])
+        return _Series(dates, vals)
+    return loaded[sym]
+
+
+def _reading(spec: tuple, series: _Series, date: str) -> Optional[float]:
+    kind = spec[2]
+    return series.move(date, "pct" if kind == "ratio_pct" else kind)
+
+
+# ── stats ────────────────────────────────────────────────────────────────────
+
+def _tercile_bounds(vals: list[float]) -> tuple[float, float]:
+    s = sorted(vals)
+    n = len(s)
+    return s[int(n / 3)], s[int(2 * n / 3)]
+
+
+def _tercile(x: float, b: tuple[float, float]) -> int:
+    return 0 if x < b[0] else (2 if x >= b[1] else 1)
+
+
+def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list[dict],
+                drivers: list[tuple], series: dict[str, _Series], today: str) -> dict:
+    slot = cal.SLOT_OF[axis]
+    state_dates = [d for d, _ in rows]
+    state_vals = [cal.Q_TO_AXES[q][slot] for _, q in rows]
+    flip_dates = sorted(e["date"] for e in events if e["axis"] == axis)
+    cadence = CADENCE_DAYS[axis]
+
+    def state_at(date: str) -> Optional[int]:
+        i = bisect.bisect_right(state_dates, date) - 1
+        return state_vals[i] if i >= 0 else None
+
+    # First window start: every driver must have LOOKBACK_ROWS of history
+    # and the axis state must be known.
+    starts = [state_dates[0]]
+    for spec in drivers:
+        s = series[spec[0]]
+        if len(s.dates) > LOOKBACK_ROWS:
+            starts.append(s.dates[LOOKBACK_ROWS])
+    t = dt.date.fromisoformat(max(starts))
+    end = dt.date.fromisoformat(today)
+
+    windows = []  # (start, state, flipped, readings)
+    while t + dt.timedelta(days=cadence) <= end:
+        ts = t.isoformat()
+        te = (t + dt.timedelta(days=cadence)).isoformat()
+        st = state_at(ts)
+        if st is not None:
+            lo = bisect.bisect_right(flip_dates, ts)
+            hi = bisect.bisect_right(flip_dates, te)
+            flipped = hi > lo
+            readings = {spec[0]: _reading(spec, series[spec[0]], ts) for spec in drivers}
+            windows.append((ts, st, flipped, readings))
+        t += dt.timedelta(days=cadence)
+
+    out: dict = {"cadence_days": cadence, "n_windows": len(windows),
+                 "window_range": [windows[0][0], windows[-1][0]] if windows else None, "from_state": {}}
+
+    for s in (0, 1):
+        ws = [w for w in windows if w[1] == s]
+        n = len(ws)
+        nf = sum(1 for w in ws if w[2])
+        base = nf / n if n else None
+        drv_out = []
+        for spec in drivers:
+            label = spec[0]
+            pairs = [(w[3][label], w[2]) for w in ws if w[3][label] is not None]
+            if len(pairs) < 3 * MIN_TERCILE_N:
+                drv_out.append({"name": label, "n": len(pairs), "insufficient": True})
+                continue
+            vals = [p[0] for p in pairs]
+            b = _tercile_bounds(vals)
+            by_t = {0: [0, 0], 1: [0, 0], 2: [0, 0]}
+            for v, f in pairs:
+                k = _tercile(v, b)
+                by_t[k][0] += 1
+                by_t[k][1] += int(f)
+            p_by_t = [(by_t[k][1] / by_t[k][0]) if by_t[k][0] else None for k in (0, 1, 2)]
+            mean_f = [v for v, f in pairs if f]
+            mean_nf = [v for v, f in pairs if not f]
+            cur = _reading(spec, series[label], today)
+            cur_t = _tercile(cur, b) if cur is not None else None
+            p_cur = p_by_t[cur_t] if cur_t is not None and by_t[cur_t][0] >= MIN_TERCILE_N else None
+            drv_out.append({
+                "name": label,
+                "n": len(pairs),
+                "mean_flip": round(sum(mean_f) / len(mean_f), 3) if mean_f else None,
+                "mean_noflip": round(sum(mean_nf) / len(mean_nf), 3) if mean_nf else None,
+                "terciles": [round(b[0], 3), round(b[1], 3)],
+                "p_by_tercile": [round(p, 3) if p is not None else None for p in p_by_t],
+                "n_by_tercile": [by_t[k][0] for k in (0, 1, 2)],
+                "current_value": round(cur, 3) if cur is not None else None,
+                "current_tercile": cur_t,
+                "p_current": round(p_cur, 3) if p_cur is not None else None,
+            })
+        used = [d["p_current"] for d in drv_out if d.get("p_current") is not None]
+        out["from_state"][str(s)] = {
+            "n_windows": n,
+            "n_flips": nf,
+            "base_rate": round(base, 3) if base is not None else None,
+            "drivers": drv_out,
+            "conditioned_p_flip": round(sum(used) / len(used), 3) if used else None,
+            "n_drivers_used": len(used),
+        }
+    return out
+
+
+# ── public ───────────────────────────────────────────────────────────────────
+
+def compute_axis_drivers() -> dict:
+    today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
+    hist = {m: md._load_model(f"{m}_US") for m in ("compass", "grid")}
+    events: list[dict] = []
+    current: dict[str, int] = {}
+    for m, rows in hist.items():
+        ev, _ = md._events_and_dwell(m, rows, today)
+        events.extend(ev)
+        current[m] = rows[-1][1] if rows else None
+
+    symbols: set[str] = set()
+    for specs in DRIVERS.values():
+        for _, sym, _ in specs:
+            symbols.update(sym if isinstance(sym, tuple) else (sym,))
+    loaded = {}
+    for sym in sorted(symbols):
+        d, c = _load_close(sym)
+        loaded[sym] = _Series(d, c)
+
+    axes_out = {}
+    for axis, specs in DRIVERS.items():
+        model = cal.MODEL_OF[axis]
+        series = {spec[0]: _build_driver_series(spec, loaded) for spec in specs}
+        stats = _axis_stats(axis, model, hist[model], events, specs, series, today)
+        cur_state = cal.Q_TO_AXES[current[model]][cal.SLOT_OF[axis]]
+        stats["current_state"] = cur_state
+        stats["current"] = stats["from_state"][str(cur_state)]
+        stats["release_type"] = cal.AXIS_OF and {v: k for k, v in cal.AXIS_OF.items()}[axis]
+        axes_out[axis] = stats
+
+    return {"as_of": today, "lookback_rows": LOOKBACK_ROWS, "axes": axes_out}

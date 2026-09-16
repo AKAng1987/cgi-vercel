@@ -189,12 +189,46 @@ export interface MarkovEvent {
   p_market: number | null;
   market_source: string | null;
   pre_registered_on: string | null;
+  pre_registration_note: string | null;
   flipped: boolean;
   quadrant_after: number | null;
   brier: number | null;
   brier_market: number | null;
   hit: boolean | null;
   hit_market: boolean | null;
+}
+
+export interface AxisDriver {
+  name: string;
+  n: number;
+  insufficient?: boolean;
+  mean_flip?: number | null;
+  mean_noflip?: number | null;
+  terciles?: [number, number];
+  p_by_tercile?: (number | null)[];
+  n_by_tercile?: number[];
+  current_value?: number | null;
+  current_tercile?: 0 | 1 | 2 | null;
+  p_current?: number | null;
+}
+
+export interface AxisDriverState {
+  n_windows: number;
+  n_flips: number;
+  base_rate: number | null;
+  drivers: AxisDriver[];
+  conditioned_p_flip: number | null;
+  n_drivers_used: number;
+}
+
+export interface AxisDrivers {
+  cadence_days: number;
+  n_windows: number;
+  window_range: [string, string] | null;
+  release_type: ReleaseType;
+  current_state: 0 | 1;
+  current: AxisDriverState;
+  from_state: Record<"0" | "1", AxisDriverState>;
 }
 
 export interface MarkovRun {
@@ -226,6 +260,7 @@ export interface MarkovResponse {
   runs: MarkovRun[];
   latest_daily: SignalRow | null;
   n_daily_rows: number;
+  drivers: { as_of: string; lookback_rows: number; axes: Record<MarkovAxis, AxisDrivers> } | null;
 }
 
 export interface BacktestOccurrencesResponse {
