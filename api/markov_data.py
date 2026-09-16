@@ -265,8 +265,11 @@ def build_markov_response() -> dict:
             return None  # the nearest prior row didn't carry it -> not pre-registered
         return None
 
+    # A release is scorable only from the day after: the model records the
+    # transition at 00:25 UTC the next morning, so today's print is pending.
+    yesterday = (dt.date.fromisoformat(today) - dt.timedelta(days=1)).isoformat()
     log = []
-    for r in cal.releases_between(TRACK_START, today):
+    for r in cal.releases_between(TRACK_START, yesterday):
         if r["date"] < TRACK_START:
             continue
         axis, model = r["axis"], r["model"]
@@ -306,7 +309,7 @@ def build_markov_response() -> dict:
         })
     scheduled_keys = {(e["date"], e["axis"]) for e in log}
     for e in events:
-        if e["date"] >= TRACK_START and e["date"] <= today and (e["date"], e["axis"]) not in scheduled_keys:
+        if e["date"] >= TRACK_START and e["date"] <= yesterday and (e["date"], e["axis"]) not in scheduled_keys:
             log.append({
                 "date": e["date"], "type": TYPE_OF_AXIS[e["axis"]], "axis": e["axis"], "model": e["model"],
                 "scheduled": False, "quadrant_before": None, "state_before": e["from"],
