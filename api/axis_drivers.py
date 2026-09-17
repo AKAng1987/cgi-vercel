@@ -86,11 +86,18 @@ DRIVERS: dict[str, list[tuple]] = {
         ("Challenger cuts (k)", "CHALLENGER", "level_k"),
         ("CPI y/y %", "CPIAUCSL", "yoy_pct"),
     ],
+    # Credit per the user's framework (2026-09-17): the curve as the bank
+    # lending margin (10y-3m level), credit spread change, bank relative
+    # strength (KBE, what the user charts), financial-conditions change,
+    # loan growth (banks tighten after a lending boom), equity drawdown.
+    # Tested and dropped: 2s10s level/change, Baa level, KRE (== KBE),
+    # XLF/SPY, NFCI level.
     "credit": [
+        ("10y-3m (level)", ("US10Y", "US03MY"), "spread"),
         ("Baa-10y 30d chg", "BAA10Y", "diff"),
-        ("KRE/SPY 30d %", ("KRE", "SPY"), "ratio_pct"),
-        ("XLF/SPY 30d %", ("XLF", "SPY"), "ratio_pct"),
-        ("2s10s 30d chg", "T10Y2Y", "diff"),
+        ("KBE/SPY 30d %", ("KBE", "SPY"), "ratio_pct"),
+        ("NFCI credit 13w chg", "NFCICREDIT", "diff@13"),
+        ("C&I loans 13w %", "BUSLOANS", "pct@13"),
         ("SPY 30d %", "SPY", "pct"),
     ],
 }
@@ -143,12 +150,13 @@ class _Series:
             return v
         if kind == "level_k":
             return v / 1000.0
-        back = {"mom_diff": 1, "mom_pct": 1, "yoy_pct": 12}.get(kind, LOOKBACK_ROWS)
+        base_kind, _, n_rows = kind.partition("@")
+        back = int(n_rows) if n_rows else {"mom_diff": 1, "mom_pct": 1, "yoy_pct": 12}.get(base_kind, LOOKBACK_ROWS)
         j = i - back
         if j < 0:
             return None
         prev = self.values[j]
-        if kind in ("diff", "mom_diff"):
+        if base_kind in ("diff", "mom_diff"):
             return v - prev
         if not prev:
             return None
@@ -166,7 +174,7 @@ def _build_driver_series(spec: tuple, loaded: dict[str, _Series]) -> _Series:
                 dates.append(d)
                 vals.append(v - rb[1])
         return _Series(dates, vals)
-    if kind == "ratio_pct":
+    if kind.startswith("ratio_pct"):
         a, b = loaded[sym[0]], loaded[sym[1]]
         bd = {d: v for d, v in zip(b.dates, b.values)}
         dates, vals = [], []
@@ -182,7 +190,9 @@ def _reading(spec: tuple, series: _Series, date: str) -> Optional[float]:
     kind = spec[2]
     if kind == "spread":
         return series.move(date, "level")
-    return series.move(date, "pct" if kind == "ratio_pct" else kind)
+    if kind.startswith("ratio_pct"):
+        return series.move(date, "pct" + kind[len("ratio_pct"):])
+    return series.move(date, kind)
 
 
 # ── stats ────────────────────────────────────────────────────────────────────
