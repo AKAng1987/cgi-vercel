@@ -61,7 +61,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
-    "axis_drivers": 1,
+    "axis_drivers": 2,  # 2026-09-17: liquidity drivers rebuilt on the user's framework (3m/2y vs target, UNRATE, CPI y/y)
 }
 
 

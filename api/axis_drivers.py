@@ -46,7 +46,13 @@ MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 
 CADENCE_DAYS = {"inflation": 30, "growth": 30, "liquidity": 45, "credit": 91}
 
-# (label, symbol or (num, den), kind)  kind: pct | diff | ratio_pct
+# (label, symbol or (a, b), kind)
+#   pct        30-day % change                 (daily price series)
+#   diff       30-day change in level          (yields, spreads, breakevens)
+#   ratio_pct  30-day % change of a/b          (relative strength)
+#   mom_diff   change from prior observation   (monthly series: UNRATE)
+#   yoy_pct    % change vs 12 observations ago (monthly index: CPIAUCSL -> CPI y/y)
+#   spread     a - b, level                    (e.g. 3m bill - Fed target)
 DRIVERS: dict[str, list[tuple]] = {
     "inflation": [
         ("DBC 30d %", "DBC", "pct"),
@@ -62,12 +68,19 @@ DRIVERS: dict[str, list[tuple]] = {
         ("KRE/SPY 30d %", ("KRE", "SPY"), "ratio_pct"),
         ("2s10s 30d chg", "T10Y2Y", "diff"),
     ],
+    # Liquidity per the user's framework (2026-09-17): the Fed sets rates on
+    # its dual mandate (prices, employment); the front end of the curve is
+    # the market's vote on the next move -- the 3m bill "has to be followed
+    # within that window", the 2y over a longer one. 10y is growth/credit,
+    # not liquidity. BOJ/USDJPY carry noted as a candidate; foreign rates
+    # not yet in the pipeline; Challenger job cuts has no free series.
     "liquidity": [
+        ("3m bill - Fed target", ("US03MY", "DFEDTARU"), "spread"),
+        ("2y - Fed target", ("US02Y", "DFEDTARU"), "spread"),
+        ("3m bill 30d chg", "US03MY", "diff"),
         ("2y yield 30d chg", "US02Y", "diff"),
-        ("2s10s 30d chg", "T10Y2Y", "diff"),
-        ("DXY 30d %", "DXY", "pct"),
-        ("10y breakeven 30d chg", "T10YIE", "diff"),
-        ("Copper 30d %", "COPPER", "pct"),
+        ("Unemployment m/m chg", "UNRATE", "mom_diff"),
+        ("CPI y/y %", "CPIAUCSL", "yoy_pct"),
     ],
     "credit": [
         ("Baa-10y 30d chg", "BAA10Y", "diff"),
@@ -122,11 +135,14 @@ class _Series:
         if r is None:
             return None
         i, v = r
-        j = i - LOOKBACK_ROWS
+        if kind == "level":
+            return v
+        back = {"mom_diff": 1, "yoy_pct": 12}.get(kind, LOOKBACK_ROWS)
+        j = i - back
         if j < 0:
             return None
         prev = self.values[j]
-        if kind == "diff":
+        if kind in ("diff", "mom_diff"):
             return v - prev
         if not prev:
             return None
@@ -135,6 +151,15 @@ class _Series:
 
 def _build_driver_series(spec: tuple, loaded: dict[str, _Series]) -> _Series:
     label, sym, kind = spec
+    if kind == "spread":
+        a, b = loaded[sym[0]], loaded[sym[1]]
+        dates, vals = [], []
+        for d, v in zip(a.dates, a.values):
+            rb = b.at(d)  # b may be lower-frequency; use last on/before d
+            if rb is not None and (dt.date.fromisoformat(d) - dt.date.fromisoformat(b.dates[rb[0]])).days <= 35:
+                dates.append(d)
+                vals.append(v - rb[1])
+        return _Series(dates, vals)
     if kind == "ratio_pct":
         a, b = loaded[sym[0]], loaded[sym[1]]
         bd = {d: v for d, v in zip(b.dates, b.values)}
@@ -149,6 +174,8 @@ def _build_driver_series(spec: tuple, loaded: dict[str, _Series]) -> _Series:
 
 def _reading(spec: tuple, series: _Series, date: str) -> Optional[float]:
     kind = spec[2]
+    if kind == "spread":
+        return series.move(date, "level")
     return series.move(date, "pct" if kind == "ratio_pct" else kind)
 
 
@@ -181,8 +208,9 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
     starts = [state_dates[0]]
     for spec in drivers:
         s = series[spec[0]]
-        if len(s.dates) > LOOKBACK_ROWS:
-            starts.append(s.dates[LOOKBACK_ROWS])
+        need = {"mom_diff": 1, "yoy_pct": 12, "spread": 0}.get(spec[2], LOOKBACK_ROWS)
+        if len(s.dates) > need:
+            starts.append(s.dates[need])
     t = dt.date.fromisoformat(max(starts))
     end = dt.date.fromisoformat(today)
 
