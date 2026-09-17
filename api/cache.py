@@ -61,7 +61,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
-    "axis_drivers": 3,  # 2026-09-17: per-driver window coverage; Challenger m/m + level added to liquidity
+    "axis_drivers": 4,  # 2026-09-17: CHALLENGER full history 1994-> via TradingView MCP
 }
 
 
