@@ -213,6 +213,9 @@ export interface AxisDriver {
   p_current?: number | null;
   base_rate?: number | null;
   window_start?: string | null;
+  categorical?: boolean;
+  buckets?: Record<string, { n: number; p_flip: number | null }>;
+  current_bucket?: string | null;
 }
 
 export interface AxisDriverState {
