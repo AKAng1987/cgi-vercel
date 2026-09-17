@@ -211,6 +211,8 @@ export interface AxisDriver {
   current_value?: number | null;
   current_tercile?: 0 | 1 | 2 | null;
   p_current?: number | null;
+  base_rate?: number | null;
+  window_start?: string | null;
 }
 
 export interface AxisDriverState {

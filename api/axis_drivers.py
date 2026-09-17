@@ -51,6 +51,8 @@ CADENCE_DAYS = {"inflation": 30, "growth": 30, "liquidity": 45, "credit": 91}
 #   diff       30-day change in level          (yields, spreads, breakevens)
 #   ratio_pct  30-day % change of a/b          (relative strength)
 #   mom_diff   change from prior observation   (monthly series: UNRATE)
+#   mom_pct    % change from prior observation (monthly counts: CHALLENGER)
+#   level_k    level / 1000                    (CHALLENGER vs the 150k line)
 #   yoy_pct    % change vs 12 observations ago (monthly index: CPIAUCSL -> CPI y/y)
 #   spread     a - b, level                    (e.g. 3m bill - Fed target)
 DRIVERS: dict[str, list[tuple]] = {
@@ -80,6 +82,8 @@ DRIVERS: dict[str, list[tuple]] = {
         ("3m bill 30d chg", "US03MY", "diff"),
         ("2y yield 30d chg", "US02Y", "diff"),
         ("Unemployment m/m chg", "UNRATE", "mom_diff"),
+        ("Challenger cuts m/m %", "CHALLENGER", "mom_pct"),
+        ("Challenger cuts (k)", "CHALLENGER", "level_k"),
         ("CPI y/y %", "CPIAUCSL", "yoy_pct"),
     ],
     "credit": [
@@ -137,7 +141,9 @@ class _Series:
         i, v = r
         if kind == "level":
             return v
-        back = {"mom_diff": 1, "yoy_pct": 12}.get(kind, LOOKBACK_ROWS)
+        if kind == "level_k":
+            return v / 1000.0
+        back = {"mom_diff": 1, "mom_pct": 1, "yoy_pct": 12}.get(kind, LOOKBACK_ROWS)
         j = i - back
         if j < 0:
             return None
@@ -203,15 +209,11 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
         i = bisect.bisect_right(state_dates, date) - 1
         return state_vals[i] if i >= 0 else None
 
-    # First window start: every driver must have LOOKBACK_ROWS of history
-    # and the axis state must be known.
-    starts = [state_dates[0]]
-    for spec in drivers:
-        s = series[spec[0]]
-        need = {"mom_diff": 1, "yoy_pct": 12, "spread": 0}.get(spec[2], LOOKBACK_ROWS)
-        if len(s.dates) > need:
-            starts.append(s.dates[need])
-    t = dt.date.fromisoformat(max(starts))
+    # Windows run from the axis's first known state. A driver whose series
+    # starts later simply has None readings in early windows and is scored
+    # over the windows it covers -- one short series (e.g. CHALLENGER from
+    # 2022) must not truncate the panel for every other driver.
+    t = dt.date.fromisoformat(state_dates[0])
     end = dt.date.fromisoformat(today)
 
     windows = []  # (start, state, flipped, readings)
@@ -240,8 +242,10 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
             label = spec[0]
             pairs = [(w[3][label], w[2]) for w in ws if w[3][label] is not None]
             if len(pairs) < 3 * MIN_TERCILE_N:
-                drv_out.append({"name": label, "n": len(pairs), "insufficient": True})
+                drv_out.append({"name": label, "n": len(pairs), "insufficient": True,
+                                "current_value": (lambda v: round(v, 3) if v is not None else None)(_reading(spec, series[label], today))})
                 continue
+            drv_base = sum(1 for _, f in pairs if f) / len(pairs)
             vals = [p[0] for p in pairs]
             b = _tercile_bounds(vals)
             by_t = {0: [0, 0], 1: [0, 0], 2: [0, 0]}
@@ -266,6 +270,8 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 "current_value": round(cur, 3) if cur is not None else None,
                 "current_tercile": cur_t,
                 "p_current": round(p_cur, 3) if p_cur is not None else None,
+                "base_rate": round(drv_base, 3),
+                "window_start": next(w[0] for w in ws if w[3][label] is not None),
             })
         used = [d["p_current"] for d in drv_out if d.get("p_current") is not None]
         out["from_state"][str(s)] = {

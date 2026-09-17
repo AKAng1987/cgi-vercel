@@ -63,7 +63,9 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
                     );
                     return (
                       <tr key={d.name} className="border-t border-slate-800/60">
-                        <td className="py-0.5 text-slate-300">{d.name}</td>
+                        <td className="py-0.5 text-slate-300" title={`${d.n} windows${d.window_start ? ` from ${d.window_start}` : ""} · base ${d.base_rate != null ? Math.round(d.base_rate * 100) + "%" : "—"}`}>
+                          {d.name}{d.n < 40 && <span className="ml-1 text-[0.6rem] text-slate-600">n={d.n}</span>}
+                        </td>
                         <td className="py-0.5 text-right text-slate-200" title={`tercile: ${d.current_tercile === null || d.current_tercile === undefined ? "—" : T[d.current_tercile]}`}>{val(d.current_value, d.name)}</td>
                         {[0, 1, 2].map((k) => (
                           <td key={k} className={`py-0.5 text-right ${d.current_tercile === k ? "rounded bg-[#2a2410] font-bold text-[#FCD34D]" : "text-slate-400"}`} title={`${d.n_by_tercile?.[k] ?? 0} windows`}>
