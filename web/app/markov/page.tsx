@@ -33,7 +33,7 @@ export default async function MarkovPage() {
 
       <AxisDriversPanel drivers={data.drivers} />
 
-      <EventLog events={data.event_log} summary={data.summary} />
+      <EventLog events={data.event_log} pending={data.pending} summary={data.summary} />
 
       <DailyRuns runs={data.runs} latest={data.latest_daily} nDaily={data.n_daily_rows} />
 

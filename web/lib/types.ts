@@ -191,6 +191,7 @@ export interface MarkovEvent {
   pre_registered_on: string | null;
   pre_registration_note: string | null;
   flipped: boolean;
+  flip_recorded_on: string | null;
   quadrant_after: number | null;
   brier: number | null;
   brier_market: number | null;
@@ -245,9 +246,11 @@ export interface MarkovResponse {
   upcoming: UpcomingRelease[];
   flip_rates: Record<MarkovAxis, Record<"0" | "1", FlipBasis>>;
   event_log: MarkovEvent[];
+  pending: { date: string; type: ReleaseType; axis: MarkovAxis; model: "compass" | "grid"; quadrant_before: number; state_before: 0 | 1; settle_by: string }[];
   summary: {
     n_events: number;
     n_unscheduled: number;
+    n_pending: number;
     n_flips: number;
     n_pre_registered: number;
     brier: number | null;

@@ -34,7 +34,7 @@ function HitCell({ hit }: { hit: boolean | null }) {
   return <span className={`font-bold ${hit ? "text-[#00C851]" : "text-[#FF4444]"}`}>{hit ? "HIT" : "MISS"}</span>;
 }
 
-export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: MarkovResponse["summary"] }) {
+export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; pending: MarkovResponse["pending"]; summary: MarkovResponse["summary"] }) {
   return (
     <section className="mb-6">
       <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
@@ -50,6 +50,18 @@ export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: 
           0 = perfect, 0.25 = coin-flip. Lower wins. History vs. market on the same events is the experiment.
         </div>
       </div>
+
+      {pending.length > 0 && (
+        <div className="mb-3 rounded border border-[#FCD34D]/40 bg-[#2a2410] px-3 py-2 text-xs text-slate-300">
+          <span className="font-bold text-[#FCD34D]">Settling:</span>{" "}
+          {pending.map((p) => (
+            <span key={`${p.date}-${p.axis}`} className="mr-3">
+              {p.date} {p.type} · {p.axis} {p.state_before ? "↑" : "↓"} from {q(p.model, p.quadrant_before)} — the model records the
+              print by its effective date at the next 00:25 UTC run; scored by {p.settle_by}.
+            </span>
+          ))}
+        </div>
+      )}
 
       {events.length === 0 ? (
         <div className="rounded border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-400">
@@ -86,7 +98,7 @@ export function EventLog({ events, summary }: { events: MarkovEvent[]; summary: 
                   <td className={`${TD} text-slate-300`} title={qTitle(e.model, e.quadrant_before)}>{q(e.model, e.quadrant_before)}</td>
                   <td className={`${TD} text-right text-slate-200`}>{pct(e.p_flip)}</td>
                   <td className={`${TD} text-right text-slate-200`} title={e.market_source ?? ""}>{pct(e.p_market)}</td>
-                  <td className={`${TD} font-bold ${e.flipped ? "text-[#FCD34D]" : "text-slate-400"}`}>{e.flipped ? "FLIP" : "hold"}</td>
+                  <td className={`${TD} font-bold ${e.flipped ? "text-[#FCD34D]" : "text-slate-400"}`} title={e.flip_recorded_on ? `recorded in model-history on ${e.flip_recorded_on}` : ""}>{e.flipped ? "FLIP" : "hold"}</td>
                   <td className={`${TD} text-slate-200`} title={qTitle(e.model, e.quadrant_after)}>{q(e.model, e.quadrant_after)}</td>
                   <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)}</td>
                   <td className={TD}><HitCell hit={e.hit} /> <span className="text-slate-600">/</span> <HitCell hit={e.hit_market} /></td>

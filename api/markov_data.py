@@ -252,6 +252,21 @@ def build_markov_response() -> dict:
 
     flips_by_date_axis = {(e["date"], e["axis"]): e for e in events}
 
+    # A release settles into model-history with a lag: the compass dates Fed
+    # moves by DFEDTARU's *effective* date (the day after the decision) and
+    # the models run at 00:25 UTC, so a flip can land 1-3 days after the
+    # release. Match flips within SETTLE_DAYS of the release; until that
+    # window closes with no flip, the event is pending, not a scored hold.
+    SETTLE_DAYS = 3
+
+    def flip_within(release_date: str, axis: str) -> Optional[dict]:
+        d0 = dt.date.fromisoformat(release_date)
+        for k in range(SETTLE_DAYS + 1):
+            e = flips_by_date_axis.get(((d0 + dt.timedelta(days=k)).isoformat(), axis))
+            if e:
+                return e
+        return None
+
     def stored_call(release_date: str, rtype: str) -> Optional[dict]:
         """Most recent daily row written BEFORE the release that pre-registered
         this exact release. Rows are latest-first in `daily`."""
@@ -269,6 +284,7 @@ def build_markov_response() -> dict:
     # transition at 00:25 UTC the next morning, so today's print is pending.
     yesterday = (dt.date.fromisoformat(today) - dt.timedelta(days=1)).isoformat()
     log = []
+    pending: list[dict] = []
     for r in cal.releases_between(TRACK_START, yesterday):
         if r["date"] < TRACK_START:
             continue
@@ -277,7 +293,13 @@ def build_markov_response() -> dict:
         if q0 is None:
             continue
         s0 = _axis_state(q0, axis)
-        flipped = (r["date"], axis) in flips_by_date_axis
+        matched = flip_within(r["date"], axis)
+        settle_by = (dt.date.fromisoformat(r["date"]) + dt.timedelta(days=SETTLE_DAYS)).isoformat()
+        if matched is None and today <= settle_by:
+            pending.append({"date": r["date"], "type": r["type"], "axis": axis, "model": model,
+                            "quadrant_before": q0, "state_before": s0, "settle_by": settle_by})
+            continue
+        flipped = matched is not None
         y = 1 if flipped else 0
         stored = stored_call(r["date"], r["type"])
         if stored:
@@ -301,15 +323,16 @@ def build_markov_response() -> dict:
             "pre_registered_on": registered,  # null = history recomputed after the fact
             "pre_registration_note": stored.get("note") if stored else None,
             "flipped": flipped,
+            "flip_recorded_on": matched["date"] if matched else None,
             "quadrant_after": _quadrant_with(q0, axis, 1 - s0) if flipped else q0,
             "brier": round((p_hist - y) ** 2, 4),
             "brier_market": round((p_mkt - y) ** 2, 4) if p_mkt is not None else None,
             "hit": (p_hist >= 0.5) == flipped,
             "hit_market": ((p_mkt >= 0.5) == flipped) if p_mkt is not None else None,
         })
-    scheduled_keys = {(e["date"], e["axis"]) for e in log}
+    claimed = {(e["flip_recorded_on"], e["axis"]) for e in log if e.get("flip_recorded_on")}
     for e in events:
-        if e["date"] >= TRACK_START and e["date"] <= yesterday and (e["date"], e["axis"]) not in scheduled_keys:
+        if e["date"] >= TRACK_START and e["date"] <= yesterday and (e["date"], e["axis"]) not in claimed:
             log.append({
                 "date": e["date"], "type": TYPE_OF_AXIS[e["axis"]], "axis": e["axis"], "model": e["model"],
                 "scheduled": False, "quadrant_before": None, "state_before": e["from"],
@@ -324,6 +347,7 @@ def build_markov_response() -> dict:
     summary = {
         "n_events": len(scored),
         "n_unscheduled": len(log) - len(scored),
+        "n_pending": len(pending),
         "n_flips": sum(1 for x in scored if x["flipped"]),
         "n_pre_registered": sum(1 for x in scored if x["pre_registered_on"]),
         "brier": round(sum(x["brier"] for x in scored) / len(scored), 4) if scored else None,
@@ -354,6 +378,7 @@ def build_markov_response() -> dict:
         "upcoming": upcoming,
         "flip_rates": rates,
         "event_log": log,
+        "pending": pending,
         "summary": summary,
         "runs": runs,
         "latest_daily": latest,
