@@ -61,7 +61,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
-    "axis_drivers": 5,  # 2026-09-17: credit drivers on the user framework; kind@N support
+    "axis_drivers": 6,  # 2026-09-17: calendar-aware yoy (CPI 3.33 not 3.73); credit: 10-2 back, 10-5, HYG/LQD, curve regime categorical; SPY out; Challenger m/m out
 }
 
 

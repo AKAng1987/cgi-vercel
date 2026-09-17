@@ -82,23 +82,26 @@ DRIVERS: dict[str, list[tuple]] = {
         ("3m bill 30d chg", "US03MY", "diff"),
         ("2y yield 30d chg", "US02Y", "diff"),
         ("Unemployment m/m chg", "UNRATE", "mom_diff"),
-        ("Challenger cuts m/m %", "CHALLENGER", "mom_pct"),
         ("Challenger cuts (k)", "CHALLENGER", "level_k"),
         ("CPI y/y %", "CPIAUCSL", "yoy_pct"),
     ],
     # Credit per the user's framework (2026-09-17): the curve as the bank
-    # lending margin (10y-3m level), credit spread change, bank relative
-    # strength (KBE, what the user charts), financial-conditions change,
-    # loan growth (banks tighten after a lending boom), equity drawdown.
-    # Tested and dropped: 2s10s level/change, Baa level, KRE (== KBE),
-    # XLF/SPY, NFCI level.
+    # lending margin (10y-2y is the user's base line; 10y-3m the cleaner
+    # academic form; 10y-5y for mortgages/autos), credit spread change,
+    # HY vs IG bonds, bank relative strength (KBE), financial-conditions
+    # change, C&I loan growth (banks tighten after a lending boom), and
+    # the curve *regime* -- bull/bear steepener/flattener, a four-way label
+    # scored as a categorical driver. SPY moved to TECHNICALS/breadth.
     "credit": [
+        ("10y-2y (level)", "T10Y2Y", "level"),
         ("10y-3m (level)", ("US10Y", "US03MY"), "spread"),
+        ("10y-5y (level)", ("US10Y", "US05Y"), "spread"),
+        ("Curve regime 30d", ("US10Y", "US03MY"), "curve_regime"),
         ("Baa-10y 30d chg", "BAA10Y", "diff"),
+        ("HYG/LQD 30d %", ("HYG", "LQD"), "ratio_pct"),
         ("KBE/SPY 30d %", ("KBE", "SPY"), "ratio_pct"),
         ("NFCI credit 13w chg", "NFCICREDIT", "diff@13"),
         ("C&I loans 13w %", "BUSLOANS", "pct@13"),
-        ("SPY 30d %", "SPY", "pct"),
     ],
 }
 
@@ -151,10 +154,21 @@ class _Series:
         if kind == "level_k":
             return v / 1000.0
         base_kind, _, n_rows = kind.partition("@")
-        back = int(n_rows) if n_rows else {"mom_diff": 1, "mom_pct": 1, "yoy_pct": 12}.get(base_kind, LOOKBACK_ROWS)
-        j = i - back
-        if j < 0:
-            return None
+        if base_kind == "yoy_pct":
+            # Calendar-aware: the observation on/before the same date a year
+            # earlier. Row-counting breaks on gaps (BLS skipped Oct-2025 CPI
+            # in the shutdown; FRED has no row), which put CPI y/y at 3.73%
+            # instead of 3.33%.
+            d = dt.date.fromisoformat(self.dates[i])
+            target = d.replace(year=d.year - 1).isoformat()
+            j = bisect.bisect_right(self.dates, target) - 1
+            if j < 0 or (d - dt.date.fromisoformat(self.dates[j])).days > 400:
+                return None
+        else:
+            back = int(n_rows) if n_rows else {"mom_diff": 1, "mom_pct": 1}.get(base_kind, LOOKBACK_ROWS)
+            j = i - back
+            if j < 0:
+                return None
         prev = self.values[j]
         if base_kind in ("diff", "mom_diff"):
             return v - prev
@@ -163,8 +177,34 @@ class _Series:
         return (v / prev - 1.0) * 100.0
 
 
+CURVE_LABELS = ("bull_steep", "bear_steep", "bull_flat", "bear_flat")
+
+
 def _build_driver_series(spec: tuple, loaded: dict[str, _Series]) -> _Series:
     label, sym, kind = spec
+    if kind == "curve_regime":
+        # Over LOOKBACK_ROWS: spread up -> steepener; which end moved names it.
+        #   bull steepener: short fell (Fed cutting / expected)
+        #   bear steepener: long rose (term premium, inflation, supply)
+        #   bull flattener: long fell (flight to quality, growth scare)
+        #   bear flattener: short rose (Fed hiking)
+        lg, sh = loaded[sym[0]], loaded[sym[1]]
+        shd = {d: v for d, v in zip(sh.dates, sh.values)}
+        dates, vals = [], []
+        for i, (d, l) in enumerate(zip(lg.dates, lg.values)):
+            if i < LOOKBACK_ROWS or d not in shd:
+                continue
+            d0 = lg.dates[i - LOOKBACK_ROWS]
+            if d0 not in shd:
+                continue
+            dl, ds = l - lg.values[i - LOOKBACK_ROWS], shd[d] - shd[d0]
+            if dl - ds >= 0:
+                lab = "bull_steep" if ds < 0 else "bear_steep"
+            else:
+                lab = "bull_flat" if dl < 0 else "bear_flat"
+            dates.append(d)
+            vals.append(lab)
+        return _Series(dates, vals)
     if kind == "spread":
         a, b = loaded[sym[0]], loaded[sym[1]]
         dates, vals = [], []
@@ -188,7 +228,7 @@ def _build_driver_series(spec: tuple, loaded: dict[str, _Series]) -> _Series:
 
 def _reading(spec: tuple, series: _Series, date: str) -> Optional[float]:
     kind = spec[2]
-    if kind == "spread":
+    if kind in ("spread", "curve_regime"):
         return series.move(date, "level")
     if kind.startswith("ratio_pct"):
         return series.move(date, "pct" + kind[len("ratio_pct"):])
@@ -251,6 +291,22 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
         for spec in drivers:
             label = spec[0]
             pairs = [(w[3][label], w[2]) for w in ws if w[3][label] is not None]
+            if pairs and isinstance(pairs[0][0], str):
+                by: dict[str, list[int]] = {k: [0, 0] for k in CURVE_LABELS}
+                for v, f in pairs:
+                    by[v][0] += 1
+                    by[v][1] += int(f)
+                cur = _reading(spec, series[label], today)
+                p_cur = (by[cur][1] / by[cur][0]) if cur in by and by[cur][0] >= MIN_TERCILE_N else None
+                drv_out.append({
+                    "name": label, "n": len(pairs), "categorical": True,
+                    "buckets": {k: {"n": c[0], "p_flip": (round(c[1] / c[0], 3) if c[0] else None)} for k, c in by.items()},
+                    "current_value": cur, "current_bucket": cur,
+                    "p_current": round(p_cur, 3) if p_cur is not None else None,
+                    "base_rate": round(sum(f for _, f in pairs) / len(pairs), 3),
+                    "window_start": next(w[0] for w in ws if w[3][label] is not None),
+                })
+                continue
             if len(pairs) < 3 * MIN_TERCILE_N:
                 drv_out.append({"name": label, "n": len(pairs), "insufficient": True,
                                 "current_value": (lambda v: round(v, 3) if v is not None else None)(_reading(spec, series[label], today))})
