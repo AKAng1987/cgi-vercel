@@ -93,3 +93,103 @@ def releases_between(start: str, end: str) -> list[dict]:
 
 def release_on(date: str) -> list[dict]:
     return [r for r in RELEASES if r["date"] == date]
+
+
+# ── Watch tier ──────────────────────────────────────────────────────────────
+# Events that don't set an axis but feed the nowcasts and the narrative.
+# Most are rule-generated (nth business day / nth weekday), so they never
+# need re-hardcoding; BOJ is hardcoded like FOMC. Each carries `informs`:
+# the axis its print is a leading read for.
+#
+#   ISM Manufacturing   1st business day of month     -> growth, inflation (prices paid)
+#   ISM Services        3rd business day of month     -> growth, inflation
+#   Challenger job cuts business day before NFP        -> growth
+#   NFP (jobs)          1st Friday (BLS occasionally shifts; verify Jan/Jul) -> growth
+#   BOJ decision        hardcoded 2026               -> liquidity (global)
+#   Quad witching       3rd Friday Mar/Jun/Sep/Dec    -> positioning
+#   Opex                3rd Friday other months       -> positioning
+#
+# US holidays that move a "1st business day" are not modelled; the ISM
+# publishes on the first business day *it* observes, which is the same
+# except around Jan 1 / Jul 4 / Labor Day (ISM Mfg on 2026-09-01 is
+# correct: Sep 1 was a Tuesday after Labor Day 8/31... verify each year).
+
+# BOJ decision days (last day of each MPM), verified 2026-09-17 against
+# boj.or.jp/en/mopo/mpmsche_minu -- 2026 and 2027.
+_BOJ = {
+    2026: ["2026-01-23", "2026-03-19", "2026-04-28", "2026-06-16", "2026-07-31", "2026-09-18", "2026-10-30", "2026-12-18"],
+    2027: ["2027-01-22", "2027-03-18", "2027-04-28", "2027-06-11", "2027-07-22", "2027-09-22", "2027-10-29", "2027-12-17"],
+}
+
+WATCH_INFORMS = {
+    "ISM_MFG": ["growth", "inflation"],
+    "ISM_SVC": ["growth", "inflation"],
+    "CHALLENGER": ["growth"],
+    "NFP": ["growth"],
+    "BOJ": ["liquidity"],
+    "QUAD_WITCH": ["positioning"],
+    "OPEX": ["positioning"],
+}
+WATCH_LABEL = {
+    "ISM_MFG": "ISM Manufacturing", "ISM_SVC": "ISM Services", "CHALLENGER": "Challenger job cuts",
+    "NFP": "Jobs report (NFP)", "BOJ": "BOJ decision", "QUAD_WITCH": "Quad witching", "OPEX": "Monthly opex",
+}
+
+
+def _nth_business_day(year: int, month: int, n: int) -> dt.date:
+    d = dt.date(year, month, 1)
+    count = 0
+    while True:
+        if d.weekday() < 5:
+            count += 1
+            if count == n:
+                return d
+        d += dt.timedelta(days=1)
+
+
+def _nth_weekday(year: int, month: int, weekday: int, n: int) -> dt.date:
+    d = dt.date(year, month, 1)
+    while d.weekday() != weekday:
+        d += dt.timedelta(days=1)
+    return d + dt.timedelta(days=7 * (n - 1))
+
+
+def _prev_business_day(d: dt.date) -> dt.date:
+    d -= dt.timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= dt.timedelta(days=1)
+    return d
+
+
+def watch_events(year: int) -> list[dict]:
+    out = []
+    for m in range(1, 13):
+        ism_m = _nth_business_day(year, m, 1)
+        ism_s = _nth_business_day(year, m, 3)
+        nfp = _nth_weekday(year, m, 4, 1)  # Friday = 4
+        chal = _prev_business_day(nfp)
+        third_fri = _nth_weekday(year, m, 4, 3)
+        out += [
+            {"date": ism_m.isoformat(), "type": "ISM_MFG"},
+            {"date": ism_s.isoformat(), "type": "ISM_SVC"},
+            {"date": chal.isoformat(), "type": "CHALLENGER"},
+            {"date": nfp.isoformat(), "type": "NFP"},
+            {"date": third_fri.isoformat(), "type": "QUAD_WITCH" if m in (3, 6, 9, 12) else "OPEX"},
+        ]
+    out += [{"date": d, "type": "BOJ"} for d in _BOJ.get(year, [])]
+    for r in out:
+        r["tier"] = "watch"
+        r["label"] = WATCH_LABEL[r["type"]]
+        r["informs"] = WATCH_INFORMS[r["type"]]
+    return sorted(out, key=lambda r: r["date"])
+
+
+def timeline(start: Optional[str] = None, days: int = 45) -> list[dict]:
+    """Axis releases + watch events from `start` (default today) for `days`,
+    sorted, each tagged tier=axis|watch."""
+    start = start or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
+    end = (dt.date.fromisoformat(start) + dt.timedelta(days=days)).isoformat()
+    years = {int(start[:4]), int(end[:4])}
+    ax = [{**r, "tier": "axis", "label": r["type"], "informs": [r["axis"]]} for r in RELEASES if start <= r["date"] <= end]
+    wt = [r for y in sorted(years) for r in watch_events(y) if start <= r["date"] <= end]
+    return sorted(ax + wt, key=lambda r: (r["date"], 0 if r["tier"] == "axis" else 1))

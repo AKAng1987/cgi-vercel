@@ -4,6 +4,7 @@ import { UpcomingReleases } from "../components/markov/UpcomingReleases";
 import { EventLog } from "../components/markov/EventLog";
 import { DailyRuns } from "../components/markov/DailyRuns";
 import { AxisDriversPanel } from "../components/markov/AxisDriversPanel";
+import { Timeline } from "../components/markov/Timeline";
 
 /**
  * MARKOV tab -- event-driven (Phase 1.5).
@@ -28,6 +29,8 @@ export default async function MarkovPage() {
         (what&apos;s priced — fed funds futures for the Fed; the experimental classifier for credit and
         inflation). The gap between them is the signal. Each release is scored once it lands.
       </p>
+
+      <Timeline events={data.timeline} asOf={data.as_of} />
 
       <UpcomingReleases current={data.current} upcoming={data.upcoming} asOf={data.as_of} />
 

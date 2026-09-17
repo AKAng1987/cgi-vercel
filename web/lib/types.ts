@@ -264,6 +264,15 @@ export interface MarkovResponse {
   latest_daily: SignalRow | null;
   n_daily_rows: number;
   drivers: { as_of: string; lookback_rows: number; axes: Record<MarkovAxis, AxisDrivers> } | null;
+  timeline: TimelineEvent[];
+}
+
+export interface TimelineEvent {
+  date: string;
+  type: string;
+  tier: "axis" | "watch";
+  label: string;
+  informs: string[];
 }
 
 export interface BacktestOccurrencesResponse {

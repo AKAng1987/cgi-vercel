@@ -384,4 +384,5 @@ def build_markov_response() -> dict:
         "latest_daily": latest,
         "n_daily_rows": len(daily),
         "drivers": drivers,
+        "timeline": cal.timeline(start=today, days=45),
     }
