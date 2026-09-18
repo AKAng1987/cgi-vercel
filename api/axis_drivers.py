@@ -77,8 +77,11 @@ DRIVERS: dict[str, list[tuple]] = {
     # not liquidity. BOJ/USDJPY carry noted as a candidate; foreign rates
     # not yet in the pipeline; Challenger job cuts has no free series.
     "liquidity": [
-        ("3m bill - Fed target", ("US03MY", "DFEDTARU"), "spread"),
-        ("2y - Fed target", ("US02Y", "DFEDTARU"), "spread"),
+        # Spread vs the *effective* rate (DFF, daily, 1954->) rather than the
+        # target ceiling (DFEDTARU, 2008-12->): identical hike-side rates
+        # (0/0/24%), but the tightening state gets 46 windows instead of 20.
+        ("3m bill - Fed target", ("US03MY", "DFF"), "spread"),
+        ("2y - Fed target", ("US02Y", "DFF"), "spread"),
         ("3m bill 30d chg", "US03MY", "diff"),
         ("2y yield 30d chg", "US02Y", "diff"),
         ("Unemployment m/m chg", "UNRATE", "mom_diff"),
