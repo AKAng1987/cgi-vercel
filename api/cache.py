@@ -34,6 +34,7 @@ TTL_HOURS: dict[str, float] = {
     "treasury_curve": 6.0,
     "spreads": 12.0,
     "lending_standards": 48.0,
+    "challenger": 24.0,  # macro: Challenger job cuts from price-history (manual monthly load)
     "gdp": 48.0,
     "gdp_nowcast": 24.0,
     "inflation": 24.0,
@@ -56,6 +57,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "treasury_curve": 1,
     "spreads": 2,  # 2026-09-11: fetch_spreads bp/percent fix (see macro_data.py)
     "lending_standards": 1,
+    "challenger": 1,
     "gdp": 1,
     "gdp_nowcast": 1,
     "inflation": 1,

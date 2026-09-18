@@ -123,6 +123,7 @@ export interface PcePoint {
 
 export interface GrowthResponse {
   lending_standards: LendingStandardPoint[];
+  challenger: LendingStandardPoint[]; // {date, value} in thousands
   gdp: GdpBlock;
   gdp_nowcast: GdpNowcastPoint[];
   inflation: InflationPoint[];

@@ -394,6 +394,35 @@ def fetch_lending_standards() -> list[dict]:
     return _df_to_records(df)
 
 
+# ── challenger (24h TTL) ───────────────────────────────────────────────
+
+def fetch_challenger() -> list[dict]:
+    """Challenger, Gray & Christmas announced job cuts (monthly, thousands).
+    No free API -- the series lives in price-history as CHALLENGER (loaded
+    from TradingView ECONOMICS:USJC, refreshed by hand). Records:
+    {date, value} in thousands, 15-year window."""
+    import boto3
+
+    ddb = boto3.client("dynamodb", region_name="ap-southeast-1")
+    start = (datetime.datetime.now() - datetime.timedelta(days=365 * 15)).strftime("%Y-%m-%d")
+    kwargs = dict(
+        TableName="cmon-stage-backend-price-history",
+        KeyConditionExpression="#s = :s AND #d >= :d",
+        ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
+        ExpressionAttributeValues={":s": {"S": "CHALLENGER"}, ":d": {"S": start}},
+        ProjectionExpression="#d, #c",
+    )
+    out = []
+    while True:
+        page = ddb.query(**kwargs)
+        out += [{"date": it["date"]["S"], "value": round(float(it["close"]["N"]) / 1000.0, 3)}
+                for it in page["Items"] if "close" in it]
+        if "LastEvaluatedKey" not in page:
+            break
+        kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    return sorted(out, key=lambda r: r["date"])
+
+
 # ── gdp (48h TTL: quarterly BEA print + ALFRED vintages) ───────────────
 
 _BEA_GDP_CALENDAR: dict[str, dict[str, str]] = {
@@ -706,6 +735,7 @@ def build_growth_response() -> dict:
 
     return {
         "lending_standards": cache.get_or_fetch("lending_standards", fetch_lending_standards),
+        "challenger": cache.get_or_fetch("challenger", fetch_challenger),
         "gdp": cache.get_or_fetch("gdp", fetch_gdp),
         "gdp_nowcast": cache.get_or_fetch("gdp_nowcast", fetch_gdp_nowcast),
         "inflation": cache.get_or_fetch("inflation", fetch_inflation),

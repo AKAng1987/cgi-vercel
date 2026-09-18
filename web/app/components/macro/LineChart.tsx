@@ -28,6 +28,7 @@ interface LineChartProps {
   y2Title?: string;
   hLineY?: number; // e.g. 0 or 2 for reference lines
   hLineLabel?: string;
+  hLines?: { y: number; label?: string; color?: string }[]; // additional dotted reference lines
 }
 
 /**
@@ -44,6 +45,7 @@ export function LineChart({
   y2Title,
   hLineY,
   hLineLabel,
+  hLines = [],
 }: LineChartProps) {
   const hasY2 = series.some((s) => s.yaxis === "y2");
 
@@ -63,6 +65,11 @@ export function LineChart({
 
   const shapes: Record<string, unknown>[] = [];
   const annotations: Record<string, unknown>[] = [];
+  for (const h of hLines) {
+    const c = h.color ?? "#6B7280";
+    shapes.push({ type: "line", xref: "paper", x0: 0, x1: 1, yref: "y", y0: h.y, y1: h.y, line: { color: c, width: 1, dash: "dot" } });
+    if (h.label) annotations.push({ xref: "paper", x: 1, xanchor: "left", yref: "y", y: h.y, text: h.label, showarrow: false, font: { color: c, size: 10 } });
+  }
   if (hLineY !== undefined) {
     shapes.push({
       type: "line",

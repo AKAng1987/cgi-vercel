@@ -39,6 +39,13 @@ export async function GrowthSection() {
   const lendDelta = priorLend ? +(latestLend.value - priorLend.value).toFixed(1) : null;
   const qoqChg = lend.map((p, i) => (i === 0 ? 0 : +(p.value - lend[i - 1].value).toFixed(2)));
 
+  // ---- Challenger job cuts (thousands) ----
+  const chal = [...(data.challenger ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+  const latestChal = chal[chal.length - 1];
+  const priorChal = chal.length > 1 ? chal[chal.length - 2] : null;
+  const chalDelta = priorChal ? +(latestChal.value - priorChal.value).toFixed(1) : null;
+  const chalMom = chal.map((p, i) => (i === 0 ? 0 : +(p.value - chal[i - 1].value).toFixed(1)));
+
   // ---- GDP ----
   const gdpQ = [...data.gdp.quarterly].sort((a, b) => a.date.localeCompare(b.date));
   const latestGdp = gdpQ[gdpQ.length - 1];
@@ -115,6 +122,49 @@ export async function GrowthSection() {
           ]}
         />
       </section>
+
+      {chal.length > 0 && (
+        <section>
+          <SectionHeader>Challenger Job Cuts — Announced Layoffs (thousands)</SectionHeader>
+          <MetricStat
+            label="Latest Month"
+            value={`${latestChal.value.toFixed(0)}k`}
+            delta={chalDelta !== null ? `${chalDelta > 0 ? "+" : ""}${chalDelta}k vs prior month` : undefined}
+            help={`Challenger, Gray & Christmas · ${latestChal.date.slice(0, 7)} · 150k = crisis marker · 80–100k m/m jump = volatility`}
+          />
+          <LineChart
+            height={220}
+            title="Level — Announced Job Cuts (k)"
+            yTitle="thousands"
+            hLines={[{ y: 150, label: "150k", color: "#EF4444" }]}
+            series={[
+              {
+                name: "Job cuts (k)",
+                x: chal.map((p) => p.date),
+                y: chal.map((p) => p.value),
+                color: COLORS.lower,
+                shape: "hv",
+                fill: "tozeroy",
+                fillColor: "rgba(96,165,250,0.08)",
+                showlegend: false,
+              },
+            ]}
+          />
+          <BarChart
+            height={200}
+            title="MoM Change (k) — Red = More Cuts · Green = Fewer Cuts"
+            yTitle="k change"
+            bars={[
+              {
+                name: "MoM Change (k)",
+                x: chal.map((p) => p.date),
+                y: chalMom,
+                colors: chalMom.map((v) => (v > 0 ? COLORS.gdpBarNeg : COLORS.gdpBarPos)),
+              },
+            ]}
+          />
+        </section>
+      )}
 
       <section>
         <SectionHeader>Real GDP Growth — QoQ Annualized (%)</SectionHeader>
