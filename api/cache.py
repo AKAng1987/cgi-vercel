@@ -41,6 +41,7 @@ TTL_HOURS: dict[str, float] = {
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d
     "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
+    "watchlists": 24.0,  # TradingView list contents for the cloud routine
 }
 
 # Bump a key's entry whenever the fetch/compute logic feeding that
@@ -63,6 +64,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
+    "watchlists": 1,
     "axis_drivers": 9,  # 2026-09-19: inflation + growth lists from user framework + sweep. v8 2026-09-18: back to DFEDTARU (v7 tried DFF, user rejected). v6 2026-09-17: calendar-aware yoy (CPI 3.33 not 3.73); credit: 10-2 back, 10-5, HYG/LQD, curve regime categorical; SPY out; Challenger m/m out
 }
 

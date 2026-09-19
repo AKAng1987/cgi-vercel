@@ -8,10 +8,12 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import backtest_data
+import cache
 import dashboard_data
 import macro_data
 import markov_data
 import signals_data
+import watchlists as watchlists_data
 
 load_dotenv()
 
@@ -35,7 +37,8 @@ def _warm_up_caches() -> None:
             ("macro/rates", macro_data.build_rates_response),
             ("macro/growth", macro_data.build_growth_response),
             ("live", lambda: dashboard_data.build_live_response(date_str=None)),
-            ("markov/axis_drivers", lambda: __import__("cache").get_or_fetch("axis_drivers", __import__("axis_drivers").compute_axis_drivers)),
+            ("markov/axis_drivers", lambda: cache.get_or_fetch("axis_drivers", __import__("axis_drivers").compute_axis_drivers)),
+            ("watchlists", lambda: cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)),
         ]:
             try:
                 fn()
@@ -131,3 +134,8 @@ def signals(limit: Optional[int] = None):
 @app.get("/api/markov", dependencies=[Depends(require_bearer_token)])
 def markov():
     return markov_data.build_markov_response()
+
+
+@app.get("/api/watchlists", dependencies=[Depends(require_bearer_token)])
+def watchlists():
+    return cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)
