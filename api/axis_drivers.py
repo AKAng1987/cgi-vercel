@@ -56,19 +56,44 @@ CADENCE_DAYS = {"inflation": 30, "growth": 30, "liquidity": 45, "credit": 91}
 #   yoy_pct    % change vs 12 observations ago (monthly index: CPIAUCSL -> CPI y/y)
 #   spread     a - b, level                    (e.g. 3m bill - Fed target)
 DRIVERS: dict[str, list[tuple]] = {
+    # Inflation per the user's framework (2026-09-19): rolling ~30d moves in
+    # the live prices (oil, broad commodities), the pipeline (PPI commodities,
+    # import prices -- the dollar->imports->prices channel), the dollar, TIPS
+    # breakevens, CPI itself (last print) and the Fed's measure (core PCE).
+    # Sweep (docs/CANDIDATE_SWEEP_2026-09-18.md): DBA, copper, hourly
+    # earnings, Michigan expectations did not separate -- dropped. ISM prices
+    # paid (mfg level, services m/m) and USCI added 2026-09-19 from the TradingView
+    # pull; Baltic Dry tested 5pp -- parked for the logistics tab.
     "inflation": [
+        ("ISM svc prices m/m", "ISM_SVC_PRICES", "mom_diff"),
+        ("ISM mfg prices (level)", "ISM_MFG_PRICES", "level"),
+        ("WTI 3m %", "DCOILWTICO", "pct@63"),
+        ("WTI 30d %", "DCOILWTICO", "pct"),
         ("DBC 30d %", "DBC", "pct"),
-        ("DBA 30d %", "DBA", "pct"),
-        ("USO 30d %", "USO", "pct"),
-        ("Copper 30d %", "COPPER", "pct"),
-        ("10y breakeven 30d chg", "T10YIE", "diff"),
+        ("USCI 30d %", "USCI", "pct"),
+        ("PPI commodities 3m %", "PPIACO", "pct@3"),
+        ("Import prices 3m %", "IR", "pct@3"),
+        ("Dollar 30d %", "DTWEXBGS", "pct"),
+        ("5y breakeven 30d chg", "T5YIE", "diff"),
+        ("CPI m/m %", "CPIAUCSL", "mom_pct"),
+        ("Core PCE y/y %", "PCEPILFE", "yoy_pct"),
     ],
+    # Growth per the user's framework (2026-09-19): ISM services and
+    # manufacturing (ISM mfg PMI 3m change is the top driver; services
+    # activity tested mean-reverting and was left off) and GDPNow. From the sweep,
+    # the free series that separate: durables and core capex orders, initial
+    # claims (falling -> turn up), CFNAI, retail sales. Copper, XLY/XLP,
+    # SPY, KRE/SPY and 2s10s did not -- dropped.
     "growth": [
-        ("Copper 30d %", "COPPER", "pct"),
-        ("XLY/XLP 30d %", ("XLY", "XLP"), "ratio_pct"),
-        ("SPY 30d %", "SPY", "pct"),
-        ("KRE/SPY 30d %", ("KRE", "SPY"), "ratio_pct"),
-        ("2s10s 30d chg", "T10Y2Y", "diff"),
+        ("ISM mfg PMI 3m chg", "ISM_MFG_PMI", "diff@3"),
+        ("ISM mfg PMI (level)", "ISM_MFG_PMI", "level"),
+        ("GDPNow (level)", "GDPNOW", "level"),
+        ("Durables 3m %", "DGORDER", "pct@3"),
+        ("Core capex orders 3m %", "NEWORDER", "pct@3"),
+        ("Claims 13w %", "ICSA", "pct@13"),
+        ("CFNAI (level)", "CFNAI", "level"),
+        ("Retail sales y/y %", "RSXFS", "yoy_pct"),
+        ("Ind. production 3m %", "INDPRO", "pct@3"),
     ],
     # Liquidity per the user's framework (2026-09-17): the Fed sets rates on
     # its dual mandate (prices, employment); the front end of the curve is

@@ -14,13 +14,14 @@ const TD = "px-2 py-1 text-[0.74rem]";
 function kindOf(name: string): string {
   if (/\(level\)|\(k\)|y\/y|- Fed target/.test(name)) return "level";
   if (/13w/.test(name)) return "13w chg";
+  if (/3m %|3m chg/.test(name)) return "3m chg";
   if (/m\/m/.test(name)) return "vs last print";
   if (/30d/.test(name)) return "30d chg";
   if (/regime/i.test(name)) return "30d pattern";
   return "";
 }
 function shortName(name: string): string {
-  return name.replace(/ 30d.*| 13w.*| \(level\)| \(k\)| m\/m.*| - Fed target/, "").replace("Curve regime", "Curve");
+  return name.replace(/ 30d.*| 13w.*| 3m %| 3m chg| \(level\)| \(k\)| m\/m.*| - Fed target/, "").replace("Curve regime", "Curve");
 }
 function fmt(v: number | null | undefined, name: string): string {
   if (v === null || v === undefined) return "—";
