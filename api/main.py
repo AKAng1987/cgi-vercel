@@ -12,6 +12,7 @@ import cache
 import dashboard_data
 import macro_data
 import markov_data
+import series_write
 import signals_data
 import watchlists as watchlists_data
 
@@ -134,6 +135,18 @@ def signals(limit: Optional[int] = None):
 @app.get("/api/markov", dependencies=[Depends(require_bearer_token)])
 def markov():
     return markov_data.build_markov_response()
+
+
+@app.get("/api/series")
+def series_describe():
+    """Public: which manually-loaded series exist and their last stored date."""
+    return series_write.describe()
+
+
+@app.post("/api/series/{symbol}")
+def series_append(symbol: str, body: dict):
+    """Public but append-only, whitelisted and range-checked -- see series_write.py."""
+    return series_write.append(symbol, body.get("rows"))
 
 
 @app.get("/api/watchlists")
