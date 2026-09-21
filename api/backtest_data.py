@@ -134,12 +134,54 @@ def trend_bucket(o: dict) -> Optional[str]:
     return "neutral"
 
 
+# ── entered-from (path dependence) ──────────────────────────────────────
+# An occurrence of C3G3 starts when one axis flips into it; the regime just
+# before the start date says which (C2G3 -> compass flipped, C3G2 -> grid).
+# Model-history is small and read once per process; the (compass, grid)
+# pair on the day before start_date is the "entered from" combo.
+
+_combo_timeline: list[tuple[str, str]] | None = None  # (date, "CxGy") on every day either model has a row
+
+
+def _timeline() -> list[tuple[str, str]]:
+    global _combo_timeline
+    if _combo_timeline is None:
+        import bisect
+        import markov_data as md
+        c_rows, g_rows = md._load_model("compass_US"), md._load_model("grid_US")
+        c_d, g_d = [d for d, _ in c_rows], [d for d, _ in g_rows]
+        out = []
+        for d in sorted(set(c_d) | set(g_d)):
+            i, j = bisect.bisect_right(c_d, d) - 1, bisect.bisect_right(g_d, d) - 1
+            if i >= 0 and j >= 0:
+                out.append((d, f"C{c_rows[i][1]}G{g_rows[j][1]}"))
+        _combo_timeline = out
+    return _combo_timeline
+
+
+def entered_from(o: dict, combo: Optional[str] = None) -> Optional[str]:
+    """The last combo that differs from this occurrence's combo, looking back
+    from its start date. Occurrences can start a day or two after the
+    actual flip (ticker data gaps), so "the day before" is not enough."""
+    import bisect
+    tl = _timeline()
+    dates = [d for d, _ in tl]
+    i = bisect.bisect_right(dates, o["start_date"]) - 1
+    if i < 0:
+        return None
+    here = combo or tl[i][1]
+    while i >= 0 and tl[i][1] == here:
+        i -= 1
+    return tl[i][1] if i >= 0 else None
+
+
 def build_table_response(
     compass_q: int,
     grid_q: int,
     min_occ: int = 5,
     lookback: Optional[str] = None,
     trend: Optional[str] = None,
+    from_combo: Optional[str] = None,
 ) -> dict:
     """Read the single blob once and return the aggregated per-ticker
     stats table for one (compass_q, grid_q) combo, sorted by Edge
@@ -166,12 +208,28 @@ def build_table_response(
     combo_key = _combo_key(grid_q, compass_q)
     rows = []
 
+    # Which prior regimes this combo was entered from, counted over distinct
+    # occurrence start dates (the same regime window appears under every
+    # ticker) -- feeds the "entered from" control.
+    from_counts: dict[str, int] = {}
+    seen_starts: set[str] = set()
+    for entry in blob["tickers"].values():
+        for o in entry["combos"].get(combo_key, []):
+            if o["start_date"] in seen_starts:
+                continue
+            seen_starts.add(o["start_date"])
+            f = entered_from(o, f"C{compass_q}G{grid_q}")
+            if f:
+                from_counts[f] = from_counts.get(f, 0) + 1
+
     for sym, entry in blob["tickers"].items():
         occ = entry["combos"].get(combo_key, [])
         if cutoff:
             occ = [o for o in occ if o["start_date"] >= cutoff]
         if trend and trend != "all":
             occ = [o for o in occ if trend_bucket(o) == trend]
+        if from_combo and from_combo != "all":
+            occ = [o for o in occ if entered_from(o, f"C{compass_q}G{grid_q}") == from_combo]
         stats = compute_stats(occ)
         if stats is None or stats["count"] < min_occ:
             continue
@@ -196,6 +254,8 @@ def build_table_response(
         "min_occ": min_occ,
         "lookback": lookback or "all",
         "trend": trend or "all",
+        "from_combo": from_combo or "all",
+        "from_counts": dict(sorted(from_counts.items(), key=lambda kv: -kv[1])),
         "rows": rows,
     }
 

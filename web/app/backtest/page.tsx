@@ -64,10 +64,13 @@ export default async function BacktestPage({
   }
   const minOcc = parseMinOcc(sp.min_occ);
   const lookback = parseLookback(sp.lookback);
+  const fromRaw = typeof sp.from === "string" ? sp.from : "all";
+  const fromCombo = /^C[1-4]G[1-4]$/.test(fromRaw) ? fromRaw : "all";
 
   const qs = new URLSearchParams({
     min_occ: String(minOcc),
     lookback,
+    from_combo: fromCombo,
   });
   const data = await apiFetch<BacktestTableResponse>(
     `/api/backtest/${compassQ}/${gridQ}?${qs}`
@@ -106,6 +109,8 @@ export default async function BacktestPage({
         gridQ={gridQ}
         minOcc={minOcc}
         lookback={lookback}
+        fromCombo={fromCombo}
+        fromCounts={data.from_counts ?? {}}
       />
 
       <div className="mb-3 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
@@ -113,7 +118,7 @@ export default async function BacktestPage({
         <span className="font-medium text-slate-100">
           {COMPASS_Q_LABELS[compassQ]} × {GRID_Q_LABELS[gridQ]}
         </span>{" "}
-        (C{compassQ}×G{gridQ}) has {data.rows.length}{" "}
+        (C{compassQ}×G{gridQ}{fromCombo !== "all" && <span className="text-slate-400">, entered from {fromCombo}</span>}) has {data.rows.length}{" "}
         {data.rows.length === 1 ? "ticker" : "tickers"} meeting the min-occurrences
         threshold ({minOcc}).
         {data.last_refreshed_at && (

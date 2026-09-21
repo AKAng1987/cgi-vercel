@@ -66,6 +66,8 @@ export interface BacktestTableResponse {
   grid_q: number;
   min_occ: number;
   lookback: string;
+  from_combo?: string;
+  from_counts?: Record<string, number>; // "C2G3" -> distinct regime windows entered from there
   rows: BacktestRow[];
   error?: string;
 }

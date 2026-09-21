@@ -16,11 +16,15 @@ export function BacktestClient({
   gridQ,
   minOcc,
   lookback,
+  fromCombo,
+  fromCounts,
 }: {
   compassQ: number;
   gridQ: number;
   minOcc: number;
   lookback: string;
+  fromCombo: string;
+  fromCounts: Record<string, number>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,7 +40,7 @@ export function BacktestClient({
 
   return (
     <div
-      className={`mb-4 grid grid-cols-1 gap-3 rounded border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-4 ${
+      className={`mb-4 grid grid-cols-1 gap-3 rounded border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-5 ${
         isPending ? "opacity-60" : ""
       }`}
     >
@@ -93,6 +97,22 @@ export function BacktestClient({
           <option value="all">All history</option>
           <option value="10y">Last 10 years</option>
           <option value="5y">Last 5 years</option>
+        </select>
+      </label>
+
+      <label className="flex flex-col text-xs text-slate-400" title="Path dependence: only regime windows that were entered from this prior regime">
+        Entered from
+        <select
+          value={fromCombo}
+          onChange={(e) => updateParam("from", e.target.value)}
+          className="mt-1 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+        >
+          <option value="all">Any prior regime</option>
+          {Object.entries(fromCounts).map(([combo, n]) => (
+            <option key={combo} value={combo}>
+              {combo} ({n} {n === 1 ? "window" : "windows"})
+            </option>
+          ))}
         </select>
       </label>
     </div>

@@ -108,14 +108,18 @@ def backtest_table(
     min_occ: int = 5,
     lookback: Optional[str] = None,
     trend: Optional[str] = None,
+    from_combo: Optional[str] = None,
 ):
     if compass_q not in (1, 2, 3, 4) or grid_q not in (1, 2, 3, 4):
         raise HTTPException(status_code=400, detail="compass_q and grid_q must each be 1-4")
+    if from_combo not in (None, "all") and not (len(from_combo) == 4 and from_combo[0] == "C" and from_combo[2] == "G"
+                                                 and from_combo[1] in "1234" and from_combo[3] in "1234"):
+        raise HTTPException(status_code=400, detail="from_combo must look like C2G3 or all")
     if lookback not in (None, "all", "10y", "5y"):
         raise HTTPException(status_code=400, detail="lookback must be one of: all, 10y, 5y")
     if trend not in (None, *backtest_data.TREND_BUCKETS):
         raise HTTPException(status_code=400, detail="trend must be one of: all, extended, neutral, oversold")
-    return backtest_data.build_table_response(compass_q, grid_q, min_occ=min_occ, lookback=lookback, trend=trend)
+    return backtest_data.build_table_response(compass_q, grid_q, min_occ=min_occ, lookback=lookback, trend=trend, from_combo=from_combo)
 
 
 @app.get("/api/backtest/{compass_q}/{grid_q}/occurrences", dependencies=[Depends(require_bearer_token)])
