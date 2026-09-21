@@ -136,6 +136,9 @@ def markov():
     return markov_data.build_markov_response()
 
 
-@app.get("/api/watchlists", dependencies=[Depends(require_bearer_token)])
+@app.get("/api/watchlists")
 def watchlists():
+    """Public, read-only: ticker lists per regime for the TradingView cloud
+    routine. Nothing sensitive, so no bearer -- the routine runs in an
+    environment that cannot hold secrets."""
     return cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)
