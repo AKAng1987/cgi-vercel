@@ -35,7 +35,24 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
          "XLF", "KBE", "KRE", "KIE", "IAI", "XLV", "XHE",
          "IYT", "JETS", "BLOK", "SOCL", "SOXX", "ROBO", "SKYY",
          "FDN", "HACK", "CIBR", "KWEB", "MJ",
-         "ARKK", "ARKG", "ARKW", "ARKF", "ARKQ", "IZRL"],
+         "ARKK", "ARKG", "ARKW", "ARKF", "ARKQ", "IZRL",
+         # 2026-09-23: onboarded-but-unwired ETFs brought onto LIVE (and so
+         # into the backtest universe). Tested first -- none is redundant
+         # with XLK: the highest correlation of 20d relative strength vs
+         # XLK's own is SMH at 0.45, WCLD/SOCL/ROBO ~0.15, and IBB/ITA/
+         # XRT/VNQ/KRE are negative. MAGS closes the gap that missed the
+         # Magnificent-7 breakout; FNGU and UVXY deliberately left out
+         # (leveraged, their multi-month returns are compounding drag).
+         "SMH", "MAGS", "AIQ", "WCLD",            # semis / AI / cloud
+         "IBB", "IHI", "IHE", "IYH", "CNCR",      # healthcare depth
+         "ITA", "XAR",                            # aerospace & defense
+         "VNQ", "MORT",                           # real estate
+         "XRT", "IBUY",                           # retail
+         "KCE", "KBWP", "PSP",                    # capital markets, insurance, PE
+         "ESPO", "BJK", "VICE",                   # gaming
+         "IDRV", "KARS", "BATT",                  # EV and batteries
+         "GRID", "FAN", "PBD", "NLR", "EVX",      # grid, wind, clean, nuclear, environmental
+         "SEA", "IGF"],                           # shipping; global infrastructure
         "SPX",
     )),
     ("US INTEREST RATES", (["US03MY", "US01Y", "US02Y", "US05Y", "US10Y", "US20Y", "US30Y", "MOVE"], None)),
@@ -44,7 +61,14 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     ("RATES", (["DFEDTARU", "FEDFUNDS", "CPIAUCSL", "GDP", "DRTSCILM"], None)),
     ("COMMODITIES METALS", (
         ["DBC", "USO", "UNG", "GLD", "GDX", "GDXJ", "SLV", "SIL",
-         "JJC", "CPER", "JJN", "WOOD", "SLX", "URA"],
+         "JJC", "CPER", "JJN", "WOOD", "SLX", "URA", "COPX",
+         # energy value chain -- the split the user's own watchlist lacks:
+         # upstream E&P (IEO), oilfield services (OIH), gas producers (FCG),
+         # midstream (MLPX), refiners (CRAK). XOP/XLE already cover E&P and
+         # integrated. Refiners matter separately: crack spreads widen when
+         # crude falls, so CRAK trades opposite IEO in exactly the regimes
+         # that matter.
+         "IEO", "OIH", "FCG", "MLPX", "CRAK"],
         "USCI",
     )),
     ("COMMODITIES CONT.", (
@@ -54,7 +78,7 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     )),
     ("AGRICULTURAL", (["DBA", "WEAT", "SOYB", "CORN", "RICE", "CANE", "COTTON"], "DBA")),
     ("COUNTRY ETF", (
-        ["KWEB", "FXI", "EWJ", "EWZ", "EWT", "EWG", "EWH", "EWI",
+        ["EWQ", "KWEB", "FXI", "EWJ", "EWZ", "EWT", "EWG", "EWH", "EWI",
          "EWW", "EWU", "PIN", "IDX", "VNM", "EWM", "EIDO", "EPHE",
          "EWY", "EWA", "EWC", "EWS", "EWP", "EWL", "EZA", "INDA"],
         "SPX",
