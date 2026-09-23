@@ -64,7 +64,14 @@ DRIVERS: dict[str, list[tuple]] = {
     # earnings, Michigan expectations did not separate -- dropped. ISM prices
     # paid (mfg level, services m/m) and USCI added 2026-09-19 from the TradingView
     # pull; Baltic Dry tested 5pp -- parked for the logistics tab.
+    # 2026-09-23: TradingView's MCP started refusing the ECONOMICS: group
+    # (charts still work -- their bug, reported), so the ISM rows freeze at
+    # their loaded history. Empire State prices paid (FRED, free, prints the
+    # 15th -- two weeks BEFORE ISM services) tested at the same 26pp spread
+    # and is the live read; ISM stays for context and resumes if they fix it.
     "inflation": [
+        ("Empire prices paid m/m", "PPCDISA066MSFRBNY", "mom_diff"),
+        ("Empire prices paid 3m chg", "PPCDISA066MSFRBNY", "diff@3"),
         ("ISM svc prices m/m", "ISM_SVC_PRICES", "mom_diff"),
         ("ISM mfg prices (level)", "ISM_MFG_PRICES", "level"),
         ("WTI 3m %", "DCOILWTICO", "pct@63"),
@@ -80,13 +87,18 @@ DRIVERS: dict[str, list[tuple]] = {
     ],
     # Growth per the user's framework (2026-09-19): ISM services and
     # manufacturing (ISM mfg PMI 3m change is the top driver; services
-    # activity tested mean-reverting and was left off) and GDPNow. From the sweep,
+    # activity is mean-reverting -- kept as context, reads INVERTED: high
+    # services activity has gone with FEWER turn-ups, 40/44/32) and GDPNow.
+    # Philly Fed future activity (FRED, free, 1968->) added 2026-09-23: 22pp,
+    # and unlike ISM it keeps updating. From the sweep,
     # the free series that separate: durables and core capex orders, initial
     # claims (falling -> turn up), CFNAI, retail sales. Copper, XLY/XLP,
     # SPY, KRE/SPY and 2s10s did not -- dropped.
     "growth": [
+        ("Philly future activity", "GAFDFSA066MSFRBPHI", "level"),
         ("ISM mfg PMI 3m chg", "ISM_MFG_PMI", "diff@3"),
         ("ISM mfg PMI (level)", "ISM_MFG_PMI", "level"),
+        ("ISM svc activity (level)", "ISM_SVC_ACTIVITY", "level"),
         ("GDPNow (level)", "GDPNOW", "level"),
         ("Durables 3m %", "DGORDER", "pct@3"),
         ("Core capex orders 3m %", "NEWORDER", "pct@3"),
