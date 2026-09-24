@@ -291,3 +291,48 @@ export interface BacktestOccurrencesResponse {
   occurrences: BacktestOccurrence[];
   error?: string;
 }
+
+export interface StandingTheme {
+  name: string;
+  since: string;
+  horizon: string;
+  review_on: string;
+  thesis: string;
+  expressions: string[];
+  exit_rule?: string | null;
+  days_to_review: number | null;
+}
+
+export interface ThemeLeg {
+  symbol: string;
+  status: "running" | "no active run" | "insufficient history" | "not in price-history";
+  onset?: string;
+  age_days?: number;
+  rs_gain_pct?: number;
+  price_gain_pct?: number;
+  persistence?: number;
+  rs_vs_trend_pct?: number;
+  last_above?: string | null;
+  n_days?: number;
+}
+
+export interface ThemeRow {
+  theme: string;
+  legs: ThemeLeg[];
+  n_running: number;
+  n_legs: number;
+  onset: string | null;
+  age_days: number | null;
+  lead_symbol: string | null;
+  stage: "emerging" | "established" | "mature" | null;
+}
+
+export interface ThemesResponse {
+  as_of: string | null;
+  benchmark: string;
+  method: string;
+  note: string;
+  standing: StandingTheme[];
+  themes: ThemeRow[];
+  generated_at: string;
+}

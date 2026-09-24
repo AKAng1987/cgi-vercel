@@ -70,6 +70,36 @@ THEMES: dict[str, list[str]] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Layer 1: standing themes. Edited by hand, deliberately -- this is the slow
+# layer whose whole purpose is NOT to change when the regime rotates. Review
+# monthly against the detector below; promote or drop, then hold.
+STANDING: list[dict] = [
+    # {
+    #   "name": "Hyperscaler capex",
+    #   "since": "2026-09-24",
+    #   "horizon": "12 months",
+    #   "review_on": "2026-10-24",
+    #   "thesis": "...",
+    #   "expressions": ["SMH", "GRID", "XLU"],
+    #   "exit_rule": "RS below its 200d trend for 6 consecutive weeks",
+    # },
+]
+
+
+def _standing() -> list[dict]:
+    today = dt.date.today()
+    out = []
+    for t in STANDING:
+        d = dict(t)
+        try:
+            d["days_to_review"] = (dt.date.fromisoformat(t["review_on"]) - today).days
+        except Exception:
+            d["days_to_review"] = None
+        out.append(d)
+    return out
+
+
 def _ema(vals: list[float], n: int) -> list[float]:
     k = 2.0 / (n + 1)
     out = [vals[0]]
@@ -158,6 +188,7 @@ def build_themes_response() -> dict:
                    f"from which RS stayed above trend on >= {int(PERSISTENCE * 100)}% of days since."),
         "note": ("Discovery only. Promotion to a standing theme is a monthly human decision; "
                  "once promoted a theme is held for its horizon rather than re-decided daily."),
+        "standing": _standing(),
         "themes": out,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
     }

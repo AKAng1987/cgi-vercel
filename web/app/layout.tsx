@@ -17,6 +17,9 @@ export default function RootLayout({
           <a href="/" className="mr-4 text-slate-300 hover:text-slate-100">
             LIVE
           </a>
+          <a href="/tape" className="mr-4 text-slate-300 hover:text-slate-100">
+            TAPE
+          </a>
           <a href="/macro" className="mr-4 text-slate-300 hover:text-slate-100">
             MACRO
           </a>
