@@ -445,3 +445,21 @@ export interface CotResponse {
   caveat: string;
   generated_at: string;
 }
+
+export interface PolicyCandidate {
+  country: string;
+  source: string;
+  type: string;
+  announced: string | null;
+  title: string;
+  link: string;
+}
+
+export interface PolicyWatchResponse {
+  as_of: string;
+  window_days: number;
+  candidates: PolicyCandidate[];
+  no_feed: { country: string; source: string; reason: string }[];
+  errors: { country: string; source: string; error: string }[];
+  note: string;
+}

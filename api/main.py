@@ -14,6 +14,7 @@ import macro_data
 import markov_data
 import series_write
 import cot_data
+import policy_watch
 import notes_data
 import technicals_data
 import themes_data
@@ -160,6 +161,11 @@ def series_append(symbol: str, body: dict):
 @app.get("/api/cot", dependencies=[Depends(require_bearer_token)])
 def cot():
     return cache.get_or_fetch("cot", cot_data.build_cot_response)
+
+
+@app.get("/api/policy-watch", dependencies=[Depends(require_bearer_token)])
+def policy_watch_endpoint(days: int = 45):
+    return cache.get_or_fetch("policy_watch", lambda: policy_watch.build_policy_watch(days))
 
 
 @app.get("/api/notes", dependencies=[Depends(require_bearer_token)])
