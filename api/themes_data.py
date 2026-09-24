@@ -36,6 +36,14 @@ TREND_DAYS = 200
 PERSISTENCE = 0.80     # share of days since onset that RS must be above trend
 MIN_HISTORY = 400
 
+# Megatrends are structurally different from rotations: multi-year secular
+# build-outs whose runs are not drawn from the same distribution as a sector
+# rotation. The survival curve below is measured over rotational runs, so
+# applying it to a megatrend reads "0% runway" when what it actually means is
+# "this is the longest run in the sample" -- true, but not a warning. For
+# these the runway figure is reported as context, not as a countdown.
+MEGATRENDS = {"AI", "semis / memory"}
+
 # Theme -> proxies, ordered so the leading indicator comes first where the
 # sequence matters (miners lead the metal: COPX turned 68 days before CPER,
 # GDX is running while GLD is not -- that gap is itself the signal).
@@ -230,10 +238,11 @@ def build_themes_response() -> dict:
             "onset": lead["onset"] if lead else None,
             "age_days": lead["age_days"] if lead else None,
             "lead_symbol": lead["symbol"] if lead else None,
+            "class": "megatrend" if theme in MEGATRENDS else "rotation",
             "stage": None if not lead else _stage(lead["age_days"]),
             "survival_pct": None if not lead else _survival(lead["age_days"]),
         })
-    out.sort(key=lambda t: (t["age_days"] is None, t["age_days"] or 0))
+    out.sort(key=lambda t: (t["class"] != "megatrend", t["age_days"] is None, t["age_days"] or 0))
     return {
         "as_of": max(bench) if bench else None,
         "benchmark": BENCH,

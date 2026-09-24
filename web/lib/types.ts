@@ -319,6 +319,7 @@ export interface ThemeLeg {
 
 export interface ThemeRow {
   theme: string;
+  class: "megatrend" | "rotation";
   legs: ThemeLeg[];
   n_running: number;
   n_legs: number;

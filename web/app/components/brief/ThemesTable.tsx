@@ -16,7 +16,8 @@ function pct(v: number | null | undefined) {
  * lagging one does not is early (miners before the metal).
  */
 export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats?: RunStats }) {
-  const running = themes.filter((t) => t.stage);
+  const mega = themes.filter((t) => t.stage && t.class === "megatrend");
+  const running = themes.filter((t) => t.stage && t.class !== "megatrend");
   const dormant = themes.filter((t) => !t.stage);
 
   return (
@@ -42,9 +43,29 @@ export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats
           </tr>
         </thead>
         <tbody>
-          {running.map((t) => {
+          {mega.length > 0 && (
+            <tr>
+              <td colSpan={7} className="px-2 pb-1 pt-2 text-[0.6rem] uppercase tracking-[2px] text-slate-500">
+                megatrend{" "}
+                <span className="normal-case tracking-normal text-slate-600">
+                  — secular, not rotational; runway is context here, not a countdown
+                </span>
+              </td>
+            </tr>
+          )}
+          {[...mega, ...(mega.length ? [null] : []), ...running].map((t, i) => {
+            if (t === null) {
+              return (
+                <tr key="hdr-rot">
+                  <td colSpan={7} className="px-2 pb-1 pt-3 text-[0.6rem] uppercase tracking-[2px] text-slate-500">
+                    rotation
+                  </td>
+                </tr>
+              );
+            }
             const lead = t.legs.find((l) => l.symbol === t.lead_symbol);
             const partial = t.n_running < t.n_legs;
+            const isMega = t.class === "megatrend";
             return (
               <tr key={t.theme} className="border-t border-slate-800/60 text-[0.76rem]">
                 <td className="px-2 py-1 font-medium text-slate-100">{t.theme}</td>
@@ -55,8 +76,10 @@ export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats
                 </td>
                 <td className="px-2 py-1 text-slate-400">{t.onset}</td>
                 <td className="px-2 py-1 text-right text-slate-300">{t.age_days}d</td>
-                <td className={`px-2 py-1 text-right ${(t.survival_pct ?? 0) >= 0.5 ? "text-slate-200" : (t.survival_pct ?? 0) >= 0.2 ? "text-slate-400" : "text-slate-600"}`}>
+                <td className={`px-2 py-1 text-right ${isMega ? "text-slate-600" : (t.survival_pct ?? 0) >= 0.5 ? "text-slate-200" : (t.survival_pct ?? 0) >= 0.2 ? "text-slate-400" : "text-slate-600"}`}
+                    title={isMega ? "measured over rotational runs; a secular trend is not drawn from that distribution" : undefined}>
                   {t.survival_pct === null ? "—" : `${Math.round(t.survival_pct * 100)}%`}
+                  {isMega && <span className="ml-0.5 text-[0.6rem] text-slate-700">n/a</span>}
                 </td>
                 <td className="px-2 py-1 text-right font-semibold text-slate-100">{pct(lead?.rs_gain_pct)}</td>
                 <td className="px-2 py-1 text-right text-slate-300">{pct(lead?.price_gain_pct)}</td>
