@@ -329,8 +329,18 @@ _LOOKBACK = {"pct_1d": 1, "pct_5d": 5, "pct_7d": 7, "pct_1m": 21, "pct_3m": 63,
              "pct_6m": 126, "pct_1y": 252}
 
 
+_ddb_shared = None
+
+
+def _ddb_client():
+    global _ddb_shared
+    if _ddb_shared is None:
+        _ddb_shared = boto3.client("dynamodb", region_name=REGION)
+    return _ddb_shared
+
+
 def _recent_closes(symbol: str, limit: int = 300) -> list[tuple[str, float]]:
-    ddb = boto3.client("dynamodb", region_name=REGION)
+    ddb = _ddb_client()
     rows: list[tuple[str, float]] = []
     resp = ddb.query(
         TableName=_PRICE_TABLE,
@@ -409,16 +419,38 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
             grid_stale_note = "Quadrant from live model-history fallback; not present in today's report."
 
     hud_by_symbol = {r["symbol"]: r for r in hud_records}
+
+    # Tickers the workbook does not carry are computed from price-history.
+    # Done in parallel and cached: doing it serially added ~25s to every
+    # request, which is what made LIVE and TAPE take half a minute.
+    missing = [(t, g) for g, (tk, _) in HUD_GROUPS.items() for t in tk if t not in hud_by_symbol]
+    extra_rows: dict[str, dict] = {}
+    if missing:
+        import cache as _cache
+
+        def _compute() -> dict:
+            from concurrent.futures import ThreadPoolExecutor
+            out: dict[str, dict] = {}
+            with ThreadPoolExecutor(max_workers=12) as ex:
+                for sym, row in zip([m[0] for m in missing],
+                                    ex.map(lambda m: hud_from_price_history(m[0], m[1]), missing)):
+                    if row:
+                        out[sym] = row
+            return out
+
+        try:
+            extra_rows = _cache.get_or_fetch("hud_extra", _compute)
+        except Exception:
+            extra_rows = _compute()
+
     hud_groups = []
     for group_name, (tickers, rs_denom) in HUD_GROUPS.items():
         group_tickers = []
         for t in tickers:
             if t in hud_by_symbol:
                 group_tickers.append(hud_by_symbol[t])
-                continue
-            row = hud_from_price_history(t, group_name)
-            if row:
-                group_tickers.append(row)
+            elif t in extra_rows:
+                group_tickers.append(extra_rows[t])
         hud_groups.append({
             "name": group_name,
             "default_rs_denom": rs_denom,
