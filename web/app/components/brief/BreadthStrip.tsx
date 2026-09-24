@@ -62,6 +62,9 @@ export function BreadthStrip({ t }: { t: TechnicalsResponse }) {
         <span><span className="text-blue-400">—</span> 8 EMA</span>
         <span><span className="text-violet-400">—</span> 20 EMA</span>
         <span>{n.series.length} sessions</span>
+        <span><span className="text-emerald-900">▉</span> 3d net highs</span>
+        <span><span className="text-red-950">▉</span> 3d net lows</span>
+        <span>unshaded = chop</span>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-4">

@@ -373,7 +373,7 @@ export interface TechnicalsResponse {
     state: string;
     cross_signal: string | null;
     last_cross: { date: string; direction: "up" | "down"; days_ago: number } | null;
-    series: { date: string; net: number; fast: number; slow: number }[];
+    series: { date: string; net: number; fast: number; slow: number; colour: "green" | "red" | "white" }[];
   };
   gauges: BreadthGauge[];
   oversold: string[];

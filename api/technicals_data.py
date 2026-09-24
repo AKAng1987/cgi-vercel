@@ -161,8 +161,14 @@ def build_technicals_response() -> dict:
             "state": state,
             "cross_signal": cross_signal,
             "last_cross": {"date": dates[cross_i], "direction": cross_dir, "days_ago": days_since} if cross_i else None,
+            # per-day colour so the chart can shade the background the way the
+            # indicator does: green/red bands where three consecutive days ran
+            # one way, white everywhere else (the chop the user reads off)
             "series": [{"date": dates[j], "net": round(net[j], 1),
-                        "fast": round(f[j], 1), "slow": round(s[j], 1)}
+                        "fast": round(f[j], 1), "slow": round(s[j], 1),
+                        "colour": ("green" if j >= CONSEC - 1 and all(net[k] > 0 for k in range(j - CONSEC + 1, j + 1))
+                                   else "red" if j >= CONSEC - 1 and all(net[k] < 0 for k in range(j - CONSEC + 1, j + 1))
+                                   else "white")}
                        for j in range(max(0, len(dates) - 120), len(dates))],
         },
         "gauges": gauges,

@@ -26,6 +26,18 @@ export function NetHighsChart({ series }: { series: TechnicalsResponse["net_new_
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="net new highs">
+      {/* background bands: green where three straight days of net highs,
+          red where three straight days of net lows, white = chop */}
+      {series.map((p, i) => (
+        <rect
+          key={`bg-${p.date}`}
+          x={x(i) - barW / 2 - 0.3}
+          y={0}
+          width={barW + 0.6}
+          height={H}
+          fill={p.colour === "green" ? "#052e16" : p.colour === "red" ? "#340d0d" : "transparent"}
+        />
+      ))}
       <line x1={0} x2={W} y1={zero} y2={zero} stroke="#475569" strokeWidth={1} />
       {series.map((p, i) => {
         const top = p.net >= 0 ? y(p.net) : zero;
