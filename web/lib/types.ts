@@ -362,13 +362,16 @@ export interface BreadthGauge {
 
 export interface TechnicalsResponse {
   as_of: string;
+  universe?: string;
   net_new_highs: {
     value: number;
     ema_fast: number;
     ema_slow: number;
     spread: number;
     colour: "red" | "white" | "green";
+    streak_days: number;
     state: string;
+    cross_signal: string | null;
     last_cross: { date: string; direction: "up" | "down"; days_ago: number } | null;
     series: { date: string; net: number; fast: number; slow: number }[];
   };

@@ -59,10 +59,25 @@ def _ema(vals: list[float], n: int) -> list[float]:
     return out
 
 
+# Nasdaq Composite, matching the user's "Net Highs/Lows v6" indicator, whose
+# published description defines it as the net number of Nasdaq Composite
+# stocks making 52-week highs or lows. Verified: HIGQ 37 - LOWQ 91 = -54,
+# the exact value on his chart. NYSE (HIGN/LOWN) is loaded too and gives a
+# different number -- that mismatch is what identified the universe.
+UNIVERSE = [("HIGQ", "LOWQ")]
+
+# The indicator's own shading rule: three consecutive days of net highs is a
+# healthy tape (increase exposure, green); three consecutive days of net lows
+# is unhealthy (reduce exposure, red); anything else is chop (white).
+CONSEC = 3
+
+
 def build_technicals_response() -> dict:
-    hi, lo = _load("HIGN"), _load("LOWN")
-    dates = sorted(set(hi) & set(lo))
-    net = [hi[d] - lo[d] for d in dates]
+    legs = [(_load(h), _load(l)) for h, l in UNIVERSE]
+    legs = [(h, l) for h, l in legs if h and l]
+    common = set.intersection(*[set(h) & set(l) for h, l in legs])
+    dates = sorted(common)
+    net = [sum(h[d] - l[d] for h, l in legs) for d in dates]
     f, s = _ema(net, FAST), _ema(net, SLOW)
     i = len(dates) - 1
 
@@ -74,24 +89,47 @@ def build_technicals_response() -> dict:
             break
     days_since = (dt.date.fromisoformat(dates[-1]) - dt.date.fromisoformat(dates[cross_i])).days if cross_i else None
 
-    # colour, in the user's language
-    colour = "red" if net[i] < 0 else "green"
-    spread = f[i] - s[i]
-    scale = max(abs(x) for x in net[-250:]) or 1.0
-    chop = abs(spread) / scale < 0.05
-    if chop:
-        colour = "white"
-
-    if colour == "red" and cross_dir == "up":
-        state = "risk-on window — net still negative but the 8 has crossed up from below"
-    elif cross_dir == "down" and not chop:
-        state = "crossed down from the top — chop starts here, take profits near this point"
-    elif colour == "white":
-        state = "chop — the EMAs have converged"
-    elif colour == "red":
-        state = "red — after a sell-off; the buying window, held in names stronger than the market"
+    # colour by the indicator's rule, not a threshold of my own
+    last = net[-CONSEC:]
+    if len(last) == CONSEC and all(v > 0 for v in last):
+        colour = "green"
+    elif len(last) == CONSEC and all(v < 0 for v in last):
+        colour = "red"
     else:
-        state = "green — participation broad"
+        colour = "white"
+    spread = f[i] - s[i]
+    # how long the current colour has held
+    streak = 1
+    sign = (net[i] > 0) - (net[i] < 0)
+    for j in range(len(net) - 2, -1, -1):
+        if ((net[j] > 0) - (net[j] < 0)) == sign and sign != 0:
+            streak += 1
+        else:
+            break
+
+    # Colour and cross are SEPARATE reads and both are always reported. A
+    # crossover down matters even while the tape is still green -- it is the
+    # earliest warning that chop is starting, which is where profits come off.
+    # A crossover up from below is a possible rate-of-change shift, and is
+    # strongest when it happens against bad news rather than good.
+    if colour == "green":
+        state = f"green — {streak}d of net highs, tape healthy, exposure can rise"
+    elif colour == "red":
+        state = f"red — {streak}d of net lows; after a sell-off this is the buying window, held in names stronger than the market"
+    else:
+        state = "chop — no three-day run either way"
+
+    cross_signal = None
+    if cross_dir:
+        fresh = days_since is not None and days_since <= 20
+        if cross_dir == "down":
+            cross_signal = ("8 crossed BELOW the 20"
+                            + (" — chop may be starting; this is where profits come off"
+                               if fresh else " — chop regime, still in force"))
+        else:
+            cross_signal = ("8 crossed ABOVE the 20"
+                            + (" — possible rate-of-change shift; strongest when it holds against bad news"
+                               if fresh else " — uptrend in the EMAs, still in force"))
 
     gauges = []
     for sym, label in GAUGES:
@@ -112,13 +150,16 @@ def build_technicals_response() -> dict:
     oversold = [g["symbol"] for g in gauges if g["zone"] == "oversold"]
     return {
         "as_of": dates[-1],
+        "universe": "Nasdaq Composite (HIGQ - LOWQ)",
         "net_new_highs": {
             "value": round(net[i], 1),
             "ema_fast": round(f[i], 1),
             "ema_slow": round(s[i], 1),
             "spread": round(spread, 1),
             "colour": colour,
+            "streak_days": streak,
             "state": state,
+            "cross_signal": cross_signal,
             "last_cross": {"date": dates[cross_i], "direction": cross_dir, "days_ago": days_since} if cross_i else None,
             "series": [{"date": dates[j], "net": round(net[j], 1),
                         "fast": round(f[j], 1), "slow": round(s[j], 1)}

@@ -1,4 +1,5 @@
 import { TechnicalsResponse } from "@/lib/types";
+import { NetHighsChart } from "./NetHighsChart";
 
 const COLOUR: Record<string, { dot: string; text: string; label: string }> = {
   red: { dot: "bg-red-500", text: "text-red-300", label: "RED" },
@@ -24,7 +25,7 @@ export function BreadthStrip({ t }: { t: TechnicalsResponse }) {
     <section className="mb-6 rounded border border-slate-800 bg-slate-900/50 p-3">
       <div className="mb-2 flex items-baseline gap-3">
         <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Breadth</div>
-        <div className="text-xs text-slate-500">net new highs is the primary · gauges confirm</div>
+        <div className="text-xs text-slate-500">net new highs is the primary · gauges confirm{t.universe ? ` · ${t.universe}` : ""}</div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -35,7 +36,7 @@ export function BreadthStrip({ t }: { t: TechnicalsResponse }) {
             net <span className="font-semibold text-slate-100">{n.value}</span>
           </span>
           <span className="text-[0.7rem] text-slate-500">
-            8ema {n.ema_fast} · 20ema {n.ema_slow}
+            8ema {n.ema_fast} · 20ema {n.ema_slow} · {n.streak_days}d streak
           </span>
         </div>
         {n.last_cross && (
@@ -50,6 +51,18 @@ export function BreadthStrip({ t }: { t: TechnicalsResponse }) {
       </div>
 
       <p className="mt-1.5 text-sm text-slate-200">{n.state}</p>
+      {n.cross_signal && (
+        <p className={`mt-0.5 text-sm ${n.last_cross?.direction === "down" ? "text-amber-300" : "text-emerald-300"}`}>
+          {n.cross_signal}
+        </p>
+      )}
+
+      <NetHighsChart series={n.series} />
+      <div className="mt-0.5 flex gap-4 text-[0.6rem] text-slate-600">
+        <span><span className="text-blue-400">—</span> 8 EMA</span>
+        <span><span className="text-violet-400">—</span> 20 EMA</span>
+        <span>{n.series.length} sessions</span>
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-4">
         {t.gauges.map((g) => (
@@ -73,7 +86,7 @@ export function BreadthStrip({ t }: { t: TechnicalsResponse }) {
       </div>
 
       <p className="mt-2 text-[0.65rem] leading-relaxed text-slate-600">
-        Red after a sell-off is the buying window — held in names stronger than the market. A cross
+        Green needs three straight days of net highs, red three straight days of net lows, anything else is chop. Red after a sell-off is the buying window — held in names stronger than the market. A cross
         down from the top starts chop, so take profits near it; a cross up from below while still red
         is where risk goes back on. {t.caveat}
       </p>
