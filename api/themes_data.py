@@ -75,15 +75,36 @@ THEMES: dict[str, list[str]] = {
 # layer whose whole purpose is NOT to change when the regime rotates. Review
 # monthly against the detector below; promote or drop, then hold.
 STANDING: list[dict] = [
-    # {
-    #   "name": "Hyperscaler capex",
-    #   "since": "2026-09-24",
-    #   "horizon": "12 months",
-    #   "review_on": "2026-10-24",
-    #   "thesis": "...",
-    #   "expressions": ["SMH", "GRID", "XLU"],
-    #   "exit_rule": "RS below its 200d trend for 6 consecutive weeks",
-    # },
+    {
+        "name": "Hyperscaler capex — the $1T build-out",
+        "since": "2026-09-24",
+        "horizon": "12 months",
+        "review_on": "2026-10-24",
+        "thesis": (
+            "The Magnificent 7 have committed on the order of $1 trillion to AI "
+            "infrastructure. The spend lands in chips and datacentres first, then "
+            "the power and cooling to run them, then the software and security "
+            "layers sold on top. Held for the capex cycle, not the quarter. "
+            "Caveat carried deliberately: the regime is C3 (liquidity tightening, "
+            "credit easing) and the holding period shortens with each further "
+            "hike -- rate rises compress the multiple on long-duration growth "
+            "even when the capex itself is unchanged. Oil is the live risk: it "
+            "remains tightly linked to inflation and therefore to the hiking "
+            "path, and a prolonged conflict would make that the dominant factor "
+            "over the theme."
+        ),
+        # Tracked proxies -- what CGI actually monitors (ETF-level by design).
+        "expressions": ["SMH", "WCLD", "SKYY", "CIBR", "GRID", "XLU"],
+        # Named equities are the user's expression list, not tracked series:
+        # onboarding individual stocks is unbounded scope and would sidetrack
+        # the ETF-level architecture.
+        "watchlist": ["AMD", "TWLO", "DDOG", "CRM", "PLTR", "PANW"],
+        "exit_rule": (
+            "Any of: lead proxy RS below its 200d trend for 6 consecutive weeks; "
+            "oil sustained higher driving CPI and a faster hiking path; or the "
+            "capex guidance itself cut at earnings."
+        ),
+    },
 ]
 
 

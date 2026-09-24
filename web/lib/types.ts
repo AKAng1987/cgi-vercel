@@ -299,6 +299,7 @@ export interface StandingTheme {
   review_on: string;
   thesis: string;
   expressions: string[];
+  watchlist?: string[];
   exit_rule?: string | null;
   days_to_review: number | null;
 }

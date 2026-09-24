@@ -62,8 +62,8 @@ export function ThemesTable({ themes }: { themes: ThemeRow[] }) {
                     .map((l) => l.symbol)
                     .join(" ")}
                   {partial && (
-                    <span className="ml-1 text-[0.62rem] text-[#FCD34D]" title="leading proxy is running while a lagging one is not — the early-cycle sequence">
-                      · {t.n_running}/{t.n_legs} — leaders only
+                    <span className="ml-1 text-[0.62rem] text-slate-500" title="some proxies in this theme are running and some are not — partial participation, not necessarily a lead/lag sequence">
+                      · {t.n_running}/{t.n_legs}
                     </span>
                   )}
                 </td>

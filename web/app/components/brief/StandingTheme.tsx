@@ -33,13 +33,26 @@ export function StandingTheme({ themes }: { themes: ST[] }) {
               </div>
             </div>
             <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.thesis}</p>
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-2 flex flex-wrap items-center gap-1">
+              <span className="mr-1 text-[0.62rem] uppercase tracking-wide text-slate-500">tracked</span>
               {t.expressions.map((e) => (
                 <span key={e} className="rounded bg-slate-800 px-2 py-0.5 text-[0.7rem] text-slate-300">
                   {e}
                 </span>
               ))}
             </div>
+            {t.watchlist && t.watchlist.length > 0 && (
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                <span className="mr-1 text-[0.62rem] uppercase tracking-wide text-slate-600" title="named in the thesis but not tracked by CGI — it stays ETF-level by design">
+                  named
+                </span>
+                {t.watchlist.map((e) => (
+                  <span key={e} className="rounded border border-slate-800 px-2 py-0.5 text-[0.7rem] text-slate-500">
+                    {e}
+                  </span>
+                ))}
+              </div>
+            )}
             {t.exit_rule && (
               <p className="mt-2 text-[0.7rem] text-slate-500">
                 <span className="text-slate-400">Exit:</span> {t.exit_rule}

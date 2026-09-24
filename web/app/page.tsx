@@ -1,5 +1,7 @@
 import { apiFetch } from "@/lib/api";
-import { ThemesResponse, SignalsResponse, BacktestTableResponse } from "@/lib/types";
+import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse } from "@/lib/types";
+import { RegimeCard } from "./components/RegimeCard";
+import { TradingViewChart } from "./components/TradingViewChart";
 import { StandingTheme } from "./components/brief/StandingTheme";
 import { ThemesTable } from "./components/brief/ThemesTable";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
@@ -12,9 +14,10 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals] = await Promise.all([
+  const [themes, signals, live] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
+    apiFetch<LiveResponse>("/api/live"),
   ]);
 
   const sig = signals.signals?.[0];
@@ -29,7 +32,9 @@ export default async function Live() {
       edge = null;
     }
   }
-  const top = (edge?.rows ?? []).filter((r) => r.edge !== null).slice(0, 12);
+  const ranked = (edge?.rows ?? []).filter((r) => r.edge !== null);
+  const top = ranked.slice(0, 20);
+  const worst = ranked.length > 20 ? ranked.slice(-10).reverse() : [];
 
   return (
     <main className="mx-auto max-w-6xl p-6">
@@ -49,6 +54,11 @@ export default async function Live() {
         </div>
       </div>
 
+      <section className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <RegimeCard kind="compass" data={live.compass} />
+        <RegimeCard kind="grid" data={live.grid} />
+      </section>
+
       <StandingTheme themes={themes.standing} />
       <ThemesTable themes={themes.themes} />
 
@@ -65,7 +75,8 @@ export default async function Live() {
               </a>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="mb-1 text-[0.62rem] uppercase tracking-wide text-slate-500">best 20</div>
+          <div className="mb-3 flex flex-wrap gap-2">
             {top.map((r) => (
               <div key={r.ticker} className="rounded border border-slate-800 bg-slate-900/60 px-2.5 py-1.5">
                 <div className="text-sm font-semibold text-slate-100">{r.ticker}</div>
@@ -75,8 +86,31 @@ export default async function Live() {
               </div>
             ))}
           </div>
+          {worst.length > 0 && (
+            <>
+              <div className="mb-1 text-[0.62rem] uppercase tracking-wide text-slate-500">worst 10</div>
+              <div className="flex flex-wrap gap-2">
+                {worst.map((r) => (
+                  <div key={r.ticker} className="rounded border border-slate-800/60 bg-slate-950/60 px-2.5 py-1.5">
+                    <div className="text-sm font-semibold text-slate-400">{r.ticker}</div>
+                    <div className="text-[0.65rem] text-slate-600">
+                      edge {r.edge!.toFixed(2)} · {Math.round(r.hit_rate * 100)}% · n={r.occurrences}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       )}
+
+      <section className="mb-6">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Chart</div>
+        <TradingViewChart symbol="SPY" />
+        <p className="mt-1 text-[0.65rem] text-slate-600">
+          Click any ticker on <a href="/tape" className="underline">TAPE</a> to chart it there.
+        </p>
+      </section>
 
       <p className="text-[0.68rem] leading-relaxed text-slate-600">
         The standing theme does not move when the regime rotates — that is the point. If the
