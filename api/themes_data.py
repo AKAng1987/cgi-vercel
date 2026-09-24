@@ -73,7 +73,14 @@ THEMES: dict[str, list[str]] = {
     "solar / clean": ["TAN", "ICLN", "FAN"],
     "crypto equities": ["BLOK", "BITO"],
     "China": ["KWEB", "FXI"],
-    "Japan": ["EWJ"],
+    # DXJ (yen-hedged) leads: EWJ is unhedged USD and hands the currency back,
+    # which is why the detector read Japan as 33 days old when Japan in yen had
+    # been strong for a year. Measured over the Takaichi window: Japan +13.8%
+    # in yen vs EWJ +5.3% in USD. The gap between the two legs IS the currency.
+    "Japan": ["DXJ", "EWJ"],
+    # Korea is the memory trade -- Samsung and SK Hynix are about half the
+    # index, so EWY is the cleanest liquid DRAM proxy available at ETF level.
+    "Korea / DRAM": ["EWY"],
     "agriculture": ["DBA", "CORN", "WEAT"],
 }
 
@@ -89,17 +96,23 @@ STANDING: list[dict] = [
         "horizon": "12 months",
         "review_on": "2026-10-24",
         "thesis": (
-            "The Magnificent 7 have committed on the order of $1 trillion to AI "
-            "infrastructure. The spend lands in chips and datacentres first, then "
-            "the power and cooling to run them, then the software and security "
-            "layers sold on top. Held for the capex cycle, not the quarter. "
+            "Mag 7 spending on the AI layer cake: energy, chips, infrastructure, "
+            "models, applications. Read the layers separately, because they are "
+            "not moving together. "
+            "APPLICATIONS are starting to emerge inside the software names -- CRM "
+            "and TWLO building on DDOG -- and this is the layer where a "
+            "fundamentals model is needed to tell real revenue from press release. "
+            "MODELS are about to become listable: SPCX is the first IPO, with "
+            "OpenAI and Anthropic expected to follow. "
+            "INFRASTRUCTURE (datacentre build-outs) appears to have slowed. "
+            "CHIPS are splitting -- AMD is still working while NVDA and others "
+            "have started to decelerate. "
+            "ENERGY on the utilities side has fallen over the last few months. "
+            "Held for the capex cycle, not the quarter. "
             "Caveat carried deliberately: the regime is C3 (liquidity tightening, "
             "credit easing) and the holding period shortens with each further "
             "hike -- rate rises compress the multiple on long-duration growth "
-            "even when the capex itself is unchanged. Oil is the live risk: it "
-            "remains tightly linked to inflation and therefore to the hiking "
-            "path, and a prolonged conflict would make that the dominant factor "
-            "over the theme."
+            "even when the capex itself is unchanged."
         ),
         # Tracked proxies -- what CGI actually monitors (ETF-level by design).
         "expressions": ["SMH", "WCLD", "SKYY", "CIBR", "GRID", "XLU"],
@@ -110,7 +123,31 @@ STANDING: list[dict] = [
         "exit_rule": (
             "Any of: lead proxy RS below its 200d trend for 6 consecutive weeks; "
             "oil sustained higher driving CPI and a faster hiking path; or the "
-            "capex guidance itself cut at earnings."
+            "capex guidance itself cut at earnings. Watch the layers separately -- "
+            "infrastructure slowing and utilities falling are already partial "
+            "breaks, not yet a thesis break."
+        ),
+    },
+    {
+        "name": "Energy pricing power — routes and shortage",
+        "since": "2026-09-24",
+        "horizon": "while the disruptions persist",
+        "review_on": "2026-10-24",
+        "thesis": (
+            "Two separate legs on the oil side. SHIPPING: additional trade routes "
+            "and Middle East disruption mean vessels are repositioned and voyages "
+            "lengthened, so BDI and SEA hold pricing power for as long as those "
+            "conditions run. PRODUCERS: XLE and XOP have pricing power through "
+            "shortage, which feeds directly back into inflation and therefore into "
+            "the hiking path -- making this theme the main risk to the capex theme "
+            "above rather than an independent bet. Event-driven and not repeatable: "
+            "this is narrative, held on the condition persisting, not a factor."
+        ),
+        "expressions": ["SEA", "XLE", "XOP", "IEO", "CRAK"],
+        "watchlist": ["BDI"],
+        "exit_rule": (
+            "Routes normalise or the conflict de-escalates; BDI rolls over; or "
+            "crude falls far enough that the inflation linkage stops mattering."
         ),
     },
 ]

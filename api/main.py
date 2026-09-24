@@ -13,6 +13,7 @@ import dashboard_data
 import macro_data
 import markov_data
 import series_write
+import technicals_data
 import themes_data
 import signals_data
 import watchlists as watchlists_data
@@ -152,6 +153,11 @@ def series_describe():
 def series_append(symbol: str, body: dict):
     """Public but append-only, whitelisted and range-checked -- see series_write.py."""
     return series_write.append(symbol, body.get("rows"))
+
+
+@app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
+def technicals():
+    return cache.get_or_fetch("technicals", technicals_data.build_technicals_response)
 
 
 @app.get("/api/themes", dependencies=[Depends(require_bearer_token)])

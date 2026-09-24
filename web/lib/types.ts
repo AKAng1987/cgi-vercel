@@ -349,3 +349,32 @@ export interface ThemesResponse {
   themes: ThemeRow[];
   generated_at: string;
 }
+
+export interface BreadthGauge {
+  symbol: string;
+  label: string;
+  as_of: string;
+  value: number;
+  change: number | null;
+  zone: "oversold" | "neutral" | "overbought";
+  days_below_30_of_60: number;
+}
+
+export interface TechnicalsResponse {
+  as_of: string;
+  net_new_highs: {
+    value: number;
+    ema_fast: number;
+    ema_slow: number;
+    spread: number;
+    colour: "red" | "white" | "green";
+    state: string;
+    last_cross: { date: string; direction: "up" | "down"; days_ago: number } | null;
+    series: { date: string; net: number; fast: number; slow: number }[];
+  };
+  gauges: BreadthGauge[];
+  oversold: string[];
+  confirmation: string;
+  caveat: string;
+  generated_at: string;
+}

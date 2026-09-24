@@ -1,7 +1,8 @@
 import { apiFetch } from "@/lib/api";
-import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse } from "@/lib/types";
+import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
+import { BreadthStrip } from "./components/brief/BreadthStrip";
 import { StandingTheme } from "./components/brief/StandingTheme";
 import { ThemesTable } from "./components/brief/ThemesTable";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
@@ -14,10 +15,11 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live] = await Promise.all([
+  const [themes, signals, live, tech] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
+    apiFetch<TechnicalsResponse>("/api/technicals").catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
@@ -58,6 +60,8 @@ export default async function Live() {
         <RegimeCard kind="compass" data={live.compass} />
         <RegimeCard kind="grid" data={live.grid} />
       </section>
+
+      {tech && <BreadthStrip t={tech} />}
 
       <StandingTheme themes={themes.standing} />
       <ThemesTable themes={themes.themes} runStats={themes.run_stats} />

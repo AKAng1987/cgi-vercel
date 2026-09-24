@@ -41,6 +41,7 @@ TTL_HOURS: dict[str, float] = {
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d
     "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
+    "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
     "watchlists": 24.0,  # TradingView list contents for the cloud routine
 }
@@ -65,6 +66,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
+    "technicals": 1,
     "themes": 2,  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "watchlists": 1,
     "axis_drivers": 10,  # 2026-09-23: Empire prices paid, Philly future activity (free FRED; ISM frozen by TradingView MCP bug), ISM svc activity back as inverted context. v9 2026-09-19: inflation + growth lists from user framework + sweep. v8 2026-09-18: back to DFEDTARU (v7 tried DFF, user rejected). v6 2026-09-17: calendar-aware yoy (CPI 3.33 not 3.73); credit: 10-2 back, 10-5, HYG/LQD, curve regime categorical; SPY out; Challenger m/m out
