@@ -325,7 +325,17 @@ export interface ThemeRow {
   onset: string | null;
   age_days: number | null;
   lead_symbol: string | null;
-  stage: "emerging" | "established" | "mature" | null;
+  stage: "early" | "mid" | "late" | null;
+  survival_pct: number | null;
+}
+
+export interface RunStats {
+  n_runs: number;
+  median_days: number;
+  mean_days: number;
+  p75_days: number;
+  p90_days: number;
+  measured_on: string;
 }
 
 export interface ThemesResponse {
@@ -334,6 +344,7 @@ export interface ThemesResponse {
   method: string;
   note: string;
   standing: StandingTheme[];
+  run_stats: RunStats;
   themes: ThemeRow[];
   generated_at: string;
 }

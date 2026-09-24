@@ -121,6 +121,41 @@ def _standing() -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Empirical run-length distribution. Measured 2026-09-24 over every theme
+# proxy's history with THIS detector's own definition of a run (RS above its
+# 200d trend, dips shorter than 15 days merged, runs under 20 days discarded
+# as noise): 727 completed runs, median 82d, mean 138d, p75 182d, p90 328d.
+#
+# Measuring raw EMA crossings instead gives a median of 3 days and is
+# meaningless -- RS crosses its trend constantly. That mistake is why the
+# first version of this module shipped with invented 120/400-day cut-offs,
+# which called a 100-day run "emerging" when it was already past the median.
+#
+# Stages are terciles of the real distribution; survival answers the question
+# that actually matters -- not how old a run is, but how much runway runs of
+# that age have historically had left.
+STAGE_EARLY, STAGE_MID = 51, 137          # tercile boundaries, days
+SURVIVAL = [(6, 1.00), (33, 0.83), (43, 0.73), (50, 0.67), (68, 0.55), (89, 0.46),
+            (100, 0.42), (117, 0.39), (162, 0.28), (328, 0.10), (433, 0.04),
+            (506, 0.03), (644, 0.02), (1333, 0.00)]
+
+
+def _stage(age: int) -> str:
+    return "early" if age <= STAGE_EARLY else "mid" if age <= STAGE_MID else "late"
+
+
+def _survival(age: int) -> float:
+    """Share of historical runs that lasted longer than `age`, interpolated."""
+    if age <= SURVIVAL[0][0]:
+        return SURVIVAL[0][1]
+    for (a0, s0), (a1, s1) in zip(SURVIVAL, SURVIVAL[1:]):
+        if age <= a1:
+            f = (age - a0) / (a1 - a0) if a1 > a0 else 0
+            return round(s0 + f * (s1 - s0), 3)
+    return 0.0
+
+
 def _ema(vals: list[float], n: int) -> list[float]:
     k = 2.0 / (n + 1)
     out = [vals[0]]
@@ -195,11 +230,8 @@ def build_themes_response() -> dict:
             "onset": lead["onset"] if lead else None,
             "age_days": lead["age_days"] if lead else None,
             "lead_symbol": lead["symbol"] if lead else None,
-            # a theme where the leading proxy runs and the lagging one does not
-            # is early; one where every leg runs is consensus
-            "stage": None if not lead else (
-                "emerging" if lead["age_days"] <= 120 else
-                "established" if lead["age_days"] <= 400 else "mature"),
+            "stage": None if not lead else _stage(lead["age_days"]),
+            "survival_pct": None if not lead else _survival(lead["age_days"]),
         })
     out.sort(key=lambda t: (t["age_days"] is None, t["age_days"] or 0))
     return {
@@ -207,6 +239,8 @@ def build_themes_response() -> dict:
         "benchmark": BENCH,
         "method": (f"RS = ticker/{BENCH}; trend = {TREND_DAYS}d EMA of RS; onset = earliest day "
                    f"from which RS stayed above trend on >= {int(PERSISTENCE * 100)}% of days since."),
+        "run_stats": {"n_runs": 727, "median_days": 82, "mean_days": 138,
+                      "p75_days": 182, "p90_days": 328, "measured_on": "2026-09-24"},
         "note": ("Discovery only. Promotion to a standing theme is a monthly human decision; "
                  "once promoted a theme is held for its horizon rather than re-decided daily."),
         "standing": _standing(),

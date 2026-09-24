@@ -1,9 +1,9 @@
-import { ThemeRow } from "@/lib/types";
+import { ThemeRow, RunStats } from "@/lib/types";
 
 const STAGE_STYLE: Record<string, string> = {
-  emerging: "bg-emerald-950/60 text-emerald-300 border-emerald-800",
-  established: "bg-sky-950/60 text-sky-300 border-sky-800",
-  mature: "bg-amber-950/60 text-amber-300 border-amber-800",
+  early: "bg-emerald-950/60 text-emerald-300 border-emerald-800",
+  mid: "bg-sky-950/60 text-sky-300 border-sky-800",
+  late: "bg-amber-950/60 text-amber-300 border-amber-800",
 };
 
 function pct(v: number | null | undefined) {
@@ -15,7 +15,7 @@ function pct(v: number | null | undefined) {
  * runway or is already consensus. A theme whose leading proxy runs while the
  * lagging one does not is early (miners before the metal).
  */
-export function ThemesTable({ themes }: { themes: ThemeRow[] }) {
+export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats?: RunStats }) {
   const running = themes.filter((t) => t.stage);
   const dormant = themes.filter((t) => !t.stage);
 
@@ -24,7 +24,7 @@ export function ThemesTable({ themes }: { themes: ThemeRow[] }) {
       <div className="mb-2 flex items-baseline gap-3">
         <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Themes in force</div>
         <div className="text-xs text-slate-500">
-          relative strength vs SPY above its 200-day trend · age, not direction, is the read
+          relative strength vs SPY above its 200-day trend · how much runway is typically left, not how old
         </div>
       </div>
 
@@ -35,6 +35,7 @@ export function ThemesTable({ themes }: { themes: ThemeRow[] }) {
             <th className="px-2 py-1 text-left font-normal">stage</th>
             <th className="px-2 py-1 text-left font-normal">started</th>
             <th className="px-2 py-1 text-right font-normal">age</th>
+            <th className="px-2 py-1 text-right font-normal" title="share of 727 historical runs that lasted longer than this one has">runway</th>
             <th className="px-2 py-1 text-right font-normal">RS</th>
             <th className="px-2 py-1 text-right font-normal">price</th>
             <th className="px-2 py-1 text-left font-normal">legs running</th>
@@ -54,6 +55,9 @@ export function ThemesTable({ themes }: { themes: ThemeRow[] }) {
                 </td>
                 <td className="px-2 py-1 text-slate-400">{t.onset}</td>
                 <td className="px-2 py-1 text-right text-slate-300">{t.age_days}d</td>
+                <td className={`px-2 py-1 text-right ${(t.survival_pct ?? 0) >= 0.5 ? "text-slate-200" : (t.survival_pct ?? 0) >= 0.2 ? "text-slate-400" : "text-slate-600"}`}>
+                  {t.survival_pct === null ? "—" : `${Math.round(t.survival_pct * 100)}%`}
+                </td>
                 <td className="px-2 py-1 text-right font-semibold text-slate-100">{pct(lead?.rs_gain_pct)}</td>
                 <td className="px-2 py-1 text-right text-slate-300">{pct(lead?.price_gain_pct)}</td>
                 <td className="px-2 py-1 text-slate-400">
@@ -72,6 +76,15 @@ export function ThemesTable({ themes }: { themes: ThemeRow[] }) {
           })}
         </tbody>
       </table>
+
+      {runStats && (
+        <p className="mt-2 text-[0.68rem] text-slate-600">
+          Runway = share of {runStats.n_runs} historical runs that lasted longer than this one has.
+          Median run {runStats.median_days}d, p75 {runStats.p75_days}d, p90 {runStats.p90_days}d
+          (measured {runStats.measured_on}). Stage boundaries are terciles of that distribution,
+          not round numbers.
+        </p>
+      )}
 
       {dormant.length > 0 && (
         <p className="mt-2 text-[0.7rem] leading-relaxed text-slate-600">

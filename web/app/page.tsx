@@ -60,7 +60,7 @@ export default async function Live() {
       </section>
 
       <StandingTheme themes={themes.standing} />
-      <ThemesTable themes={themes.themes} />
+      <ThemesTable themes={themes.themes} runStats={themes.run_stats} />
 
       {top.length > 0 && (
         <section className="mb-6">
