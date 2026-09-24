@@ -41,6 +41,7 @@ TTL_HOURS: dict[str, float] = {
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d
     "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
+    "cot": 12.0,  # COT publishes Friday 15:30 ET; 12h keeps it fresh without hammering CFTC
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
     "watchlists": 24.0,  # TradingView list contents for the cloud routine
@@ -66,6 +67,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
+    "cot": 1,
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 4,  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "watchlists": 1,

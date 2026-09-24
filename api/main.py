@@ -13,6 +13,7 @@ import dashboard_data
 import macro_data
 import markov_data
 import series_write
+import cot_data
 import notes_data
 import technicals_data
 import themes_data
@@ -154,6 +155,11 @@ def series_describe():
 def series_append(symbol: str, body: dict):
     """Public but append-only, whitelisted and range-checked -- see series_write.py."""
     return series_write.append(symbol, body.get("rows"))
+
+
+@app.get("/api/cot", dependencies=[Depends(require_bearer_token)])
+def cot():
+    return cache.get_or_fetch("cot", cot_data.build_cot_response)
 
 
 @app.get("/api/notes", dependencies=[Depends(require_bearer_token)])

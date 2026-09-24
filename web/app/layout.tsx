@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CGI Dashboard",
+  title: "CGI — Compass Grid Identifier",
+  description: "Macro regime dashboard: regime, themes, breadth, positioning.",
 };
 
 export default function RootLayout({
@@ -13,25 +14,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <nav className="border-b border-slate-800 bg-slate-950 px-6 py-2 text-sm">
-          <a href="/" className="mr-4 text-slate-300 hover:text-slate-100">
-            LIVE
-          </a>
-          <a href="/tape" className="mr-4 text-slate-300 hover:text-slate-100">
-            TAPE
-          </a>
-          <a href="/backtest" className="mr-4 text-slate-300 hover:text-slate-100">
-            BACKTEST
-          </a>
-          <a href="/macro" className="mr-4 text-slate-300 hover:text-slate-100">
-            MACRO
-          </a>
-          <a href="/markov" className="mr-4 text-slate-300 hover:text-slate-100">
-            MARKOV
-          </a>
-          <a href="/notes" className="text-slate-300 hover:text-slate-100">
-            NOTES
-          </a>
+        <nav className="flex items-center gap-1 border-b border-slate-800 bg-slate-950 px-6 py-2 text-sm">
+          {[
+            { href: "/", label: "LIVE", icon: "◉" },
+            { href: "/tape", label: "TAPE", icon: "≡" },
+            { href: "/backtest", label: "BACKTEST", icon: "⊞" },
+            { href: "/macro", label: "MACRO", icon: "◎" },
+            { href: "/markov", label: "MARKOV", icon: "⇄" },
+            { href: "/cot", label: "POSITIONING", icon: "⚖" },
+            { href: "/notes", label: "NOTES", icon: "✎" },
+          ].map((t) => (
+            <a
+              key={t.href}
+              href={t.href}
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-slate-300 transition hover:bg-slate-900 hover:text-slate-100"
+            >
+              <span className="text-[0.85rem] text-[#8b9dc3]">{t.icon}</span>
+              {t.label}
+            </a>
+          ))}
         </nav>
         {children}
       </body>

@@ -418,3 +418,30 @@ export interface NotesResponse {
   findings: Note[];
   note: string;
 }
+
+export interface CotContract {
+  contract: string;
+  status: string;
+  as_of?: string;
+  open_interest?: number;
+  spec: number;
+  comm: number;
+  small: number;
+  spec_pct_oi: number;
+  spec_change_4w: number;
+  cot_index: Record<string, number | null>;
+  cot_index_pct_oi: Record<string, number | null>;
+  signal: string | null;
+  n_weeks: number;
+  history_from: string;
+  spark: number[];
+}
+
+export interface CotResponse {
+  as_of: string | null;
+  source: string;
+  groups: { group: string; contracts: CotContract[] }[];
+  extremes: { contract: string; cot_index_3y: number | null; cot_index_3y_pct_oi: number | null; spec: number; signal: string | null }[];
+  caveat: string;
+  generated_at: string;
+}
