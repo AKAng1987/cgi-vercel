@@ -26,8 +26,11 @@ export default function RootLayout({
           <a href="/macro" className="mr-4 text-slate-300 hover:text-slate-100">
             MACRO
           </a>
-          <a href="/markov" className="text-slate-300 hover:text-slate-100">
+          <a href="/markov" className="mr-4 text-slate-300 hover:text-slate-100">
             MARKOV
+          </a>
+          <a href="/notes" className="text-slate-300 hover:text-slate-100">
+            NOTES
           </a>
         </nav>
         {children}

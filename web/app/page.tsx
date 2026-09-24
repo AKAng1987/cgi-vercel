@@ -1,8 +1,9 @@
 import { apiFetch } from "@/lib/api";
-import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse } from "@/lib/types";
+import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
+import { Notes } from "./components/brief/Notes";
 import { StandingTheme } from "./components/brief/StandingTheme";
 import { ThemesTable } from "./components/brief/ThemesTable";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
@@ -15,11 +16,12 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live, tech] = await Promise.all([
+  const [themes, signals, live, tech, notes] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
     apiFetch<TechnicalsResponse>("/api/technicals").catch(() => null),
+    apiFetch<NotesResponse>("/api/notes").catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
@@ -68,6 +70,24 @@ export default async function Live() {
 
       {top.length > 0 && cq && gq && (
         <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} />
+      )}
+
+      {notes && notes.notes.length > 0 && (
+        <section className="mb-6">
+          <div className="mb-2 flex items-baseline gap-3">
+            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+              Standing notes
+            </div>
+            <div className="text-xs text-slate-500">
+              what holds regardless of today ·{" "}
+              <a href="/notes" className="underline hover:text-slate-300">all {notes.count}</a>
+            </div>
+          </div>
+          <Notes
+            notes={notes.notes.filter((n) => n.scope === "global" || n.scope === `regime:C${cq}G${gq}` || n.scope === `regime:C${cq}`).slice(0, 4)}
+            compact
+          />
+        </section>
       )}
 
       <p className="text-[0.68rem] leading-relaxed text-slate-600">

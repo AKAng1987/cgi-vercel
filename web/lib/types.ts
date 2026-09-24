@@ -381,3 +381,22 @@ export interface TechnicalsResponse {
   caveat: string;
   generated_at: string;
 }
+
+export interface Note {
+  date: string;
+  kind: "data" | "narrative" | "policy";
+  scope: string;
+  title: string;
+  body: string;
+  source: string;
+  confidence?: "confirmed" | "likely" | "speculative";
+  age_days?: number | null;
+}
+
+export interface NotesResponse {
+  as_of: string;
+  count: number;
+  by_kind: Record<string, number>;
+  scopes: string[];
+  notes: Note[];
+}

@@ -13,6 +13,7 @@ import dashboard_data
 import macro_data
 import markov_data
 import series_write
+import notes_data
 import technicals_data
 import themes_data
 import signals_data
@@ -153,6 +154,11 @@ def series_describe():
 def series_append(symbol: str, body: dict):
     """Public but append-only, whitelisted and range-checked -- see series_write.py."""
     return series_write.append(symbol, body.get("rows"))
+
+
+@app.get("/api/notes", dependencies=[Depends(require_bearer_token)])
+def notes(scope: Optional[str] = None):
+    return notes_data.build_notes_response(scope=scope)
 
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
