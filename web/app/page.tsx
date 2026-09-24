@@ -3,7 +3,7 @@ import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, T
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
-import { Notes } from "./components/brief/Notes";
+import { PolicyNotes } from "./components/brief/PolicyNotes";
 import { StandingTheme } from "./components/brief/StandingTheme";
 import { ThemesTable } from "./components/brief/ThemesTable";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
@@ -72,21 +72,18 @@ export default async function Live() {
         <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} />
       )}
 
-      {notes && notes.notes.length > 0 && (
+      {notes && notes.policy.filter((p) => p.is_live).length > 0 && (
         <section className="mb-6">
           <div className="mb-2 flex items-baseline gap-3">
             <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
-              Standing notes
+              Policy in force
             </div>
             <div className="text-xs text-slate-500">
-              what holds regardless of today ·{" "}
-              <a href="/notes" className="underline hover:text-slate-300">all {notes.count}</a>
+              announcements whose themes are still running on RS ·{" "}
+              <a href="/notes" className="underline hover:text-slate-300">all {notes.counts.policy}</a>
             </div>
           </div>
-          <Notes
-            notes={notes.notes.filter((n) => n.scope === "global" || n.scope === `regime:C${cq}G${gq}` || n.scope === `regime:C${cq}`).slice(0, 4)}
-            compact
-          />
+          <PolicyNotes notes={notes.policy.filter((p) => p.is_live).slice(0, 5)} compact />
         </section>
       )}
 

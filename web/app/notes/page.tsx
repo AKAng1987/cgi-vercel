@@ -1,37 +1,43 @@
 import { apiFetch } from "@/lib/api";
 import { NotesResponse } from "@/lib/types";
+import { PolicyNotes } from "../components/brief/PolicyNotes";
 import { Notes } from "../components/brief/Notes";
 
-/**
- * The accumulation. Everything CGI has established, dated and attributed --
- * tested numbers and narrative context side by side, neither pretending to
- * be the other.
- */
 export default async function NotesPage() {
   const data = await apiFetch<NotesResponse>("/api/notes");
 
   return (
     <main className="mx-auto max-w-4xl p-6">
       <h1 className="mb-1 text-2xl font-bold">NOTES</h1>
-      <p className="mb-4 text-xs text-slate-400">
-        What we have established, dated and attributed.{" "}
-        <span className="text-sky-300">data</span> is something a test found, with its numbers;{" "}
-        <span className="text-violet-300">narrative</span> is something known but not derivable from
-        price; <span className="text-amber-300">policy</span> is a dated event and its read-through.
-        Every note keeps its date, so a claim that ages badly is visibly old rather than quietly
-        wrong.
+      <p className="mb-5 text-xs leading-relaxed text-slate-400">
+        Three registers, kept apart because they decay and are trusted differently.{" "}
+        <span className="text-slate-200">Policy</span> is dated announcements by country, each
+        naming the themes it should move — meant to work forward, so a policy is on the page before
+        the rally rather than explaining it afterwards.{" "}
+        <span className="text-slate-200">Narrative</span> is known but not derivable from price.{" "}
+        <span className="text-slate-200">Findings</span> are this build&apos;s own test results.
       </p>
 
-      <div className="mb-4 flex flex-wrap gap-3 text-[0.7rem] text-slate-500">
-        <span>{data.count} notes</span>
-        {Object.entries(data.by_kind).map(([k, n]) => (
-          <span key={k}>
-            {k} {n}
-          </span>
-        ))}
-      </div>
+      <section className="mb-7">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          Policy · {data.counts.policy} · {data.countries.join(" ")}
+        </div>
+        <PolicyNotes notes={data.policy} />
+      </section>
 
-      <Notes notes={data.notes} />
+      <section className="mb-7">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          Narrative · {data.counts.narrative}
+        </div>
+        <Notes notes={data.narrative.map((n) => ({ ...n, kind: "narrative" as const }))} />
+      </section>
+
+      <section>
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          Findings · {data.counts.findings}
+        </div>
+        <Notes notes={data.findings.map((n) => ({ ...n, kind: "data" as const }))} />
+      </section>
     </main>
   );
 }

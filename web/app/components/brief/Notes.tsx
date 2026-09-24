@@ -12,7 +12,7 @@ export function Notes({ notes, compact }: { notes: Note[]; compact?: boolean }) 
   return (
     <div className={compact ? "space-y-1.5" : "space-y-3"}>
       {notes.map((n) => {
-        const k = KIND[n.kind] ?? KIND.data;
+        const k = KIND[n.kind ?? "data"] ?? KIND.data;
         return (
           <div
             key={`${n.date}-${n.title}`}

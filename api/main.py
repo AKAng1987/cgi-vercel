@@ -157,8 +157,16 @@ def series_append(symbol: str, body: dict):
 
 
 @app.get("/api/notes", dependencies=[Depends(require_bearer_token)])
-def notes(scope: Optional[str] = None):
-    return notes_data.build_notes_response(scope=scope)
+def notes():
+    """Policy notes are marked live when a theme they point at is still
+    running on RS, so this reads the theme detector rather than taking the
+    list from the caller."""
+    try:
+        th = cache.get_or_fetch("themes", themes_data.build_themes_response)
+        active = [t["theme"] for t in th.get("themes", []) if t.get("stage")]
+    except Exception:
+        active = []
+    return notes_data.build_notes_response(active_themes=active)
 
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])

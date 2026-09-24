@@ -384,7 +384,7 @@ export interface TechnicalsResponse {
 
 export interface Note {
   date: string;
-  kind: "data" | "narrative" | "policy";
+  kind?: "data" | "narrative" | "policy";
   scope: string;
   title: string;
   body: string;
@@ -393,10 +393,28 @@ export interface Note {
   age_days?: number | null;
 }
 
+export interface PolicyNote {
+  country: string;
+  type: "monetary" | "fiscal" | "trade" | "geopolitical";
+  announced: string;
+  effective: string | null;
+  title: string;
+  detail: string;
+  themes: string[];
+  tickers: string[];
+  source: string;
+  confidence?: string;
+  age_days: number | null;
+  live_themes: string[];
+  is_live: boolean;
+}
+
 export interface NotesResponse {
   as_of: string;
-  count: number;
-  by_kind: Record<string, number>;
-  scopes: string[];
-  notes: Note[];
+  counts: { policy: number; narrative: number; findings: number };
+  countries: string[];
+  policy: PolicyNote[];
+  narrative: Note[];
+  findings: Note[];
+  note: string;
 }

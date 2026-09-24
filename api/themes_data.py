@@ -38,11 +38,14 @@ MIN_HISTORY = 400
 
 # Megatrends are structurally different from rotations: multi-year secular
 # build-outs whose runs are not drawn from the same distribution as a sector
-# rotation. The survival curve below is measured over rotational runs, so
-# applying it to a megatrend reads "0% runway" when what it actually means is
-# "this is the longest run in the sample" -- true, but not a warning. For
-# these the runway figure is reported as context, not as a countdown.
-MEGATRENDS = {"AI", "semis / memory"}
+# rotation. The survival curve is measured over rotational runs, so applying
+# it to a megatrend reads "0% runway" when what it means is "this is the
+# longest run in the sample" -- true, but not a warning. For these the runway
+# figure is reported as context, not as a countdown.
+#
+# Defined by rule rather than by a hand-maintained list (user, 2026-09-25):
+# anything that has trended for more than a year has stopped being a rotation.
+MEGATREND_DAYS = 365
 
 # Theme -> proxies, ordered so the leading indicator comes first where the
 # sequence matters (miners lead the metal: COPX turned 68 days before CPER,
@@ -91,7 +94,7 @@ THEMES: dict[str, list[str]] = {
 # monthly against the detector below; promote or drop, then hold.
 STANDING: list[dict] = [
     {
-        "name": "Hyperscaler capex — the $1T build-out",
+        "name": "AI capex — the $1T build-out",
         "since": "2026-09-24",
         "horizon": "12 months",
         "review_on": "2026-10-24",
@@ -126,6 +129,32 @@ STANDING: list[dict] = [
             "capex guidance itself cut at earnings. Watch the layers separately -- "
             "infrastructure slowing and utilities falling are already partial "
             "breaks, not yet a thesis break."
+        ),
+    },
+    {
+        "name": "The Dollar — hikes into a steepener",
+        "since": "2026-09-25",
+        "horizon": "while the hiking path holds",
+        "review_on": "2026-10-25",
+        "thesis": (
+            "This regime is about the dollar. CGI has the compass at C3 -- liquidity "
+            "tightening -- and hikes arriving into a steepening curve strengthen the "
+            "USD. The clean expression is UUP. "
+            "The second-order effects matter more than the dollar itself: other "
+            "currencies weaken against it, IMPORTERS get hit as their input costs "
+            "rise in local terms, and EXPORTERS priced against a strong dollar do "
+            "relatively well -- which is the same mechanism that made Japan work "
+            "under a falling yen. Read the country ETFs through that lens rather "
+            "than as independent bets. "
+            "Note the instrument trap already found on Japan: an unhedged USD-"
+            "denominated country ETF hands the currency move back, so a weak-currency "
+            "/ strong-exporter thesis needs a hedged vehicle or local shares."
+        ),
+        "expressions": ["UUP", "DXY", "DXJ", "EWY", "EWJ"],
+        "watchlist": ["USDPHP", "USDJPY", "USDKRW", "USDEUR"],
+        "exit_rule": (
+            "The hiking path stalls or reverses; the curve stops steepening; or UUP "
+            "loses its 200d RS trend for 6 consecutive weeks."
         ),
     },
     {
@@ -275,7 +304,7 @@ def build_themes_response() -> dict:
             "onset": lead["onset"] if lead else None,
             "age_days": lead["age_days"] if lead else None,
             "lead_symbol": lead["symbol"] if lead else None,
-            "class": "megatrend" if theme in MEGATRENDS else "rotation",
+            "class": ("megatrend" if lead and lead["age_days"] > MEGATREND_DAYS else "rotation"),
             "stage": None if not lead else _stage(lead["age_days"]),
             "survival_pct": None if not lead else _survival(lead["age_days"]),
         })
@@ -285,6 +314,7 @@ def build_themes_response() -> dict:
         "benchmark": BENCH,
         "method": (f"RS = ticker/{BENCH}; trend = {TREND_DAYS}d EMA of RS; onset = earliest day "
                    f"from which RS stayed above trend on >= {int(PERSISTENCE * 100)}% of days since."),
+        "megatrend_days": MEGATREND_DAYS,
         "run_stats": {"n_runs": 727, "median_days": 82, "mean_days": 138,
                       "p75_days": 182, "p90_days": 328, "measured_on": "2026-09-24"},
         "note": ("Discovery only. Promotion to a standing theme is a monthly human decision; "
