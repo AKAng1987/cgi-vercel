@@ -316,6 +316,73 @@ def model_history_fallback(model_name: str) -> Optional[int]:
     return int(float(q)) if q is not None else None
 
 
+# ── price-history fallback for HUD rows ──────────────────────────────────────
+# TAPE renders HUD_GROUPS from a workbook written by the legacy pipeline, so
+# any ticker added to a group after that pipeline was frozen simply vanished
+# from the scan -- which is why the 38 ETFs wired in on 2026-09-23 were fully
+# backtested but invisible. These rows are computed from price-history instead,
+# with the same fields parse_hud produces, so the two sources are
+# interchangeable from the UI's point of view.
+
+_PRICE_TABLE = "cmon-stage-backend-price-history"
+_LOOKBACK = {"pct_1d": 1, "pct_5d": 5, "pct_7d": 7, "pct_1m": 21, "pct_3m": 63,
+             "pct_6m": 126, "pct_1y": 252}
+
+
+def _recent_closes(symbol: str, limit: int = 300) -> list[tuple[str, float]]:
+    ddb = boto3.client("dynamodb", region_name=REGION)
+    rows: list[tuple[str, float]] = []
+    resp = ddb.query(
+        TableName=_PRICE_TABLE,
+        KeyConditionExpression="symbol = :s",
+        ExpressionAttributeValues={":s": {"S": symbol}},
+        ProjectionExpression="#d, #c",
+        ExpressionAttributeNames={"#d": "date", "#c": "close"},
+        ScanIndexForward=False,
+        Limit=limit,
+    )
+    for it in resp.get("Items", []):
+        c = it.get("close", {}).get("N")
+        if c is not None:
+            rows.append((it["date"]["S"], float(c)))
+    rows.sort()
+    return rows
+
+
+def hud_from_price_history(symbol: str, sector: str) -> Optional[dict]:
+    rows = _recent_closes(symbol)
+    if len(rows) < 2:
+        return None
+    dates = [d for d, _ in rows]
+    closes = [c for _, c in rows]
+    cur = closes[-1]
+    n = len(closes)
+
+    out = {"symbol": symbol, "sector": sector, "current": cur}
+    for field, back in _LOOKBACK.items():
+        j = n - 1 - back
+        out[field] = _pct(cur, closes[j]) if j >= 0 and closes[j] else None
+
+    win = closes[-7:]
+    if len(win) >= 2:
+        mean = sum(win) / len(win)
+        out["sd_7d"] = round((sum((x - mean) ** 2 for x in win) / len(win)) ** 0.5, 4)
+        k = 2.0 / 8.0
+        ema = win[0]
+        for v in win[1:]:
+            ema = v * k + ema * (1 - k)
+        out["ema_7d"] = round(ema, 4)
+    else:
+        out["sd_7d"] = out["ema_7d"] = None
+
+    out["as_of"] = dates[-1]
+    try:
+        out["stale_days"] = (datetime.date.today() - datetime.date.fromisoformat(dates[-1])).days
+    except ValueError:
+        out["stale_days"] = None
+    return out
+
+
 def build_live_response(date_str: Optional[str] = None) -> dict:
     available = list_dashboard_dates()
     if not available:
@@ -344,7 +411,14 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
     hud_by_symbol = {r["symbol"]: r for r in hud_records}
     hud_groups = []
     for group_name, (tickers, rs_denom) in HUD_GROUPS.items():
-        group_tickers = [hud_by_symbol[t] for t in tickers if t in hud_by_symbol]
+        group_tickers = []
+        for t in tickers:
+            if t in hud_by_symbol:
+                group_tickers.append(hud_by_symbol[t])
+                continue
+            row = hud_from_price_history(t, group_name)
+            if row:
+                group_tickers.append(row)
         hud_groups.append({
             "name": group_name,
             "default_rs_denom": rs_denom,
