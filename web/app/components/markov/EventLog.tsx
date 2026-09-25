@@ -37,7 +37,7 @@ function HitCell({ hit }: { hit: boolean | null }) {
 export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; pending: MarkovResponse["pending"]; summary: MarkovResponse["summary"] }) {
   return (
     <section className="mb-6">
-      <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+      <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
         Event log · since {summary.track_start}
       </div>
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-5">

@@ -44,7 +44,7 @@ export function EdgeStrip({
     <>
       <section className="mb-6">
         <div className="mb-2 flex items-baseline gap-3">
-          <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Edge in this regime</div>
+          <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Edge in this regime</div>
           <div className="text-xs text-slate-500">
             C{cq}G{gq} · avg high ÷ |avg low|, min 5 occurrences · click to chart ·{" "}
             <a href={`/backtest?cq=${cq}&gq=${gq}`} className="underline hover:text-slate-300">
@@ -74,7 +74,7 @@ export function EdgeStrip({
 
       <section className="mb-6">
         <div className="mb-2 flex items-baseline gap-3">
-          <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Chart</div>
+          <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Chart</div>
           <div className="text-xs text-slate-500">{symbol}</div>
         </div>
         <TradingViewChart symbol={symbol} />

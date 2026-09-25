@@ -6,7 +6,7 @@ export function DailyRuns({ runs, latest, nDaily }: { runs: MarkovRun[]; latest:
   return (
     <section>
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Daily audit trail</div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Daily audit trail</div>
         <div className="text-xs text-slate-500">{nDaily} rows written at 00:55 UTC, collapsed into runs</div>
       </div>
       <div className="overflow-x-auto rounded border border-slate-800">

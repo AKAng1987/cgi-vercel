@@ -85,7 +85,7 @@ export function BacktestTable({
                 onClick={() => toggleGroup(g)}
                 className={`rounded border px-2 py-0.5 text-[0.68rem] uppercase tracking-wide transition ${
                   active
-                    ? "border-[#3b4f8a] bg-[#1a1f35] text-[#8b9dc3]"
+                    ? "border-[#3b4f8a] bg-[#1a1f35] text-[color:var(--cgi-accent)]"
                     : "border-slate-800 bg-slate-950 text-slate-600 line-through"
                 }`}
               >
@@ -98,7 +98,7 @@ export function BacktestTable({
 
       {topByEdge.length > 0 && (
         <div className="mb-4 rounded border border-[#3b4f8a] bg-[#0f1425]">
-          <div className="border-b border-[#1a2340] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          <div className="border-b border-[#1a2340] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             Top {topByEdge.length} by Edge — across all shown groups
           </div>
           <div className="overflow-x-auto">
@@ -162,7 +162,7 @@ export function BacktestTable({
 
       {Array.from(grouped.entries()).map(([group, rowsInGroup]) => (
         <div key={group} className="mt-4">
-          <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             {group}
           </div>
           <div className="overflow-x-auto">

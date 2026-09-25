@@ -31,7 +31,7 @@ export function HudTable({
 
   return (
     <div className="mt-3.5">
-      <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+      <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
         {group.name}
         <span className="ml-2 text-[0.6rem] font-normal tracking-wide text-[#5b7fa6]">
           {denomLabel}

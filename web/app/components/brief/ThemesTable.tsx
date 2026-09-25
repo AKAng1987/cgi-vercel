@@ -23,7 +23,7 @@ export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Themes in force</div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Themes in force</div>
         <div className="text-xs text-slate-500">
           relative strength vs SPY above its 200-day trend · how much runway is typically left, not how old
         </div>

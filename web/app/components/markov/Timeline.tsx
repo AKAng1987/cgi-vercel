@@ -16,7 +16,7 @@ export function Timeline({ events, asOf }: { events: TimelineEvent[]; asOf: stri
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Next 45 days</div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Next 45 days</div>
         <div className="text-xs text-slate-500">
           <span className="font-bold text-slate-300">bold</span> = sets an axis · others feed the nowcasts and narrative · colour = what it informs
         </div>

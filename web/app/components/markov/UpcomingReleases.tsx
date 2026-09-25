@@ -25,7 +25,7 @@ export function UpcomingReleases({
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Upcoming releases</div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Upcoming releases</div>
         <div className="text-xs text-slate-500">
           Now: <span className="font-bold text-slate-200" title={qTitle("compass", current.compass)}>C{current.compass}</span>
           {" × "}

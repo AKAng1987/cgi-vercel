@@ -23,7 +23,7 @@ export default async function CotPage() {
 
       {data.extremes.length > 0 && (
         <section className="mb-5 rounded border border-slate-700 bg-slate-900/70 p-3">
-          <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             At the extremes
           </div>
           <div className="flex flex-wrap gap-2">

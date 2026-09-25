@@ -89,7 +89,7 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">What moves each axis</div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">What moves each axis</div>
         <div className="text-xs text-slate-500">
           how often the axis flipped within one release when the driver sat where it sits today · hover a row for all three thirds
         </div>

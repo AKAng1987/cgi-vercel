@@ -75,7 +75,7 @@ export default async function Live() {
       {notes && notes.policy.filter((p) => p.is_live).length > 0 && (
         <section className="mb-6">
           <div className="mb-2 flex items-baseline gap-3">
-            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
               Policy in force
             </div>
             <div className="text-xs text-slate-500">

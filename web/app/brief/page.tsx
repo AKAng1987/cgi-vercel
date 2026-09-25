@@ -35,7 +35,7 @@ function Section({ s }: { s: BriefSection }) {
   return (
     <div className="border-b border-slate-900 py-2">
       <div className="flex flex-wrap items-baseline gap-3">
-        <span className="w-24 shrink-0 text-[0.62rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+        <span className="w-24 shrink-0 text-[0.62rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
           {s.name}
         </span>
         {s.status === "unavailable" ? (
@@ -97,7 +97,7 @@ export default async function BriefPage({
           </div>
         ) : (
           <>
-            <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+            <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
               {d.headline}
             </div>
             <div>

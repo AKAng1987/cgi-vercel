@@ -24,7 +24,7 @@ export function BreadthStrip({ t }: { t: TechnicalsResponse }) {
   return (
     <section className="mb-6 rounded border border-slate-800 bg-slate-900/50 p-3">
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">Breadth</div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Breadth</div>
         <div className="text-xs text-slate-500">net new highs is the primary · gauges confirm{t.universe ? ` · ${t.universe}` : ""}</div>
       </div>
 

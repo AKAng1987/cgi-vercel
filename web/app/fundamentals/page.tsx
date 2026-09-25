@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
-import { FundamentalsResponse, FundCompany, FundRollup } from "@/lib/types";
+import { FundamentalsResponse, FundRollup } from "@/lib/types";
+import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
 
 const VERDICT_COLOR: Record<string, string> = {
   capturing: "text-emerald-400",
@@ -96,69 +97,10 @@ function RollupRow({ label, r, wide, fallback }: { label: string; r: FundRollup 
   );
 }
 
-function CompanyRow({ c }: { c: FundCompany }) {
-  const r = c.revenue;
-  const m = c.margin;
-  const ruin = c.risk_of_ruin;
-  const hist = (r.history ?? []).map((h) => h.yoy_pct).filter((v): v is number => v !== null);
-  return (
-    <tr className="border-b border-slate-900/70 hover:bg-slate-900/40">
-      <td className="py-1 pr-2 font-mono text-slate-200">{c.symbol}</td>
-      <td className={`py-1 pr-3 text-[0.68rem] ${VERDICT_COLOR[c.read.verdict] ?? "text-slate-400"}`}>
-        {c.read.verdict}
-      </td>
-      <td className="py-1 pr-2 text-right tabular-nums text-slate-300">
-        {r.yoy_pct !== null && r.yoy_pct !== undefined ? `${r.yoy_pct.toFixed(1)}%` : "—"}
-      </td>
-      <td className="py-1 pr-2 text-right tabular-nums">{sign(r.acceleration_pp)}</td>
-      <td className="py-1 pr-3">
-        <Spark pts={[...hist].reverse()} />
-      </td>
-      <td className="py-1 pr-2 text-right tabular-nums">
-        {m.status === "ok" ? sign(m.margin_change_yoy_pp) : <span className="text-slate-600">—</span>}
-      </td>
-      <td className="py-1 pr-2 text-right tabular-nums text-slate-400">
-        {c.return_to_shareholders.status === "ok"
-          ? `${c.return_to_shareholders.payout_of_ocf_pct?.toFixed(0)}%`
-          : "—"}
-      </td>
-      <td className="py-1 pr-2 text-right tabular-nums text-slate-400">
-        {c.rate_risk.interest_burden_pct !== undefined
-          ? `${c.rate_risk.interest_burden_pct.toFixed(0)}%`
-          : "—"}
-      </td>
-      <td className="py-1 text-right tabular-nums">
-        {ruin.status === "ok" && ruin.altman_z2 !== undefined ? (
-          <span
-            className={
-              ruin.band === "distress"
-                ? "text-rose-400"
-                : ruin.band === "grey"
-                ? "text-amber-300"
-                : ruin.band === "safe"
-                ? "text-slate-400"
-                : "text-slate-600"
-            }
-            title={ruin.note}
-          >
-            {ruin.altman_z2.toFixed(1)}
-            {ruin.accumulated_deficit ? "*" : ""}
-          </span>
-        ) : (
-          <span className="text-slate-600">—</span>
-        )}
-      </td>
-    </tr>
-  );
-}
-
 export default async function FundamentalsPage() {
   const d = await apiFetch<FundamentalsResponse>("/api/fundamentals");
   const live = d.themes.filter((t) => t.is_live);
   const rest = d.themes.filter((t) => !t.is_live);
-  const byAccel = [...d.companies].sort(
-    (a, b) => (b.revenue.acceleration_pp ?? -1e9) - (a.revenue.acceleration_pp ?? -1e9)
-  );
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -178,7 +120,7 @@ export default async function FundamentalsPage() {
       {d.changes && d.changes.length > 0 && (
         <section className="mb-7">
           <div className="mb-2 flex items-baseline gap-3">
-            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
               Changed on the latest filings · {d.changes.length}
             </div>
             {d.surprise_thresholds && (
@@ -211,7 +153,7 @@ export default async function FundamentalsPage() {
       )}
 
       <section className="mb-7">
-        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
           The AI layer cake · are the layers moving together?
         </div>
         <p className="mb-2 text-[0.7rem] text-slate-500">
@@ -224,7 +166,7 @@ export default async function FundamentalsPage() {
 
       {live.length > 0 && (
         <section className="mb-7">
-          <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             Themes running on RS · {live.length}
           </div>
           {live.map((t) => (
@@ -244,35 +186,14 @@ export default async function FundamentalsPage() {
 
       <section className="mb-7">
         <div className="mb-2 flex items-baseline gap-3">
-          <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+          <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             Every name · by revenue acceleration
           </div>
           <div className="text-[0.65rem] text-slate-500">
-            {d.coverage.with_data} of {d.coverage.universe} filers
+            {d.coverage.with_data} of {d.coverage.universe} filers · click any column to sort
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[0.72rem]">
-            <thead>
-              <tr className="border-b border-slate-800 text-[0.6rem] uppercase tracking-wider text-slate-500">
-                <th className="pb-1 pr-2 text-left font-medium">sym</th>
-                <th className="pb-1 pr-3 text-left font-medium">read</th>
-                <th className="pb-1 pr-2 text-right font-medium">rev yoy</th>
-                <th className="pb-1 pr-2 text-right font-medium">accel</th>
-                <th className="pb-1 pr-3 text-left font-medium">yoy shape</th>
-                <th className="pb-1 pr-2 text-right font-medium">margin Δ</th>
-                <th className="pb-1 pr-2 text-right font-medium">payout</th>
-                <th className="pb-1 pr-2 text-right font-medium">int burden</th>
-                <th className="pb-1 text-right font-medium">Z&apos;&apos;</th>
-              </tr>
-            </thead>
-            <tbody>
-              {byAccel.map((c) => (
-                <CompanyRow key={c.symbol} c={c} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <FundamentalsTable companies={d.companies} />
         <p className="mt-2 text-[0.65rem] text-slate-600">
           * accumulated deficit — Z&apos;&apos; is dragged negative by retained earnings regardless of
           solvency, so the band is withheld. Read FCF and cash instead.
@@ -280,7 +201,7 @@ export default async function FundamentalsPage() {
       </section>
 
       <section className="mb-7">
-        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
           Who pays whom · {d.links.length}
         </div>
         <p className="mb-2 text-[0.7rem] text-slate-500">

@@ -22,7 +22,7 @@ export default async function NotesPage() {
       </p>
 
       <section className="mb-7">
-        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
           Policy · {data.counts.policy} · {data.countries.join(" ")}
         </div>
         <PolicyNotes notes={data.policy} />
@@ -31,7 +31,7 @@ export default async function NotesPage() {
       {watch && watch.candidates.length > 0 && (
         <section className="mb-7">
           <div className="mb-2 flex items-baseline gap-3">
-            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
               Candidates · last {watch.window_days}d
             </div>
             <div className="text-xs text-slate-500">from central bank feeds — confirm one and it becomes a policy note</div>
@@ -61,14 +61,14 @@ export default async function NotesPage() {
       )}
 
       <section className="mb-7">
-        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
           Narrative · {data.counts.narrative}
         </div>
         <Notes notes={data.narrative.map((n) => ({ ...n, kind: "narrative" as const }))} />
       </section>
 
       <section>
-        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
           Findings · {data.counts.findings}
         </div>
         <Notes notes={data.findings.map((n) => ({ ...n, kind: "data" as const }))} />
