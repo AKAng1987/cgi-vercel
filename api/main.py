@@ -16,6 +16,7 @@ import series_write
 import cot_data
 import policy_watch
 import notes_data
+import fundamentals_data
 import technicals_data
 import themes_data
 import signals_data
@@ -189,6 +190,25 @@ def technicals():
 @app.get("/api/themes", dependencies=[Depends(require_bearer_token)])
 def themes():
     return cache.get_or_fetch("themes", themes_data.build_themes_response)
+
+
+@app.get("/api/fundamentals", dependencies=[Depends(require_bearer_token)])
+def fundamentals():
+    """Layer 3 of the brief: who inside each theme is capturing the money.
+
+    Live from SEC XBRL -- no key needed, so unlike ISM this does not depend on
+    a connector staying up. Themes still running on RS are flagged is_live the
+    same way /api/notes does it, so the page can lead with the live ones.
+    """
+    try:
+        th = cache.get_or_fetch("themes", themes_data.build_themes_response)
+        active = [t["theme"] for t in th.get("themes", []) if t.get("stage")]
+    except Exception:
+        active = []
+    return cache.get_or_fetch(
+        "fundamentals",
+        lambda: fundamentals_data.build_fundamentals_response(active_themes=active),
+    )
 
 
 @app.get("/api/watchlists")

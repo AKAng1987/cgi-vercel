@@ -1,0 +1,379 @@
+"""
+fundamentals_data.py -- FUNDAMENTALS: who actually earns the theme.
+
+Layer 3 of the LIVE brief. Themes (layer 2) say a trade is working; this says
+which companies inside it are capturing the money. That is the gap the AI
+capex thesis names out loud -- the applications layer is where real revenue
+has to be told apart from a press release.
+
+SOURCE: SEC XBRL, via sec_xbrl.py. See that module's header for why, at
+length: FMP's free tier gates per symbol (MU and CRM denied on the same call
+AMD and NVDA answered) and caps history at 5 sequential quarters;
+TradingView has no server-side API. SEC has full history, true year-on-year,
+every filer, and needs no key.
+
+ORGANISED BY THEME, NOT BY WATCHLIST
+Constituents hang off the theme names in themes_data.THEMES, so the factor
+inherits the universe CGI already tracks rather than a hand-kept list that
+goes stale. Keys are checked against that dict, so a theme renamed there
+fails loudly instead of silently emptying this table.
+
+DAMODARAN'S FIVE, ALL AS RATE OF CHANGE
+Levels are priced; the change in the level re-rates the stock. The read
+throughout is the SECOND derivative -- a company going from +30% to +20%
+revenue growth is decelerating while still growing fast, and that is exactly
+what separates "the theme is working" from "this company is capturing it".
+
+  1 revenue growth     YoY, and the change in YoY (percentage points)
+  2 margin growth      gross and operating margin in pp, and their change
+  3 return to holders  (buybacks + dividends) as a share of operating cash
+                       flow -- "what share of the cash it generated came
+                       back". A share, not a yield: SEC filings carry no
+                       market cap, and inventing one would be worse.
+  4 interest rate risk interest burden (interest / operating income) and the
+                       refinancing wall (debt due within a year vs cash)
+  5 risk of ruin       Altman Z'' plus cash runway against burn
+
+WHAT IS DELIBERATELY NOT HERE
+No valuation. SEC filings do not carry a share price, and a P/E stapled on
+from elsewhere would make this look like a stock screen. This factor answers
+"is the business capturing the theme", not "is it cheap".
+"""
+from __future__ import annotations
+
+import datetime as dt
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
+
+import sec_xbrl as sx
+
+MIN_YOY_POINTS = 2
+_logger = logging.getLogger("cgi_api.fundamentals_data")
+
+# ---------------------------------------------------------------------------
+# Constituents, keyed to themes_data.THEMES.
+#
+# Anchors, not an index. ETF holdings would be the obvious source and are
+# paywalled (FMP Ultimate), so nothing here pretends to be a fund weighting.
+# A few verifiable names per theme, expanded over time via company/peers.
+THEME_CONSTITUENTS: dict[str, list[str]] = {
+    "AI": ["NVDA", "MSFT", "GOOGL", "META"],
+    "semis / memory": ["NVDA", "AMD", "AVGO", "MU", "INTC"],
+    "Korea / DRAM": ["MU"],            # the listable DRAM pure-play; Samsung/SK are local
+    "cloud / software": ["MSFT", "AMZN", "CRM", "NOW", "DDOG", "SNOW"],
+    "cyber": ["PANW", "CRWD", "FTNT"],
+    "power / grid": ["VST", "CEG", "NRG", "ETN"],
+    "energy: upstream": ["XOM", "COP", "EOG", "DVN"],
+    "energy: refiners": ["VLO", "MPC", "PSX"],
+    "energy: midstream": ["WMB", "KMI", "ET"],
+    "copper": ["FCX", "SCCO"],
+    "gold": ["NEM", "AEM"],
+    "steel / metals": ["NUE", "STLD", "X"],
+    "uranium / nuclear": ["CCJ", "LEU"],
+    "defense": ["LMT", "RTX", "NOC", "GD"],
+    "shipping / logistics": ["MATX", "FDX", "UNP"],
+    "banks": ["JPM", "BAC", "WFC", "USB"],
+    "homebuilders": ["DHI", "LEN", "PHM"],
+    "retail / consumer": ["WMT", "COST", "TGT"],
+    "biotech / healthcare": ["LLY", "ABBV", "AMGN"],
+}
+
+# The AI layer cake, in your words. Kept SEPARATE from the theme map because
+# the thesis claim is that these layers are NOT moving together --
+# infrastructure slowing, utilities falling, chips splitting AMD from NVDA.
+# A per-layer rollup is the only way to see that, and it is what to check
+# each month.
+AI_LAYERS: dict[str, list[str]] = {
+    "energy": ["VST", "CEG", "NRG", "ETN"],
+    "chips": ["NVDA", "AMD", "AVGO", "MU"],
+    "infrastructure": ["VRT", "ANET", "DLR", "SMCI"],
+    "models": [],   # SPCX is the first IPO; OpenAI/Anthropic expected to follow
+    "applications": ["CRM", "NOW", "PLTR", "DDOG", "TWLO", "PANW"],
+}
+
+# ---------------------------------------------------------------------------
+# The "who pays whom" map. One row per link, per the spec's data model.
+#
+# The half no vendor sells, and the reason it is hand-built: the only HARD
+# number is the SEC 10% customer-concentration disclosure. Everything else is
+# direction and importance -- which is what matters for reading one company's
+# result through to a name that has NOT reported yet.
+#
+# Never assume a link. Each row carries its source and confidence, and
+# speculative rows stay labelled speculative rather than quietly averaged in.
+LINKS: list[dict] = [
+    {"payer": "MSFT", "payee": "NVDA", "for": "GPUs / accelerators",
+     "importance": "key vendor", "source": "capex guidance + vendor commentary",
+     "found": "2026-09-25", "confidence": "confirmed"},
+    {"payer": "META", "payee": "NVDA", "for": "GPUs / accelerators",
+     "importance": "key vendor", "source": "public capex guidance",
+     "found": "2026-09-25", "confidence": "confirmed"},
+    {"payer": "NVDA", "payee": "MU", "for": "HBM / high-bandwidth memory",
+     "importance": "key vendor", "source": "MU commentary: HBM sold out",
+     "found": "2026-09-25", "confidence": "confirmed"},
+    {"payer": "NVDA", "payee": "VRT", "for": "power / thermal for racks",
+     "importance": "key vendor", "source": "reference architectures",
+     "found": "2026-09-25", "confidence": "likely"},
+    {"payer": "CRM", "payee": "TWLO", "for": "messaging / customer comms",
+     "importance": "minor", "source": "your thesis: CRM messaging strength implies TWLO spend",
+     "found": "2026-09-25", "confidence": "speculative"},
+    {"payer": "CRM", "payee": "DDOG", "for": "observability",
+     "importance": "minor", "source": "vendor case studies",
+     "found": "2026-09-25", "confidence": "likely"},
+    {"payer": "DLR", "payee": "VST", "for": "power purchase for datacentres",
+     "importance": "key vendor", "source": "PPA announcements",
+     "found": "2026-09-25", "confidence": "likely"},
+]
+
+
+def _pp(x: Optional[float]) -> Optional[float]:
+    return None if x is None else round(x * 100.0, 2)
+
+
+def _trend(series: list[tuple[str, float]], label: str) -> dict:
+    """Latest YoY, prior YoY, and the change in percentage points. The sign
+    of that change is accelerating vs decelerating."""
+    if len(series) < MIN_YOY_POINTS:
+        return {"status": "insufficient history", "n_points": len(series)}
+    latest, prior = series[0][1], series[1][1]
+    d = (latest - prior) * 100.0
+    return {
+        "status": "ok", "measure": label, "as_of": series[0][0],
+        "yoy_pct": _pp(latest), "prior_yoy_pct": _pp(prior),
+        "acceleration_pp": round(d, 2),
+        "direction": ("accelerating" if d > 0.5 else "decelerating" if d < -0.5 else "flat"),
+        "history": [{"period": p, "yoy_pct": _pp(v)} for p, v in series[:12]],
+    }
+
+
+def _margin_series(f: dict) -> tuple[list[tuple[str, float]], str]:
+    """Gross margin as a RATIO per quarter, newest first, plus how it was
+    derived. GrossProfit is absent for energy and miners (XOM, VST, FCX), so
+    revenue minus cost of revenue is the fallback."""
+    rev = sx.series(f, "revenue")
+    gp = sx.series(f, "gross_profit")
+    basis = "GrossProfit / Revenue"
+    if not gp:
+        cost = sx.series(f, "cost_of_revenue")
+        if not cost:
+            return [], "unavailable"
+        gp = {d: rev[d] - cost[d] for d in set(rev) & set(cost)}
+        basis = "(Revenue - CostOfRevenue) / Revenue"
+    common = sorted(set(rev) & set(gp), reverse=True)
+    return [(d, gp[d] / rev[d]) for d in common if rev[d]], basis
+
+
+def _margin_trend(f: dict) -> dict:
+    """Margin is a level in pp, so the rate of change is the DIFFERENCE in
+    margin year on year, not a percentage growth of a percentage -- which
+    would be unreadable."""
+    s, basis = _margin_series(f)
+    if len(s) < 5:
+        return {"status": "insufficient history", "n_points": len(s), "basis": basis}
+    d = dict(s)
+    ds = sorted(d, reverse=True)
+    pts = []
+    for e in ds:
+        base = [x for x in ds if sx.YOY_DAYS[0] <= sx._days(x, e) <= sx.YOY_DAYS[1]]
+        if base:
+            pts.append((e, d[e] - d[base[0]]))
+    if len(pts) < MIN_YOY_POINTS:
+        return {"status": "insufficient history", "n_points": len(pts), "basis": basis}
+    return {
+        "status": "ok", "basis": basis, "as_of": pts[0][0],
+        "margin_pct": _pp(d[ds[0]]),
+        "margin_change_yoy_pp": round(pts[0][1] * 100, 2),
+        "prior_change_yoy_pp": round(pts[1][1] * 100, 2),
+        "direction": ("expanding" if pts[0][1] > 0.002
+                      else "compressing" if pts[0][1] < -0.002 else "flat"),
+        "history": [{"period": p, "change_yoy_pp": round(v * 100, 2)} for p, v in pts[:12]],
+    }
+
+
+def _ttm(s: dict[str, float], n: int = 4) -> Optional[float]:
+    if len(s) < n:
+        return None
+    return sum(s[d] for d in sorted(s, reverse=True)[:n])
+
+
+def _company(sym: str) -> dict:
+    f = sx.company_facts(sym)
+    if not f:
+        return {"symbol": sym, "status": "no SEC data",
+                "read": {"verdict": "unknown", "why": "not found in SEC XBRL"}}
+
+    out: dict = {"symbol": sym, "status": "ok",
+                 "name": f.get("entityName"), "cik": f.get("cik")}
+
+    rev = sx.series(f, "revenue")
+    out["revenue"] = _trend(sx.yoy(rev), "revenue")
+    out["margin"] = _margin_trend(f)
+    out["operating_income"] = _trend(sx.yoy(sx.series(f, "operating_income")), "operating income")
+
+    # 3 return to shareholders, as a share of the cash actually generated.
+    bb, dv, ocf = (sx.series(f, k) for k in ("buybacks", "dividends", "op_cash_flow"))
+    t_bb, t_dv, t_ocf = _ttm(bb), _ttm(dv), _ttm(ocf)
+    if t_ocf and t_ocf > 0:
+        returned = (t_bb or 0.0) + (t_dv or 0.0)
+        out["return_to_shareholders"] = {
+            "status": "ok", "basis": "trailing 4 quarters, share of operating cash flow",
+            "buybacks_ttm": t_bb, "dividends_ttm": t_dv, "op_cash_flow_ttm": t_ocf,
+            "payout_of_ocf_pct": round(returned / t_ocf * 100, 1),
+        }
+    else:
+        out["return_to_shareholders"] = {"status": "no data"}
+
+    # 4 interest rate risk: the burden now, and the wall next year.
+    ie, cash = sx.series(f, "interest_expense"), sx.series(f, "cash")
+    oi = sx.series(f, "operating_income")
+    t_ie, t_oi = _ttm(ie), _ttm(oi)
+    due = sx.latest(sx.series(f, "debt_due_1y"))
+    l_cash = sx.latest(cash)
+    dc, dn = sx.latest(sx.series(f, "debt_current")), sx.latest(sx.series(f, "debt_noncurrent"))
+    rr: dict = {"status": "ok"}
+    if t_ie and t_oi and t_oi > 0:
+        rr["interest_burden_pct"] = round(t_ie / t_oi * 100, 1)
+        rr["interest_burden_note"] = "interest expense as a share of operating income, trailing 4q"
+    if due and l_cash and l_cash[1]:
+        rr["debt_due_1y"] = due[1]
+        rr["cash"] = l_cash[1]
+        rr["wall_covered_by_cash_x"] = round(l_cash[1] / due[1], 2) if due[1] else None
+    if dc or dn:
+        rr["total_debt"] = (dc[1] if dc else 0) + (dn[1] if dn else 0)
+    if len(rr) == 1:
+        rr = {"status": "no data"}
+    out["rate_risk"] = rr
+
+    # 5 risk of ruin. Altman Z'' (the non-manufacturing / private variant)
+    # because it uses BOOK equity -- SEC filings carry no market cap, and the
+    # original Z needs one. Z'' bands are 1.1 / 2.6, not 1.81 / 2.99.
+    ta, tl = sx.latest(sx.series(f, "assets")), sx.latest(sx.series(f, "liabilities"))
+    ca, cl = sx.latest(sx.series(f, "current_assets")), sx.latest(sx.series(f, "current_liabilities"))
+    re_, eq = sx.latest(sx.series(f, "retained_earnings")), sx.latest(sx.series(f, "equity"))
+    ruin: dict = {"status": "no data"}
+    if ta and ta[1]:
+        A = ta[1]
+        # AMD does not tag Liabilities; derive it from assets minus equity.
+        liab = tl[1] if tl else (A - eq[1] if eq else None)
+        wc = (ca[1] - cl[1]) if (ca and cl) else None
+        ebit = t_oi
+        if liab and wc is not None and re_ and ebit is not None and eq:
+            z = (6.56 * wc / A + 3.26 * re_[1] / A + 6.72 * ebit / A + 1.05 * eq[1] / liab)
+            # A company that has never cumulatively earned (accumulated
+            # deficit) is pushed deep into the distress band by the retained-
+            # earnings term alone -- SNOW scored -4.7 that way while holding
+            # net cash. That is the formula meeting a company it was not
+            # designed for, not a solvency warning, so the band is suppressed
+            # and the reason is reported instead of a misleading label.
+            deficit = re_[1] < 0
+            ruin = {
+                "status": "ok", "altman_z2": round(z, 2),
+                "band": (None if deficit
+                         else "distress" if z < 1.1 else "grey" if z < 2.6 else "safe"),
+                "variant": "Z'' (book equity), bands 1.1 / 2.6",
+                "accumulated_deficit": deficit,
+                "note": ("Z'' is used because SEC filings carry no market cap. "
+                         + ("This company has an accumulated deficit, which dominates Z'' "
+                            "and drags it negative regardless of solvency -- the band is "
+                            "withheld rather than shown as distress; read FCF and cash instead."
+                            if deficit else
+                            "Asset-light balance sheets still score high; read the band loosely.")),
+            }
+    cap = _ttm(sx.series(f, "capex"))
+    if t_ocf is not None and cap is not None:
+        fcf = t_ocf - cap
+        ruin = dict(ruin)
+        ruin["fcf_ttm"] = fcf
+        if fcf < 0 and l_cash:
+            ruin["cash_runway_quarters"] = round(l_cash[1] / (abs(fcf) / 4), 1)
+    out["risk_of_ruin"] = ruin
+
+    # The verdict uses revenue and margin only -- the two measures that are
+    # quarterly and therefore current. Folding in a trailing-year figure
+    # would date the verdict without saying so.
+    r, m = out["revenue"], out["margin"]
+    if r.get("status") == "ok" and m.get("status") == "ok":
+        ra, ma = r["acceleration_pp"], m["margin_change_yoy_pp"]
+        if ra > 0.5 and ma > 0.2:
+            v, w = "capturing", "revenue accelerating into expanding margin"
+        elif ra > 0.5:
+            v, w = "buying growth", "revenue accelerating but margin not expanding"
+        elif ra < -0.5 and ma < -0.2:
+            v, w = "rolling over", "revenue decelerating into compressing margin"
+        elif ra < -0.5:
+            v, w = "slowing", "revenue decelerating"
+        else:
+            v, w = "holding", "no clear acceleration either way"
+        out["read"] = {"verdict": v, "why": w, "basis": "quarterly, true YoY from SEC XBRL"}
+    elif r.get("status") == "ok":
+        ra = r["acceleration_pp"]
+        out["read"] = {"verdict": "accelerating" if ra > 0.5 else "slowing" if ra < -0.5 else "holding",
+                       "why": "revenue only; margin unavailable", "basis": "quarterly, true YoY"}
+    else:
+        out["read"] = {"verdict": "unknown", "why": r.get("status", "no data")}
+    return out
+
+
+def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
+    have = [comp[s] for s in names if s in comp and comp[s]["read"]["verdict"] != "unknown"]
+    if not have:
+        return {"status": "no data", "n": 0}
+    counts: dict[str, int] = {}
+    for c in have:
+        counts[c["read"]["verdict"]] = counts.get(c["read"]["verdict"], 0) + 1
+    accel = sorted(c["revenue"]["acceleration_pp"] for c in have
+                   if c.get("revenue", {}).get("acceleration_pp") is not None)
+    return {
+        "status": "ok", "n": len(have), "verdicts": counts,
+        "median_revenue_acceleration_pp": accel[len(accel) // 2] if accel else None,
+        "capturing": [c["symbol"] for c in have if c["read"]["verdict"] == "capturing"],
+        "rolling_over": [c["symbol"] for c in have if c["read"]["verdict"] == "rolling over"],
+        "leaders": [c["symbol"] for c in sorted(
+            have, key=lambda x: -(x.get("revenue", {}).get("acceleration_pp") or -1e9))[:3]],
+    }
+
+
+def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
+    active = set(active_themes or [])
+    universe = sorted({s for v in THEME_CONSTITUENTS.values() for s in v}
+                      | {s for v in AI_LAYERS.values() for s in v})
+
+    # One companyfacts request per name; SEC allows 10/sec, so 8 workers is
+    # comfortable and keeps the whole universe inside one request budget.
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        rows = list(ex.map(_company, universe))
+    comp = {r["symbol"]: r for r in rows}
+    ok = {k: v for k, v in comp.items() if v.get("status") == "ok"}
+
+    themes = [{"theme": t, "constituents": names, "is_live": t in active,
+               **_rollup(names, ok)} for t, names in THEME_CONSTITUENTS.items()]
+    themes.sort(key=lambda t: (not t["is_live"], t["theme"]))
+    layers = [{"layer": k, "constituents": v, **_rollup(v, ok)} for k, v in AI_LAYERS.items()]
+
+    return {
+        "as_of": dt.date.today().isoformat(),
+        "source": "SEC XBRL companyfacts (data.sec.gov) -- free, no key, all filers",
+        "method": ("Damodaran's five as rate of change. True year-on-year per quarter "
+                   "(same quarter prior year), so no seasonal contamination. The read is "
+                   "the change in YoY, in percentage points -- the second derivative."),
+        "coverage": {"universe": len(universe), "with_data": len(ok),
+                     "missing": sorted(set(universe) - set(ok))},
+        "limits": [
+            "No valuation: SEC filings carry no share price, so this says whether a business is capturing the theme, not whether it is cheap.",
+            "Constituents are hand-seeded anchors -- ETF holdings need FMP Ultimate.",
+            "Return to shareholders is a share of operating cash flow, not a yield, for the same reason.",
+            "Altman Z'' uses book equity and still flatters asset-light balance sheets.",
+            "Q4 is derived from the annual figure where a filer never tagged it; that recovered 5 of MU's 35 quarters.",
+        ],
+        "companies": [ok[s] for s in sorted(ok)],
+        "themes": themes,
+        "ai_layers": layers,
+        "links": LINKS,
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+    }
+
+
+def assert_theme_keys() -> list[str]:
+    import themes_data as td
+    return [k for k in THEME_CONSTITUENTS if k not in td.THEMES]

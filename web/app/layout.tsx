@@ -22,6 +22,7 @@ export default function RootLayout({
             { href: "/macro", label: "MACRO", icon: "◎" },
             { href: "/markov", label: "MARKOV", icon: "⇄" },
             { href: "/cot", label: "POSITIONING", icon: "⚖" },
+            { href: "/fundamentals", label: "FUNDAMENTALS", icon: "⊟" },
             { href: "/notes", label: "NOTES", icon: "✎" },
           ].map((t) => (
             <a

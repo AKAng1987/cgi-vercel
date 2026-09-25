@@ -463,3 +463,98 @@ export interface PolicyWatchResponse {
   errors: { country: string; source: string; error: string }[];
   note: string;
 }
+
+export interface FundTrend {
+  status: string;
+  measure?: string;
+  as_of?: string;
+  yoy_pct?: number | null;
+  prior_yoy_pct?: number | null;
+  acceleration_pp?: number;
+  direction?: string;
+  n_points?: number;
+  history?: { period: string; yoy_pct: number | null }[];
+}
+
+export interface FundMargin {
+  status: string;
+  basis?: string;
+  as_of?: string;
+  margin_pct?: number | null;
+  margin_change_yoy_pp?: number;
+  prior_change_yoy_pp?: number;
+  direction?: string;
+  n_points?: number;
+  history?: { period: string; change_yoy_pp: number }[];
+}
+
+export interface FundCompany {
+  symbol: string;
+  status: string;
+  name?: string;
+  cik?: number;
+  revenue: FundTrend;
+  margin: FundMargin;
+  operating_income: FundTrend;
+  return_to_shareholders: {
+    status: string;
+    basis?: string;
+    buybacks_ttm?: number | null;
+    dividends_ttm?: number | null;
+    op_cash_flow_ttm?: number | null;
+    payout_of_ocf_pct?: number;
+  };
+  rate_risk: {
+    status: string;
+    interest_burden_pct?: number;
+    interest_burden_note?: string;
+    debt_due_1y?: number;
+    cash?: number;
+    wall_covered_by_cash_x?: number | null;
+    total_debt?: number;
+  };
+  risk_of_ruin: {
+    status: string;
+    altman_z2?: number;
+    band?: string | null;
+    variant?: string;
+    accumulated_deficit?: boolean;
+    note?: string;
+    fcf_ttm?: number;
+    cash_runway_quarters?: number;
+  };
+  read: { verdict: string; why: string; basis?: string };
+}
+
+export interface FundRollup {
+  status: string;
+  n: number;
+  verdicts?: Record<string, number>;
+  median_revenue_acceleration_pp?: number | null;
+  capturing?: string[];
+  rolling_over?: string[];
+  leaders?: string[];
+}
+
+export interface FundLink {
+  payer: string;
+  payee: string | null;
+  for: string;
+  importance: string;
+  source: string;
+  found: string;
+  confidence: string;
+}
+
+export interface FundamentalsResponse {
+  as_of: string;
+  source: string;
+  method: string;
+  coverage: { universe: number; with_data: number; missing: string[] };
+  limits: string[];
+  companies: FundCompany[];
+  themes: ({ theme: string; constituents: string[]; is_live: boolean } & FundRollup)[];
+  ai_layers: ({ layer: string; constituents: string[] } & FundRollup)[];
+  links: FundLink[];
+  generated_at: string;
+}
