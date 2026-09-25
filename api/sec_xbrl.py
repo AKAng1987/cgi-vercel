@@ -68,11 +68,23 @@ QUARTER_DAYS = (80, 100)
 ANNUAL_DAYS = (350, 380)
 YOY_DAYS = (330, 400)      # same quarter, prior year
 
+# A filer reports at least every ~92 days. If the newest quarter this module
+# can see is older than this, something is wrong with the CONCEPT MAPPING, not
+# with the company -- that is exactly how the NVDA tag-switch bug presented
+# (a dead series read as current, reporting FY2020 as the latest quarter).
+# Callers must treat a stale series as no data rather than as a reading.
+STALE_DAYS = 200
+
 _logger = logging.getLogger("cgi_api.sec_xbrl")
 
 # measure -> ordered tag fallback chain. First tag present wins.
 CONCEPTS: dict[str, list[str]] = {
     "revenue": [
+        # Banks first: revenue for a bank is net of interest expense, and JPM
+        # and WFC let their plain "Revenues" tag go stale (2025-12 and 2020-09)
+        # while RevenuesNetOfInterestExpense stayed current. Non-banks do not
+        # carry this tag at all, so leading with it costs them nothing.
+        "RevenuesNetOfInterestExpense",
         "RevenueFromContractWithCustomerExcludingAssessedTax",
         "RevenueFromContractWithCustomerIncludingAssessedTax",
         "Revenues",
@@ -174,12 +186,18 @@ def _days(a: str, b: str) -> int:
     return (dt.date.fromisoformat(b) - dt.date.fromisoformat(a)).days
 
 
-def _pick(facts: dict, measure: str) -> tuple[Optional[str], Optional[dict]]:
+def _nodes(facts: dict, measure: str) -> list[tuple[str, dict]]:
+    """EVERY tag in the chain that this filer uses, in chain order.
+
+    Taking only the first present tag was a real bug: NVDA used
+    RevenueFromContractWithCustomerExcludingAssessedTax from 2017 to 2022 and
+    then switched to Revenues, so "first present tag" silently read a series
+    that had been dead for four years and reported FY2020 as the latest
+    quarter. Filers switch concepts, so the chain has to be MERGED, not
+    chosen between.
+    """
     g = facts.get("facts", {}).get("us-gaap", {})
-    for tag in CONCEPTS.get(measure, []):
-        if tag in g:
-            return tag, g[tag]
-    return None, None
+    return [(t, g[t]) for t in CONCEPTS.get(measure, []) if t in g]
 
 
 def _usd_rows(node: dict) -> list[dict]:
@@ -193,50 +211,77 @@ def _usd_rows(node: dict) -> list[dict]:
 def series(facts: dict, measure: str) -> dict[str, float]:
     """end_date -> value.
 
-    Duration measures return QUARTERLY values, with Q4 derived from the
-    annual figure where the filer never tagged it. Instant measures return
-    the balance-sheet value as of that date. Latest filing wins on
-    restatement.
+    Duration measures return QUARTERLY values, with Q4 derived from the annual
+    figure where the filer never tagged it. Instant measures return the
+    balance-sheet value as of that date.
+
+    Two merges happen here, and both matter:
+      across FILINGS   the same period appears once per filing that mentions
+                       it; the LATEST filed value wins, which is the restated
+                       and most accurate figure.
+      across TAGS      a filer that switched concepts mid-history has its
+                       periods filled from every tag in the chain, with
+                       earlier-in-chain (more specific) tags preferred where
+                       both cover the same period. Without this, a switch
+                       truncates the series at the switch date.
+
+    The join between two tags can carry a small definitional discontinuity,
+    which can make the single YoY point spanning it slightly off. That is
+    strictly better than losing four years of history.
     """
-    tag, node = _pick(facts, measure)
-    if node is None:
+    nodes = _nodes(facts, measure)
+    if not nodes:
         return {}
-    rows = _usd_rows(node)
 
     if measure in INSTANT:
-        best: dict[str, tuple[str, float]] = {}
-        for r in rows:
-            e, filed, v = r.get("end"), r.get("filed", ""), r.get("val")
-            if e is None or v is None:
+        merged: dict[str, float] = {}
+        for _tag, node in nodes:
+            best: dict[str, tuple[str, float]] = {}
+            for r in _usd_rows(node):
+                e, filed, v = r.get("end"), r.get("filed", ""), r.get("val")
+                if e is None or v is None:
+                    continue
+                if e not in best or filed > best[e][0]:
+                    best[e] = (filed, float(v))
+            for e, (_f, v) in best.items():
+                merged.setdefault(e, v)
+        return merged
+
+    q_all: dict[str, float] = {}
+    a_all: dict[tuple, float] = {}
+    for _tag, node in nodes:
+        q: dict[str, tuple[str, float]] = {}
+        a: dict[tuple, tuple[str, float]] = {}
+        for r in _usd_rows(node):
+            st, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
+            if not (st and e) or v is None:
                 continue
-            if e not in best or filed > best[e][0]:
-                best[e] = (filed, float(v))
-        return {e: v for e, (_, v) in best.items()}
+            n = _days(st, e)
+            if QUARTER_DAYS[0] <= n <= QUARTER_DAYS[1]:
+                if e not in q or filed > q[e][0]:
+                    q[e] = (filed, float(v))
+            elif ANNUAL_DAYS[0] <= n <= ANNUAL_DAYS[1]:
+                k = (st, e)
+                if k not in a or filed > a[k][0]:
+                    a[k] = (filed, float(v))
+        for e, (_f, v) in q.items():
+            q_all.setdefault(e, v)
+        for k, (_f, v) in a.items():
+            a_all.setdefault(k, v)
 
-    q: dict[str, tuple[str, float]] = {}
-    a: dict[tuple, tuple[str, float]] = {}
-    for r in rows:
-        s, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
-        if not (s and e) or v is None:
-            continue
-        n = _days(s, e)
-        if QUARTER_DAYS[0] <= n <= QUARTER_DAYS[1]:
-            if e not in q or filed > q[e][0]:
-                q[e] = (filed, float(v))
-        elif ANNUAL_DAYS[0] <= n <= ANNUAL_DAYS[1]:
-            k = (s, e)
-            if k not in a or filed > a[k][0]:
-                a[k] = (filed, float(v))
-
-    out = {e: v for e, (_, v) in q.items()}
-
+    out = dict(q_all)
     # Derive the missing Q4: an annual window containing exactly three known
     # quarters implies the fourth. Only fills a date that is genuinely absent.
-    for (s, e), (_f, tot) in a.items():
-        inside = [(d, v) for d, v in out.items() if s < d <= e]
+    for (st, e), tot in a_all.items():
+        inside = [(d, v) for d, v in out.items() if st < d <= e]
         if len(inside) == 3 and e not in out:
             out[e] = tot - sum(v for _d, v in inside)
     return out
+
+
+def tags_used(facts: dict, measure: str) -> list[str]:
+    """Which tags actually fed a measure -- for auditing a filer that switched."""
+    return [t for t, _ in _nodes(facts, measure)]
 
 
 def yoy(s: dict[str, float]) -> list[tuple[str, float]]:

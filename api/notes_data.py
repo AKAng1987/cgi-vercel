@@ -193,14 +193,15 @@ FINDINGS: list[dict] = [
     {
         "date": "2026-09-25", "scope": "factor:fundamentals",
         "title": "The AI layer cake is NOT moving together -- and chips contradict the thesis",
-        "body": ("Median revenue acceleration by layer, from SEC filings: chips +46.1pp "
+        "body": ("Median revenue acceleration by layer, from SEC filings: chips +37.6pp "
                  "(all four capturing), applications +3.3pp, infrastructure +2.3pp, energy "
                  "-0.4pp. Infrastructure slowing and utilities falling are CONFIRMED (CEG "
                  "-10.3pp, NRG -9.7pp, VRT -6.0pp, SMCI -29.5pp). But the standing thesis "
                  "says AMD is working while NVDA decelerates, and the filings say the "
-                 "opposite: NVDA is accelerating +46.1pp against AMD's +12.3pp. The chips "
-                 "layer is not splitting -- it is the strongest layer in the cake."),
-        "source": "fundamentals_data, SEC XBRL",
+                 "opposite: NVDA +20.6pp against AMD's +12.3pp, with MU +149.4pp and AVGO "
+                 "+37.6pp ahead of both. The chips layer is not splitting -- it is the "
+                 "strongest layer in the cake, and AMD is its weakest member."),
+        "source": "fundamentals_data, SEC XBRL (corrected 2026-09-25 after the tag-switch fix)",
     },
     {
         "date": "2026-09-25", "scope": "factor:fundamentals",
@@ -238,6 +239,22 @@ FINDINGS: list[dict] = [
                  "Refiners: MPC +45.3pp, PSX +46.1pp, VLO +41.8pp acceleration. Upstream: "
                  "DVN +73.9pp (margin +55.76pp), COP +50.1pp, EOG +35.3pp."),
         "source": "fundamentals_data, SEC XBRL",
+    },
+    {
+        "date": "2026-09-25", "scope": "factor:fundamentals",
+        "title": "A dead XBRL concept reads exactly like a live one",
+        "body": ("Filers switch concepts mid-history. NVDA used "
+                 "RevenueFromContractWithCustomerExcludingAssessedTax to 2022 then moved to "
+                 "Revenues; taking the first tag present read a series dead for four years "
+                 "and reported FY2020's $3.1bn as the latest quarter, with a confident and "
+                 "wrong verdict attached. 48 of 65 names in the universe merge more than "
+                 "one tag, so most of the first run was affected. Fixed by merging the "
+                 "whole fallback chain, plus a STALE_DAYS=200 guard that refuses any series "
+                 "whose newest quarter predates a reporting cycle. Banks needed "
+                 "RevenuesNetOfInterestExpense (JPM's plain Revenues stopped in 2025, WFC's "
+                 "in 2020). AEM files IFRS and is now correctly excluded rather than "
+                 "silently stale."),
+        "source": "caught by spot-checking NVDA's filed revenue against the tape",
     },
     {
         "date": "2026-09-25", "scope": "global",

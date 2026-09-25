@@ -207,6 +207,24 @@ def _company(sym: str) -> dict:
                  "name": f.get("entityName"), "cik": f.get("cik")}
 
     rev = sx.series(f, "revenue")
+
+    # Staleness guard. A dead concept reads exactly like a current one, which
+    # is how the NVDA tag-switch bug reported FY2020 revenue as the latest
+    # quarter and produced a confident, wrong verdict. Anything older than a
+    # reporting cycle is refused outright rather than shown.
+    if rev:
+        newest = max(rev)
+        age = (dt.date.today() - dt.date.fromisoformat(newest)).days
+        if age > sx.STALE_DAYS:
+            return {"symbol": sym, "status": "stale",
+                    "name": f.get("entityName"), "cik": f.get("cik"),
+                    "latest_quarter": newest, "stale_days": age,
+                    "tags_seen": sx.tags_used(f, "revenue"),
+                    "read": {"verdict": "unknown",
+                             "why": (f"newest filing concept CGI can read ends {newest}, "
+                                     f"{age}d ago -- likely an IFRS filer or a concept this "
+                                     f"module does not map yet")}}
+
     out["revenue"] = _trend(sx.yoy(rev), "revenue")
     out["margin"] = _margin_trend(f)
     out["operating_income"] = _trend(sx.yoy(sx.series(f, "operating_income")), "operating income")
@@ -367,6 +385,8 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
             "Return to shareholders is a share of operating cash flow, not a yield, for the same reason.",
             "Altman Z'' uses book equity and still flatters asset-light balance sheets.",
             "Q4 is derived from the annual figure where a filer never tagged it; that recovered 5 of MU's 35 quarters.",
+            "Concept chains are MERGED, not chosen between: filers switch tags mid-history and reading only the first would truncate the series silently.",
+            "Any series whose newest quarter is over 200 days old is refused as stale rather than reported -- IFRS filers (AEM) have no us-gaap revenue concept and drop out here.",
         ],
         "companies": [ok[s] for s in sorted(ok)],
         "themes": themes,
