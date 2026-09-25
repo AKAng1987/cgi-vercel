@@ -12,6 +12,8 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
+import threading
+
 import boto3
 from botocore.exceptions import ClientError
 
@@ -47,7 +49,8 @@ TTL_HOURS: dict[str, float] = {
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
     "watchlists": 24.0,  # TradingView list contents for the cloud routine
-    "fundamentals": 12.0,  # quarterly data; 12h surfaces a fresh print same-day
+    "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
+    "etf_constituents": 168.0,  # ETF books move slowly; 7d, and the pull is ~90s
 }
 
 # Bump a key's entry whenever the fetch/compute logic feeding that
@@ -76,7 +79,8 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 4,  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "watchlists": 1,
-    "fundamentals": 2,  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
+    "etf_constituents": 1,
+    "fundamentals": 3,  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
                         # v1 read dead concepts for 48 of 65 names (NVDA reported FY2020)
     "axis_drivers": 10,  # 2026-09-23: Empire prices paid, Philly future activity (free FRED; ISM frozen by TradingView MCP bug), ISM svc activity back as inverted context. v9 2026-09-19: inflation + growth lists from user framework + sweep. v8 2026-09-18: back to DFEDTARU (v7 tried DFF, user rejected). v6 2026-09-17: calendar-aware yoy (CPI 3.33 not 3.73); credit: 10-2 back, 10-5, HYG/LQD, curve regime categorical; SPY out; Challenger m/m out
 }
@@ -171,6 +175,52 @@ def _get_raw(cache_key: str) -> Optional[dict]:
             return None
         raise
     return json.loads(obj["Body"].read().decode("utf-8"))
+
+
+# A dict, not a set: this module defines its own set() for cache writes, which
+# shadows the builtin at module scope.
+_refreshing: dict[str, bool] = {}
+_refresh_lock = threading.Lock()
+
+
+def get_or_fetch_bg(cache_key: str, fetch_fn) -> dict:
+    """Like get_or_fetch, but a STALE value is served immediately while the
+    refresh runs in a background thread.
+
+    Exists because the fundamentals universe grew from 65 hand-picked names to
+    ~116 derived from real ETF holdings, and ~116 SEC fetches take ~30s. The
+    page is rendered by a Vercel server component, whose function has a hard
+    timeout well under that -- so a synchronous recompute would not merely be
+    slow, it would fail the page outright. Serving the previous value and
+    refreshing behind it keeps every request fast at the cost of the data
+    being one cycle old, which for quarterly filings is immaterial.
+
+    Only the FIRST ever call blocks, because nothing exists to serve yet.
+    """
+    fresh = get(cache_key)
+    if fresh is not None:
+        return fresh
+
+    stale = _get_raw(cache_key)
+    if stale is None:
+        return get_or_fetch(cache_key, fetch_fn)   # nothing to serve; must block
+
+    with _refresh_lock:
+        if cache_key in _refreshing:
+            return stale
+        _refreshing[cache_key] = True
+
+    def _work():
+        try:
+            get_or_fetch(cache_key, fetch_fn)
+        except Exception:
+            _logger.exception("[cache] background refresh failed for %r", cache_key)
+        finally:
+            with _refresh_lock:
+                _refreshing.pop(cache_key, None)
+
+    threading.Thread(target=_work, daemon=True).start()
+    return stale
 
 
 def get_or_fetch(cache_key: str, fetch_fn) -> dict:

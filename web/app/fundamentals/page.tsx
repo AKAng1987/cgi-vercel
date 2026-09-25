@@ -56,7 +56,7 @@ function Spark({ pts }: { pts: number[] }) {
   );
 }
 
-function RollupRow({ label, r, wide }: { label: string; r: FundRollup & { constituents: string[] }; wide?: boolean }) {
+function RollupRow({ label, r, wide, fallback }: { label: string; r: FundRollup & { constituents: string[] }; wide?: boolean; fallback?: boolean }) {
   if (r.status !== "ok") {
     return (
       <div className="flex items-baseline gap-3 border-b border-slate-900 py-1.5 text-[0.72rem]">
@@ -81,6 +81,16 @@ function RollupRow({ label, r, wide }: { label: string; r: FundRollup & { consti
       </span>
       {r.leaders && r.leaders.length > 0 && (
         <span className="text-[0.65rem] text-slate-500">lead {r.leaders.join(" ")}</span>
+      )}
+      {r.constituents.length > 0 && (
+        <span className="text-[0.62rem] text-slate-600" title={r.constituents.join(" ")}>
+          {r.constituents.slice(0, 5).join(" ")}
+        </span>
+      )}
+      {fallback && (
+        <span className="rounded bg-amber-950 px-1.5 text-[0.6rem] text-amber-300">
+          hand-seeded
+        </span>
       )}
     </div>
   );
@@ -157,7 +167,10 @@ export default async function FundamentalsPage() {
         Layer 3: themes say the trade is working — this says{" "}
         <span className="text-slate-200">who inside it is capturing the money</span>. Damodaran&apos;s
         five, all as rate of change, because the level is priced and the change in the level
-        re-rates. Every figure is the{" "}
+        re-rates. Constituents are the top 5 by weight of what each theme&apos;s ETFs{" "}
+        <span className="text-slate-200">actually hold</span> — State Street&apos;s daily files
+        where they exist, SEC N-PORT everywhere else — not a list anyone typed. Every figure is
+        the{" "}
         <span className="text-slate-200">second derivative</span>: a company going from +30% to +20%
         revenue growth is decelerating while still growing fast.
       </p>
@@ -180,7 +193,7 @@ export default async function FundamentalsPage() {
             Themes running on RS · {live.length}
           </div>
           {live.map((t) => (
-            <RollupRow key={t.theme} label={t.theme} r={t} />
+            <RollupRow key={t.theme} label={t.theme} r={t} fallback={t.source?.startsWith("hand")} />
           ))}
         </section>
       )}
@@ -190,7 +203,7 @@ export default async function FundamentalsPage() {
           Themes not currently running · {rest.length}
         </div>
         {rest.map((t) => (
-          <RollupRow key={t.theme} label={t.theme} r={t} />
+          <RollupRow key={t.theme} label={t.theme} r={t} fallback={t.source?.startsWith("hand")} />
         ))}
       </section>
 

@@ -205,7 +205,11 @@ def fundamentals():
         active = [t["theme"] for t in th.get("themes", []) if t.get("stage")]
     except Exception:
         active = []
-    return cache.get_or_fetch(
+    # Background refresh: the universe is ~116 names derived from real ETF
+    # holdings and a cold recompute takes ~30s, which would exceed the Vercel
+    # server component's function timeout and fail the page rather than just
+    # be slow. Serve the previous value, refresh behind it.
+    return cache.get_or_fetch_bg(
         "fundamentals",
         lambda: fundamentals_data.build_fundamentals_response(active_themes=active),
     )

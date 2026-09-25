@@ -46,18 +46,26 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+import cache
+import etf_holdings as eh
 import sec_xbrl as sx
+import themes_data as td
 
 MIN_YOY_POINTS = 2
 _logger = logging.getLogger("cgi_api.fundamentals_data")
 
 # ---------------------------------------------------------------------------
-# Constituents, keyed to themes_data.THEMES.
+# FALLBACK constituents only.
 #
-# Anchors, not an index. ETF holdings would be the obvious source and are
-# paywalled (FMP Ultimate), so nothing here pretends to be a fund weighting.
-# A few verifiable names per theme, expanded over time via company/peers.
-THEME_CONSTITUENTS: dict[str, list[str]] = {
+# The live list is DERIVED from what each theme's ETFs actually hold (see
+# etf_holdings.py). This hand-picked list is kept solely so a failed fetch
+# degrades to something labelled rather than to an empty table -- it is never
+# silently mixed with real holdings.
+#
+# It was the weakest input in the factor and the derivation proved it: the
+# hand list for "steel / metals" was NUE, STLD, X, while XME actually holds
+# CLF, STLD, RS, RGLD, NUE, FCX, NEM and CMC -- and X had been acquired.
+FALLBACK_CONSTITUENTS: dict[str, list[str]] = {
     "AI": ["NVDA", "MSFT", "GOOGL", "META"],
     "semis / memory": ["NVDA", "AMD", "AVGO", "MU", "INTC"],
     "Korea / DRAM": ["MU"],            # the listable DRAM pure-play; Samsung/SK are local
@@ -78,6 +86,52 @@ THEME_CONSTITUENTS: dict[str, list[str]] = {
     "retail / consumer": ["WMT", "COST", "TGT"],
     "biotech / healthcare": ["LLY", "ABBV", "AMGN"],
 }
+
+# Top N by weight per theme, after unioning that theme's ETF proxies. Five
+# keeps the whole universe near 116 names; the SEC pull is ~0.3s each, and the
+# page is rendered by a Vercel server component with a hard function timeout,
+# so this number is a LATENCY budget as much as an editorial choice.
+TOP_PER_THEME = 5
+
+
+def derive_constituents() -> dict:
+    """theme -> constituents, from the funds' own books, with provenance.
+
+    Cached for 7 days: reading 60 ETFs takes ~90s and their holdings barely
+    move week to week.
+    """
+    def _compute() -> dict:
+        out, prov = {}, {}
+        for theme, proxies in td.THEMES.items():
+            tickers, p = eh.top_constituents(proxies, n=12, min_weight=0.5)
+            out[theme] = tickers[:TOP_PER_THEME]
+            prov[theme] = p
+        return {"as_of": dt.date.today().isoformat(),
+                "top_per_theme": TOP_PER_THEME,
+                "constituents": out, "provenance": prov}
+
+    return cache.get_or_fetch("etf_constituents", _compute)
+
+
+def theme_constituents() -> tuple[dict[str, list[str]], dict, list[str]]:
+    """(theme -> names, provenance, themes that fell back to the hand list)."""
+    try:
+        d = derive_constituents()
+    except Exception:
+        _logger.exception("[fundamentals] constituent derivation failed; using fallback")
+        return dict(FALLBACK_CONSTITUENTS), {}, sorted(FALLBACK_CONSTITUENTS)
+    derived = d.get("constituents") or {}
+    out, fell_back = {}, []
+    for theme in td.THEMES:
+        names = derived.get(theme) or []
+        if not names:
+            names = FALLBACK_CONSTITUENTS.get(theme, [])
+            if names:
+                fell_back.append(theme)
+        if names:
+            out[theme] = names
+    return out, d.get("provenance", {}), fell_back
+
 
 # The AI layer cake, in your words. Kept SEPARATE from the theme map because
 # the thesis claim is that these layers are NOT moving together --
@@ -354,7 +408,8 @@ def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
 
 def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     active = set(active_themes or [])
-    universe = sorted({s for v in THEME_CONSTITUENTS.values() for s in v}
+    constituents, provenance, fell_back = theme_constituents()
+    universe = sorted({s for v in constituents.values() for s in v}
                       | {s for v in AI_LAYERS.values() for s in v})
 
     # One companyfacts request per name. Workers are held to 3 deliberately:
@@ -367,7 +422,9 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     ok = {k: v for k, v in comp.items() if v.get("status") == "ok"}
 
     themes = [{"theme": t, "constituents": names, "is_live": t in active,
-               **_rollup(names, ok)} for t, names in THEME_CONSTITUENTS.items()]
+               "source": ("hand-seeded fallback" if t in fell_back
+                          else "derived from ETF holdings"),
+               **_rollup(names, ok)} for t, names in constituents.items()]
     themes.sort(key=lambda t: (not t["is_live"], t["theme"]))
     layers = [{"layer": k, "constituents": v, **_rollup(v, ok)} for k, v in AI_LAYERS.items()]
 
@@ -378,10 +435,14 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
                    "(same quarter prior year), so no seasonal contamination. The read is "
                    "the change in YoY, in percentage points -- the second derivative."),
         "coverage": {"universe": len(universe), "with_data": len(ok),
-                     "missing": sorted(set(universe) - set(ok))},
+                     "missing": sorted(set(universe) - set(ok)),
+                     "themes_on_fallback": fell_back},
+        "constituent_provenance": provenance,
         "limits": [
             "No valuation: SEC filings carry no share price, so this says whether a business is capturing the theme, not whether it is cheap.",
-            "Constituents are hand-seeded anchors -- ETF holdings need FMP Ultimate.",
+            "Constituents are the top 5 by weight of what each theme's ETFs actually hold (State Street daily files, else SEC N-PORT).",
+            "N-PORT names holdings but never tickers, so foreign listings that do not resolve to a US symbol are dropped -- EWY is 55% SK Hynix and Samsung, neither of which can be reached this way.",
+            "An ETF does not always mean what its theme label says: KBE/KRE are equal-weighted REGIONAL banks, so the banks theme derives small regionals rather than the majors.",
             "Return to shareholders is a share of operating cash flow, not a yield, for the same reason.",
             "Altman Z'' uses book equity and still flatters asset-light balance sheets.",
             "Q4 is derived from the annual figure where a filer never tagged it; that recovered 5 of MU's 35 quarters.",
@@ -397,5 +458,4 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
 
 
 def assert_theme_keys() -> list[str]:
-    import themes_data as td
-    return [k for k in THEME_CONSTITUENTS if k not in td.THEMES]
+    return [k for k in FALLBACK_CONSTITUENTS if k not in td.THEMES]

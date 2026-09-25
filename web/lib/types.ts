@@ -550,10 +550,21 @@ export interface FundamentalsResponse {
   as_of: string;
   source: string;
   method: string;
-  coverage: { universe: number; with_data: number; missing: string[] };
+  coverage: {
+    universe: number;
+    with_data: number;
+    missing: string[];
+    themes_on_fallback?: string[];
+  };
+  constituent_provenance?: Record<string, unknown>;
   limits: string[];
   companies: FundCompany[];
-  themes: ({ theme: string; constituents: string[]; is_live: boolean } & FundRollup)[];
+  themes: ({
+    theme: string;
+    constituents: string[];
+    is_live: boolean;
+    source?: string;
+  } & FundRollup)[];
   ai_layers: ({ layer: string; constituents: string[] } & FundRollup)[];
   links: FundLink[];
   generated_at: string;
