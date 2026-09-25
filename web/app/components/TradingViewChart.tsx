@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/lib/useTheme";
 
 declare global {
   interface Window {
@@ -11,6 +12,11 @@ declare global {
 let renderCount = 0;
 
 export function TradingViewChart({ symbol }: { symbol: string }) {
+  // TradingView renders in its own iframe and cannot see the page's CSS, so
+  // like Plotly it has to be told the theme explicitly. Included in the effect
+  // deps below so toggling rebuilds the widget rather than leaving a dark
+  // chart embedded in a light page.
+  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(`tv_${renderCount++}`);
 
@@ -26,10 +32,10 @@ export function TradingViewChart({ symbol }: { symbol: string }) {
         symbol,
         interval: "D",
         timezone: "exchange",
-        theme: "dark",
+        theme,
         style: "1",
         locale: "en",
-        toolbar_bg: "#111827",
+        toolbar_bg: theme === "light" ? "#f1f5f9" : "#111827",
         enable_publishing: false,
         allow_symbol_change: true,
         container_id: containerId,
@@ -53,7 +59,7 @@ export function TradingViewChart({ symbol }: { symbol: string }) {
     return () => {
       cancelled = true;
     };
-  }, [symbol]);
+  }, [symbol, theme]);
 
   return (
     <div className="tradingview-widget-container mt-4" style={{ height: 480 }}>

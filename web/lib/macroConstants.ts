@@ -15,8 +15,35 @@ export const DARK_LAYOUT: Partial<Layout> = {
   margin: { t: 30, b: 20, l: 0, r: 0 },
 };
 
+/**
+ * Plotly draws its own canvas and never sees a Tailwind class, so the slate
+ * ramp remap that themes the rest of the app cannot reach it -- the charts
+ * stayed on a #0E1117 panel in the middle of a white page. These layouts are
+ * the light equivalents, selected through layoutFor()/gridFor().
+ *
+ * The SERIES colours in COLORS below are deliberately NOT switched: they are
+ * semantic (hike red, cut green, upper amber) and readable on both, and
+ * changing them per theme would mean two palettes to keep honest.
+ */
+export const LIGHT_LAYOUT: Partial<Layout> = {
+  paper_bgcolor: "#ffffff",
+  plot_bgcolor: "#ffffff",
+  font: { color: "#475569" },
+  legend: { bgcolor: "rgba(0,0,0,0)", font: { size: 10 } },
+  margin: { t: 30, b: 20, l: 0, r: 0 },
+};
+
 export const GRID_COLOR = "#1F2937";
 export const ZERO_LINE_COLOR = "#4B5563";
+export const GRID_COLOR_LIGHT = "#E2E8F0";
+export const ZERO_LINE_COLOR_LIGHT = "#94A3B8";
+
+export const layoutFor = (theme: string): Partial<Layout> =>
+  theme === "light" ? LIGHT_LAYOUT : DARK_LAYOUT;
+export const gridFor = (theme: string): string =>
+  theme === "light" ? GRID_COLOR_LIGHT : GRID_COLOR;
+export const zeroLineFor = (theme: string): string =>
+  theme === "light" ? ZERO_LINE_COLOR_LIGHT : ZERO_LINE_COLOR;
 
 export const COLORS = {
   upper: "#F59E0B",

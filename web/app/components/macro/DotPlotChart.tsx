@@ -1,5 +1,8 @@
+"use client";
+
 import { PlotlyChart } from "./PlotlyChart";
-import { DARK_LAYOUT, GRID_COLOR, DOT_PLOT_COLORS, DOT_PLOT_LABELS, DOT_PLOT_HORIZON_ORDER } from "@/lib/macroConstants";
+import { layoutFor, gridFor, DOT_PLOT_COLORS, DOT_PLOT_LABELS, DOT_PLOT_HORIZON_ORDER } from "@/lib/macroConstants";
+import { useTheme } from "@/lib/useTheme";
 import type { DotPlotRow } from "@/lib/macroTypes";
 import type { Data, Layout } from "plotly.js";
 
@@ -11,6 +14,7 @@ import type { Data, Layout } from "plotly.js";
  * bar marks the median rate per horizon.
  */
 export function DotPlotChart({ rows }: { rows: DotPlotRow[] }) {
+  const theme = useTheme();
   const availHorizons = DOT_PLOT_HORIZON_ORDER.filter((h) => rows.some((r) => r.year === h));
 
   const data: Data[] = [];
@@ -75,15 +79,15 @@ export function DotPlotChart({ rows }: { rows: DotPlotRow[] }) {
       data={data}
       layout={
         {
-          ...DARK_LAYOUT,
+          ...layoutFor(theme),
           showlegend: false,
           xaxis: {
-            gridcolor: GRID_COLOR,
+            gridcolor: gridFor(theme),
             tickvals: availHorizons.map((_, i) => i),
             ticktext: availHorizons.map((h) => DOT_PLOT_LABELS[h] ?? h),
             range: [-0.6, availHorizons.length - 0.4],
           },
-          yaxis: { gridcolor: GRID_COLOR, title: { text: "Target Rate (%)" } },
+          yaxis: { gridcolor: gridFor(theme), title: { text: "Target Rate (%)" } },
           shapes,
         } as Partial<Layout>
       }

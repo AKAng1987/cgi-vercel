@@ -1,5 +1,8 @@
+"use client";
+
 import { PlotlyChart } from "./PlotlyChart";
-import { DARK_LAYOUT, GRID_COLOR, ZERO_LINE_COLOR } from "@/lib/macroConstants";
+import { layoutFor, gridFor, zeroLineFor } from "@/lib/macroConstants";
+import { useTheme } from "@/lib/useTheme";
 import type { Data, Layout } from "plotly.js";
 
 export interface BarSeries {
@@ -36,6 +39,7 @@ interface BarChartProps {
  * change bars (app.py:2436-2451).
  */
 export function BarChart({ title, bars, overlays = [], height = 280, yTitle, barmode = "group", zeroLine = true }: BarChartProps) {
+  const theme = useTheme();
   const data: Data[] = [
     ...bars.map(
       (b): Data => ({
@@ -69,7 +73,7 @@ export function BarChart({ title, bars, overlays = [], height = 280, yTitle, bar
           yref: "y",
           y0: 0,
           y1: 0,
-          line: { color: ZERO_LINE_COLOR, width: 1 },
+          line: { color: zeroLineFor(theme), width: 1 },
         },
       ]
     : [];
@@ -80,11 +84,11 @@ export function BarChart({ title, bars, overlays = [], height = 280, yTitle, bar
       data={data}
       layout={
         {
-          ...DARK_LAYOUT,
+          ...layoutFor(theme),
           title: title ? { text: title, font: { size: 11, color: "#9CA3AF" } } : undefined,
           barmode,
-          xaxis: { gridcolor: GRID_COLOR },
-          yaxis: { gridcolor: GRID_COLOR, title: yTitle ? { text: yTitle } : undefined },
+          xaxis: { gridcolor: gridFor(theme) },
+          yaxis: { gridcolor: gridFor(theme), title: yTitle ? { text: yTitle } : undefined },
           shapes,
         } as Partial<Layout>
       }
