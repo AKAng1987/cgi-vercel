@@ -226,7 +226,11 @@ def brief(cadence: str = "daily"):
     rarely it actually fires. If nothing crossed, it says so.
     """
     key = "brief_weekly" if cadence == "weekly" else "brief_daily"
-    return cache.get_or_fetch(key, lambda: brief_data.build_brief(cadence))
+    # Background refresh: the brief assembles from seven other builders, and a
+    # cold rebuild pulls fundamentals with it. LIVE now fetches this on every
+    # load, and a cold miss was measured at 31s on the landing page -- so serve
+    # the previous value and refresh behind it. Only the first ever call blocks.
+    return cache.get_or_fetch_bg(key, lambda: brief_data.build_brief(cadence))
 
 
 @app.get("/api/watchlists")
