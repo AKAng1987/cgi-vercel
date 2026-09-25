@@ -134,15 +134,40 @@ def cik_map() -> dict[str, int]:
     return _cik_cache
 
 
+# Every tag this module can use, flattened once at import. A companyfacts
+# payload carries 350-780 tags and decompresses to 3-8MB per company; the
+# universe is ~314MB, and parsed into Python dicts it is several times that
+# again. Render's instance would not survive holding it, so each payload is
+# trimmed to these tags INSIDE the worker and the full object is released
+# immediately -- peak memory becomes one payload per worker rather than the
+# whole universe. This ran fine locally on a machine with room and would have
+# died in production; it is the same mistake class as the 33s LIVE load.
+_WANTED: frozenset[str] = frozenset(t for tags in CONCEPTS.values() for t in tags)
+
+
 def company_facts(ticker: str) -> Optional[dict]:
+    """Fetch and immediately trim to the tags CONCEPTS can actually use.
+
+    Returns the same {"facts": {"us-gaap": {...}}} shape callers expect, so
+    series() is unchanged -- only the volume is different.
+    """
     cik = cik_map().get(ticker.upper())
     if cik is None:
         return None
     try:
-        return _get(FACTS.format(cik=cik))
+        full = _get(FACTS.format(cik=cik))
     except urllib.error.HTTPError as e:
         _logger.warning("[sec] %s (CIK %s) -> HTTP %s", ticker, cik, e.code)
         return None
+    except Exception as e:                      # network/timeout: one name, not the page
+        _logger.warning("[sec] %s (CIK %s) -> %s", ticker, cik, e)
+        return None
+    g = full.get("facts", {}).get("us-gaap", {})
+    return {
+        "entityName": full.get("entityName"),
+        "cik": full.get("cik"),
+        "facts": {"us-gaap": {k: v for k, v in g.items() if k in _WANTED}},
+    }
 
 
 def _days(a: str, b: str) -> int:

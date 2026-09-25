@@ -339,9 +339,11 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     universe = sorted({s for v in THEME_CONSTITUENTS.values() for s in v}
                       | {s for v in AI_LAYERS.values() for s in v})
 
-    # One companyfacts request per name; SEC allows 10/sec, so 8 workers is
-    # comfortable and keeps the whole universe inside one request budget.
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    # One companyfacts request per name. Workers are held to 3 deliberately:
+    # SEC would allow 10/sec, but each payload is multi-megabyte before
+    # sec_xbrl trims it, so the ceiling here is MEMORY on Render's instance,
+    # not the rate limit.
+    with ThreadPoolExecutor(max_workers=3) as ex:
         rows = list(ex.map(_company, universe))
     comp = {r["symbol"]: r for r in rows}
     ok = {k: v for k, v in comp.items() if v.get("status") == "ok"}
