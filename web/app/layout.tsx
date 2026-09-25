@@ -31,7 +31,6 @@ export default function RootLayout({
       <body>
         <nav className="flex flex-wrap items-center gap-1 border-b border-slate-800 bg-slate-950 px-6 py-2 text-sm">
           {[
-            { href: "/brief", label: "BRIEF", icon: "☀" },
             { href: "/", label: "LIVE", icon: "◉" },
             { href: "/tape", label: "TAPE", icon: "≡" },
             { href: "/backtest", label: "BACKTEST", icon: "⊞" },

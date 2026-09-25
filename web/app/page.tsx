@@ -1,8 +1,9 @@
 import { apiFetch } from "@/lib/api";
-import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse } from "@/lib/types";
+import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
+import { ChangeStrip } from "./components/brief/ChangeStrip";
 import { PolicyNotes } from "./components/brief/PolicyNotes";
 import { StandingTheme } from "./components/brief/StandingTheme";
 import { ThemesTable } from "./components/brief/ThemesTable";
@@ -16,12 +17,15 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live, tech, notes] = await Promise.all([
+  const [themes, signals, live, tech, notes, brief] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
     apiFetch<TechnicalsResponse>("/api/technicals").catch(() => null),
     apiFetch<NotesResponse>("/api/notes").catch(() => null),
+    // In the SAME batch, not a sequential await: LIVE is already the slowest
+    // page and a second round trip would make it worse.
+    apiFetch<BriefResponse>("/api/brief?cadence=daily").catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
@@ -85,6 +89,15 @@ export default async function Live() {
           </div>
           <PolicyNotes notes={notes.policy.filter((p) => p.is_live).slice(0, 5)} compact />
         </section>
+      )}
+
+      {brief && (
+        <ChangeStrip
+          changes={brief.changes}
+          headline={brief.headline}
+          nothingCrossed={brief.nothing_crossed}
+          covers={brief.covers}
+        />
       )}
 
       <p className="text-[0.68rem] leading-relaxed text-slate-600">
