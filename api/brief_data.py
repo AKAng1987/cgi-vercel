@@ -136,10 +136,11 @@ def build_brief(cadence: str = "daily") -> dict:
     # 2 breadth -- colour and cross are separate reads, both always reported
     if tech:
         nnh = tech.get("net_new_highs") or {}
+        # The whole technicals response, because BreadthStrip already takes
+        # exactly that shape -- reshaping it here would mean a second component
+        # to keep in step with the first.
         sections.append(_section(
-            "breadth", nnh.get("state") or nnh.get("colour", "?"),
-            {"net_new_highs": nnh, "gauges": tech.get("gauges"),
-             "confirmation": tech.get("confirmation")}))
+            "breadth", nnh.get("state") or nnh.get("colour", "?"), tech))
     else:
         sections.append(_section("breadth", "unavailable", None, e_te))
 
@@ -154,7 +155,10 @@ def build_brief(cadence: str = "daily") -> dict:
              if started else f"{len(running)} running, none new"),
             {"started": started,
              "standing": themes.get("standing"),
-             "running": sorted(running, key=lambda t: -(t.get("age_days") or 0))[:12]}))
+             "run_stats": themes.get("run_stats"),
+             # full rows, unsorted slice removed: ThemesTable does its own
+             # grouping into megatrend / running / dormant
+             "running": themes.get("themes", [])}))
     else:
         sections.append(_section("themes", "unavailable", None, e_th))
 
@@ -164,7 +168,7 @@ def build_brief(cadence: str = "daily") -> dict:
             "fundamentals",
             (f"{len(fund_changes)} filing change(s)" if fund_changes else "no new filings"),
             {"changes": fund_changes, "ai_layers": fund.get("ai_layers"),
-             "coverage": fund.get("coverage")}))
+             "themes": fund.get("themes"), "coverage": fund.get("coverage")}))
     else:
         sections.append(_section("fundamentals", "unavailable", None, e_fu))
 
