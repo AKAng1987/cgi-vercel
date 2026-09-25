@@ -52,6 +52,7 @@ TTL_HOURS: dict[str, float] = {
     "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
     "etf_constituents": 168.0,  # ETF books move slowly; 7d, and the pull is ~90s
     "brief_daily": 6.0,
+    "liquidity": 12.0,  # weekly Fed data; 12h is ample
     "customer_links": 168.0,  # 10-Ks change once a year; each is 2-10MB
     "brief_weekly": 24.0,
 }
@@ -84,6 +85,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "watchlists": 2,  # 2026-09-26: CGI earning-it list + NATGAS symbol fix
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 1,
+    "liquidity": 1,
     "customer_links": 1,
     "brief_weekly": 1,
     "fundamentals": 5,  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --

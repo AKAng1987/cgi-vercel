@@ -19,6 +19,7 @@ import notes_data
 import fundamentals_data
 import brief_data
 import customer_links
+import liquidity_data
 import technicals_data
 import themes_data
 import signals_data
@@ -246,6 +247,14 @@ def brief(cadence: str = "daily"):
     # load, and a cold miss was measured at 31s on the landing page -- so serve
     # the previous value and refresh behind it. Only the first ever call blocks.
     return cache.get_or_fetch_bg(key, lambda: brief_data.build_brief(cadence))
+
+
+@app.get("/api/liquidity", dependencies=[Depends(require_bearer_token)])
+def liquidity():
+    """Global liquidity, Howell-style -- the QUANTITY of money, where CGI's
+    LIQUIDITY axis measures its PRICE. Labelled a proxy: it is free FRED data,
+    not CrossBorder Capital's licensed index."""
+    return cache.get_or_fetch("liquidity", liquidity_data.build_liquidity_response)
 
 
 @app.get("/api/customer-links", dependencies=[Depends(require_bearer_token)])
