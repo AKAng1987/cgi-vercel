@@ -63,6 +63,7 @@ from typing import Optional
 UA = "CGI macro-regime research (ang.arvin@ymail.com)"
 FACTS = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 TICKERS = "https://www.sec.gov/files/company_tickers.json"
+SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 
 QUARTER_DAYS = (80, 100)
 ANNUAL_DAYS = (350, 380)
@@ -213,6 +214,33 @@ def company_facts(ticker: str) -> Optional[dict]:
     keep = {ns: {k: v for k, v in src.get(ns, {}).items() if k in _WANTED}
             for ns in ("us-gaap", "ifrs-full") if ns in src}
     return {"entityName": full.get("entityName"), "cik": full.get("cik"), "facts": keep}
+
+
+_sector_cache: dict[str, Optional[str]] = {}
+
+
+def sector(ticker: str) -> Optional[str]:
+    """The filer's own SIC description, e.g. "Semiconductors & Related Devices".
+
+    Taken from the SEC rather than a vendor's sector taxonomy: it is the
+    classification the company files under, it is free, and it needs no extra
+    mapping table to maintain. Memoised per process because it never changes.
+    """
+    t = ticker.upper()
+    if t in _sector_cache:
+        return _sector_cache[t]
+    cik = cik_map().get(t)
+    if cik is None:
+        _sector_cache[t] = None
+        return None
+    try:
+        # _get already returns parsed JSON here (unlike etf_holdings._get,
+        # which returns bytes) -- an easy confusion between the two modules.
+        d = _get(SUBMISSIONS.format(cik=cik))
+        _sector_cache[t] = d.get("sicDescription") or None
+    except Exception:
+        _sector_cache[t] = None
+    return _sector_cache[t]
 
 
 def _days(a: str, b: str) -> int:

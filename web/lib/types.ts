@@ -493,6 +493,7 @@ export interface FundCompany {
   status: string;
   name?: string;
   cik?: number;
+  sector?: string | null;
   revenue: FundTrend;
   margin: FundMargin;
   operating_income: FundTrend;

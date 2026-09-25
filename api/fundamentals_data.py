@@ -345,7 +345,8 @@ def _company(sym: str) -> dict:
                 "read": {"verdict": "unknown", "why": "not found in SEC XBRL"}}
 
     out: dict = {"symbol": sym, "status": "ok",
-                 "name": f.get("entityName"), "cik": f.get("cik")}
+                 "name": f.get("entityName"), "cik": f.get("cik"),
+                 "sector": sx.sector(sym)}
 
     rev = sx.series(f, "revenue")
     today = dt.date.today()

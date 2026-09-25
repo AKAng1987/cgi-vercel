@@ -13,7 +13,7 @@ const VERDICT_COLOR: Record<string, string> = {
   unknown: "text-slate-600",
 };
 
-type Key = "symbol" | "verdict" | "yoy" | "accel" | "seasonal" | "margin" | "payout" | "burden" | "z";
+type Key = "symbol" | "sector" | "verdict" | "yoy" | "accel" | "seasonal" | "margin" | "payout" | "burden" | "z";
 
 /** Sort value per column. null always sorts LAST regardless of direction:
  *  a missing figure is not a small figure, and letting it rank as one would
@@ -22,6 +22,8 @@ function val(c: FundCompany, k: Key): number | string | null {
   switch (k) {
     case "symbol":
       return c.symbol;
+    case "sector":
+      return c.sector ?? null;
     case "verdict":
       return c.read.verdict;
     case "yoy":
@@ -78,6 +80,7 @@ function Spark({ pts }: { pts: number[] }) {
 
 const COLS: { key: Key; label: string; right?: boolean }[] = [
   { key: "symbol", label: "sym" },
+  { key: "sector", label: "sector" },
   { key: "verdict", label: "read" },
   { key: "yoy", label: "rev yoy", right: true },
   { key: "accel", label: "accel", right: true },
@@ -153,6 +156,9 @@ export function FundamentalsTable({ companies }: { companies: FundCompany[] }) {
                       A
                     </span>
                   )}
+                </td>
+                <td className="max-w-[12rem] truncate py-1 pr-3 text-[0.66rem] text-slate-500" title={c.sector ?? ""}>
+                  {c.sector ?? "—"}
                 </td>
                 <td className={`py-1 pr-3 text-[0.68rem] ${VERDICT_COLOR[c.read.verdict] ?? "text-slate-400"}`}>
                   {c.read.verdict}
