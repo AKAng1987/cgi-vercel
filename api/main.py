@@ -17,6 +17,7 @@ import cot_data
 import policy_watch
 import notes_data
 import fundamentals_data
+import brief_data
 import technicals_data
 import themes_data
 import signals_data
@@ -213,6 +214,19 @@ def fundamentals():
         "fundamentals",
         lambda: fundamentals_data.build_fundamentals_response(active_themes=active),
     )
+
+
+@app.get("/api/brief", dependencies=[Depends(require_bearer_token)])
+def brief(cadence: str = "daily"):
+    """The morning brief. Manila morning is after the US close, so the daily
+    edition covers the session that just finished.
+
+    Importance is not decided here: every headline comes from cgi_changes,
+    where each event is a rule that already existed in CGI, ranked by how
+    rarely it actually fires. If nothing crossed, it says so.
+    """
+    key = "brief_weekly" if cadence == "weekly" else "brief_daily"
+    return cache.get_or_fetch(key, lambda: brief_data.build_brief(cadence))
 
 
 @app.get("/api/watchlists")

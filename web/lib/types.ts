@@ -587,3 +587,42 @@ export interface FundamentalsResponse {
   links: FundLink[];
   generated_at: string;
 }
+
+export interface BriefChange {
+  kind: string;
+  title: string;
+  detail: string;
+  when: string | null;
+  rate_per_year: number | null;
+  push: boolean;
+  rarity: number;
+  newly_entered?: boolean;
+  theme?: string;
+  symbol?: string;
+  contract?: string;
+  axis?: string;
+  link?: string;
+}
+
+export interface BriefSection {
+  name: string;
+  headline: string;
+  body: unknown;
+  status: "ok" | "unavailable";
+  error: string | null;
+}
+
+export interface BriefResponse {
+  cadence: string;
+  as_of: string;
+  window_days: number;
+  covers: string;
+  nothing_crossed: boolean;
+  headline: string;
+  changes: BriefChange[];
+  push: BriefChange[];
+  sections: BriefSection[];
+  unavailable: string[];
+  note: string;
+  generated_at: string;
+}

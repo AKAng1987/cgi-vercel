@@ -97,16 +97,23 @@ def collect(window_days: int = 1, *, themes=None, technicals=None, markov=None,
 
     # ── regime ──────────────────────────────────────────────────────────────
     try:
-        for ev in (markov or {}).get("events", []) or []:
+        # markov_data calls this event_log, not events -- reading the wrong key
+        # meant regime flips, the single most important event CGI has, would
+        # have silently never fired.
+        for ev in (markov or {}).get("event_log", []) or []:
             d = _days_ago(ev.get("date"), today)
             if d is None or d > window_days:
                 continue
             axis = ev.get("axis", "")
             kind = ("regime_flip_compass" if axis in ("liquidity", "credit")
                     else "regime_flip_grid")
-            add(kind, f"{axis.upper()} flipped",
-                (f"{axis} moved {ev.get('from')} -> {ev.get('to')}"
-                 f"{' (' + ev['release'] + ')' if ev.get('release') else ''}"),
+            qb, qa = ev.get("quadrant_before"), ev.get("quadrant_after")
+            moved = f"{qb} -> {qa}" if qa is not None else f"from quadrant {qb}"
+            pre = ev.get("p_flip")
+            add(kind, f"{axis.upper()} flipped on {ev.get('type')}",
+                (f"{ev.get('model')} {moved}"
+                 + (f"; pre-registered P(flip) was {pre:.0%}" if pre is not None else "")
+                 + (f", market said {ev['p_market']:.0%}" if ev.get("p_market") is not None else "")),
                 ev.get("date"), axis=axis)
     except Exception:
         _logger.exception("[changes] markov")
