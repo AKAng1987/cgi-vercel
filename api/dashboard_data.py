@@ -139,13 +139,34 @@ def list_dashboard_dates() -> list[str]:
     return sorted(dates, reverse=True)
 
 
+# In-process memo of the parsed workbook, keyed by date and invalidated by
+# ETag. The nightly .xlsx was downloaded from S3 and re-parsed by openpyxl on
+# EVERY /api/live request -- measured at 2.7s to 12.0s per call, wildly
+# variable, and the single largest remaining cost on LIVE once the backtest
+# blob was fixed. The file is written once a night, so an ETag check (tens of
+# milliseconds) picks up a new one immediately and costs nothing in between.
+#
+# One date is kept, not a dictionary of them: LIVE only ever asks for the
+# newest, and holding several parsed workbooks would trade latency for memory
+# on an instance that has already been memory-bound once.
+_wb_cache: dict[str, object] = {"key": None, "etag": None, "wb": None, "last_modified": None}
+
+
 def load_workbook(date_str: str):
     """Ported from app.py:230. Returns (openpyxl.Workbook, s3_last_modified: datetime)."""
     import openpyxl
 
     s3 = boto3.client("s3", region_name=REGION)
-    obj = s3.get_object(Bucket=BUCKET, Key=f"{PREFIX}dashboard_{date_str}.xlsx")
+    key = f"{PREFIX}dashboard_{date_str}.xlsx"
+    head = s3.head_object(Bucket=BUCKET, Key=key)
+    etag = head.get("ETag")
+    if (_wb_cache["key"] == key and _wb_cache["etag"] == etag
+            and _wb_cache["wb"] is not None):
+        return _wb_cache["wb"], _wb_cache["last_modified"]
+
+    obj = s3.get_object(Bucket=BUCKET, Key=key)
     wb = openpyxl.load_workbook(BytesIO(obj["Body"].read()), data_only=True)
+    _wb_cache.update(key=key, etag=etag, wb=wb, last_modified=obj["LastModified"])
     return wb, obj["LastModified"]
 
 
