@@ -18,14 +18,20 @@ import markov_data as md
 import release_calendar as cal
 
 TOP, BOTTOM, MIN_OCC = 20, 10, 5
-WATCHLIST_IDS = {"CGI · now": "347463015", "CGI · if next flips": "347463028"}
+WATCHLIST_IDS = {"CGI · now": "347463015", "CGI · if next flips": "347463028",
+                 "CGI · earning it": "348364949"}
+
+# The fundamentals list is capped hard. The regime lists already run to 30
+# symbols each and the user asked for the total to stop growing; 15 names is
+# enough to see who is actually earning a theme without adding another 30.
+EARNING_IT = 15
 
 # CGI ticker -> TradingView symbol. Exchanges follow the user's own lists.
 TV = {
     "VIX": "TVC:VIX", "SPX": "TVC:SPX", "SPY": "AMEX:SPY", "QQQ": "NASDAQ:QQQ", "IWM": "AMEX:IWM", "DIA": "AMEX:DIA",
     "RUT": "TVC:RUT", "DXY": "TVC:DXY", "TLT": "NASDAQ:TLT", "IEF": "NASDAQ:IEF", "HYG": "AMEX:HYG", "LQD": "AMEX:LQD",
     "GLD": "AMEX:GLD", "GDX": "AMEX:GDX", "SLV": "AMEX:SLV", "USO": "AMEX:USO", "UNG": "AMEX:UNG", "DBC": "AMEX:DBC",
-    "DBA": "AMEX:DBA", "USCI": "AMEX:USCI", "CPER": "AMEX:CPER", "COPPER": "COMEX:HG1!", "GOLD": "TVC:GOLD", "SILVER": "TVC:SILVER", "USOIL": "TVC:USOIL",
+    "DBA": "AMEX:DBA", "USCI": "AMEX:USCI", "CPER": "AMEX:CPER", "COPPER": "COMEX:HG1!", "NATGAS": "NYMEX:NG1!", "GOLD": "TVC:GOLD", "SILVER": "TVC:SILVER", "USOIL": "TVC:USOIL",
     "BTC": "BITSTAMP:BTCUSD", "ETH": "BITSTAMP:ETHUSD",
     "USDSGD": "OANDA:USDSGD", "USDTHB": "OANDA:USDTHB", "USDCAD": "OANDA:USDCAD", "USDJPY": "FX:USDJPY",
     "USDCHF": "FX:USDCHF", "USDMXN": "FX:USDMXN", "USDTRY": "FX:USDTRY",
@@ -86,5 +92,39 @@ def build_watchlists_response() -> dict:
                         + [tv_symbol(r["ticker"], r["group"]) for r in worst]),
             "best": keep(best), "worst": keep(worst),
         })
+    # CGI · earning it -- the fundamentals view, top N by revenue acceleration.
+    # Annual filers are excluded: their acceleration is measured over a year
+    # and ranking them against quarterly names would be comparing two different
+    # quantities. Guarded so a fundamentals outage costs this list, not the
+    # regime lists beside it.
+    try:
+        import cache as _cache
+        import fundamentals_data as _fd
+        fund = _cache.get("fundamentals") or _fd.build_fundamentals_response()
+        ranked = sorted(
+            (c for c in fund.get("companies", [])
+             if not c.get("annual_only")
+             and (c.get("revenue") or {}).get("acceleration_pp") is not None),
+            key=lambda c: -c["revenue"]["acceleration_pp"])[:EARNING_IT]
+        if ranked:
+            out.append({
+                "name": "CGI · earning it",
+                "watchlist_id": WATCHLIST_IDS["CGI · earning it"],
+                "regime": "fundamentals",
+                "note": f"top {len(ranked)} by revenue acceleration, quarterly filers only",
+                "min_occ": None,
+                "symbols": ([f"###EARNING IT · TOP {len(ranked)} BY REVENUE ACCELERATION"]
+                            + [tv_symbol(c["symbol"], "EQUITY") for c in ranked]),
+                "best": [{"ticker": c["symbol"],
+                          "acceleration_pp": c["revenue"]["acceleration_pp"],
+                          "yoy_pct": c["revenue"].get("yoy_pct"),
+                          "verdict": c["read"]["verdict"]} for c in ranked],
+                "worst": [],
+            })
+    except Exception:
+        import logging
+        logging.getLogger("cgi_api.watchlists").exception(
+            "[watchlists] earning-it list unavailable; regime lists unaffected")
+
     return {"as_of": today, "current": cur, "next_release": {"date": nxt["date"], "type": nxt["type"], "axis": axis},
             "watchlists": out}

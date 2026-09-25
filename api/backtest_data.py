@@ -111,8 +111,34 @@ def _s3_get_json(key: str) -> Optional[dict]:
     return json.loads(obj["Body"].read().decode("utf-8"))
 
 
+# In-process memo of the parsed occurrences blob.
+#
+# It is 6.1MB, and every /api/backtest request re-downloaded and re-parsed the
+# whole thing -- including the one LIVE makes on every page load, which is a
+# large part of why LIVE measured 9-11s and was the slowest page on the site.
+#
+# Invalidation is by ETag rather than a timer: head_object costs a few tens of
+# milliseconds against a 6.1MB download, and the refresher Lambda writes this
+# blob once a day at 03:30 UTC, so a timer would either serve stale data or
+# re-download for nothing. Checking the ETag means the refresh is picked up on
+# the very next request and never any later.
+_blob_cache: dict[str, object] = {"etag": None, "data": None}
+
+
 def _read_blob() -> Optional[dict]:
-    return _s3_get_json(BLOB_KEY)
+    try:
+        head = _s3.head_object(Bucket=BUCKET, Key=BLOB_KEY)
+        etag = head.get("ETag")
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
+            return None
+        raise
+    if etag and etag == _blob_cache["etag"] and _blob_cache["data"] is not None:
+        return _blob_cache["data"]  # type: ignore[return-value]
+    data = _s3_get_json(BLOB_KEY)
+    if data is not None:
+        _blob_cache["etag"], _blob_cache["data"] = etag, data
+    return data
 
 
 # Trend-at-entry buckets (BACKTEST v2 step 1). Percentile is of the

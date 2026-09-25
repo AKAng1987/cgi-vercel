@@ -17,30 +17,28 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live, tech, notes, brief] = await Promise.all([
+  const [themes, signals, live, tech, notes, brief, edgeNow] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
     apiFetch<TechnicalsResponse>("/api/technicals").catch(() => null),
     apiFetch<NotesResponse>("/api/notes").catch(() => null),
-    // In the SAME batch, not a sequential await: LIVE is already the slowest
-    // page and a second round trip would make it worse.
+    // Both of these join the SAME batch, not a sequential await. LIVE was the
+    // slowest page on the site precisely because it waited for signals to
+    // learn the quadrants and only then asked for the backtest table -- two
+    // waves. /api/backtest/current resolves the regime server-side, so it can
+    // go in the first wave with everything else.
     apiFetch<BriefResponse>("/api/brief?cadence=daily").catch(() => null),
+    apiFetch<BacktestTableResponse & { compass_q: number; grid_q: number }>(
+      "/api/backtest/current?min_occ=5"
+    ).catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
   const cq = sig?.compass.current ?? null;
   const gq = sig?.grid.current ?? null;
 
-  let edge: BacktestTableResponse | null = null;
-  if (cq && gq) {
-    try {
-      edge = await apiFetch<BacktestTableResponse>(`/api/backtest/${cq}/${gq}?min_occ=5`);
-    } catch {
-      edge = null;
-    }
-  }
-  const ranked = (edge?.rows ?? []).filter((r) => r.edge !== null);
+  const ranked = (edgeNow?.rows ?? []).filter((r) => r.edge !== null);
   const top = ranked.slice(0, 20);
   const worst = ranked.length > 20 ? ranked.slice(-10).reverse() : [];
 

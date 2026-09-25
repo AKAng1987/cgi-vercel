@@ -108,6 +108,20 @@ def macro_dot_plot():
     return macro_data.build_dot_plot_response()
 
 
+@app.get("/api/backtest/current", dependencies=[Depends(require_bearer_token)])
+def backtest_current(min_occ: int = 5):
+    """The edge table for whatever regime we are in now, resolved server-side.
+
+    Exists so LIVE does not have to make TWO round trips. It previously awaited
+    /api/signals to learn the quadrants and only then could ask for
+    /api/backtest/{c}/{g}, which made the slowest page on the site wait for two
+    sequential waves. The quadrants are known here already.
+    """
+    cur = {m: markov_data._load_model(f"{m}_US")[-1][1] for m in ("compass", "grid")}
+    t = backtest_data.build_table_response(cur["compass"], cur["grid"], min_occ=min_occ)
+    return {"compass_q": cur["compass"], "grid_q": cur["grid"], **t}
+
+
 @app.get("/api/backtest/{compass_q}/{grid_q}", dependencies=[Depends(require_bearer_token)])
 def backtest_table(
     compass_q: int,

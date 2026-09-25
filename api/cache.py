@@ -80,7 +80,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "cot": 1,
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
-    "watchlists": 1,
+    "watchlists": 2,  # 2026-09-26: CGI earning-it list + NATGAS symbol fix
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 1,
     "brief_weekly": 1,
