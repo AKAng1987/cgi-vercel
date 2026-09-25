@@ -326,6 +326,45 @@ def tags_used(facts: dict, measure: str) -> list[str]:
     return [t for t, _ in _nodes(facts, measure)]
 
 
+def fiscal_periods(facts: dict, measure: str) -> dict[str, str]:
+    """end_date -> fiscal period label (Q1/Q2/Q3/Q4/FY) as the filer reports it.
+
+    Needed to compare like with like when seasonally adjusting: a retailer's Q4
+    is not comparable to its Q1, so the norm has to be per fiscal quarter, not
+    pooled. Falls back to the period-end MONTH where `fp` is absent, which
+    separates the same four periods for any filer with a stable year end.
+    """
+    out: dict[str, str] = {}
+    for _tag, node in _nodes(facts, measure):
+        for r in _usd_rows(node):
+            st, e, fp = r.get("start"), r.get("end"), r.get("fp")
+            if not (st and e):
+                continue
+            if not (QUARTER_DAYS[0] <= _days(st, e) <= QUARTER_DAYS[1]):
+                continue
+            out.setdefault(e, fp if fp in ("Q1", "Q2", "Q3", "Q4") else f"M{e[5:7]}")
+    return out
+
+
+def qoq(s: dict[str, float]) -> list[tuple[str, float]]:
+    """[(end_date, sequential growth)] newest first.
+
+    Sequential growth is the FASTEST read a filing can give -- it is the first
+    thing that moves at an inflection -- but it is seasonally contaminated,
+    which is why the factor reads YoY. seasonal_qoq() below removes the
+    seasonality without giving up the speed.
+    """
+    ds = sorted(s)
+    out = []
+    for i in range(1, len(ds)):
+        prev = s[ds[i - 1]]
+        # only consecutive quarters; a gap makes the comparison meaningless
+        if prev and prev > 0 and 60 <= _days(ds[i - 1], ds[i]) <= 130:
+            out.append((ds[i], s[ds[i]] / prev - 1.0))
+    out.reverse()
+    return out
+
+
 def annual(facts: dict, measure: str) -> dict[str, float]:
     """end_date -> value, for ANNUAL periods only.
 

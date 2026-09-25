@@ -13,7 +13,7 @@ const VERDICT_COLOR: Record<string, string> = {
   unknown: "text-slate-600",
 };
 
-type Key = "symbol" | "verdict" | "yoy" | "accel" | "margin" | "payout" | "burden" | "z";
+type Key = "symbol" | "verdict" | "yoy" | "accel" | "seasonal" | "margin" | "payout" | "burden" | "z";
 
 /** Sort value per column. null always sorts LAST regardless of direction:
  *  a missing figure is not a small figure, and letting it rank as one would
@@ -28,6 +28,8 @@ function val(c: FundCompany, k: Key): number | string | null {
       return c.revenue.status === "ok" ? c.revenue.yoy_pct ?? null : null;
     case "accel":
       return c.revenue.status === "ok" ? c.revenue.acceleration_pp ?? null : null;
+    case "seasonal":
+      return c.seasonal_qoq?.status === "ok" ? c.seasonal_qoq.surprise_pp ?? null : null;
     case "margin":
       return c.margin.status === "ok" ? c.margin.margin_change_yoy_pp ?? null : null;
     case "payout":
@@ -79,6 +81,7 @@ const COLS: { key: Key; label: string; right?: boolean }[] = [
   { key: "verdict", label: "read" },
   { key: "yoy", label: "rev yoy", right: true },
   { key: "accel", label: "accel", right: true },
+  { key: "seasonal", label: "seas. QoQ", right: true },
   { key: "margin", label: "margin Δ", right: true },
   { key: "payout", label: "payout", right: true },
   { key: "burden", label: "int burden", right: true },
@@ -140,7 +143,17 @@ export function FundamentalsTable({ companies }: { companies: FundCompany[] }) {
             const hist = (r.history ?? []).map((h) => h.yoy_pct).filter((v): v is number => v !== null);
             return (
               <tr key={c.symbol} className="border-b border-slate-900/70 hover:bg-slate-900/40">
-                <td className="py-1 pr-2 font-mono text-slate-200">{c.symbol}</td>
+                <td className="py-1 pr-2 font-mono text-slate-200">
+                  {c.symbol}
+                  {c.annual_only && (
+                    <span
+                      className="ml-1 text-[0.55rem] text-amber-400"
+                      title="20-F/40-F filer, read annually — excluded from quarterly medians"
+                    >
+                      A
+                    </span>
+                  )}
+                </td>
                 <td className={`py-1 pr-3 text-[0.68rem] ${VERDICT_COLOR[c.read.verdict] ?? "text-slate-400"}`}>
                   {c.read.verdict}
                 </td>
@@ -150,6 +163,16 @@ export function FundamentalsTable({ companies }: { companies: FundCompany[] }) {
                     : "—"}
                 </td>
                 <td className="py-1 pr-2 text-right tabular-nums">{sign(r.acceleration_pp)}</td>
+                <td
+                  className="py-1 pr-2 text-right tabular-nums"
+                  title={c.seasonal_qoq?.note}
+                >
+                  {c.seasonal_qoq?.status === "ok" ? (
+                    sign(c.seasonal_qoq.surprise_pp)
+                  ) : (
+                    <span className="text-slate-600">—</span>
+                  )}
+                </td>
                 <td className="py-1 pr-2 text-right tabular-nums">
                   {m.status === "ok" ? sign(m.margin_change_yoy_pp) : <span className="text-slate-600">—</span>}
                 </td>

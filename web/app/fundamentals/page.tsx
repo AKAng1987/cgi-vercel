@@ -195,7 +195,12 @@ export default async function FundamentalsPage() {
         </div>
         <FundamentalsTable companies={d.companies} />
         <p className="mt-2 text-[0.65rem] text-slate-600">
-          * accumulated deficit — Z&apos;&apos; is dragged negative by retained earnings regardless of
+          <span className="text-amber-400">A</span> = 20-F/40-F filer, read annually and excluded from
+          quarterly medians · <span className="text-slate-400">seas. QoQ</span> = this quarter
+          against the company&apos;s own typical same quarter. Descriptive only — backtested over
+          4,949 company-quarters and it does <span className="text-slate-300">not</span> predict
+          year-on-year turning (0.91–1.03× lift vs a 50.5% base rate).
+          <br />* accumulated deficit — Z&apos;&apos; is dragged negative by retained earnings regardless of
           solvency, so the band is withheld. Read FCF and cash instead.
         </p>
       </section>

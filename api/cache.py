@@ -84,7 +84,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 1,
     "brief_weekly": 1,
-    "fundamentals": 4,  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
+    "fundamentals": 5,  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
                         # v1 read dead concepts for 48 of 65 names (NVDA reported FY2020)
     "axis_drivers": 10,  # 2026-09-23: Empire prices paid, Philly future activity (free FRED; ISM frozen by TradingView MCP bug), ISM svc activity back as inverted context. v9 2026-09-19: inflation + growth lists from user framework + sweep. v8 2026-09-18: back to DFEDTARU (v7 tried DFF, user rejected). v6 2026-09-17: calendar-aware yoy (CPI 3.33 not 3.73); credit: 10-2 back, 10-5, HYG/LQD, curve regime categorical; SPY out; Challenger m/m out
 }

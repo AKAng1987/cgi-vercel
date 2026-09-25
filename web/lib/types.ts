@@ -524,6 +524,18 @@ export interface FundCompany {
     cash_runway_quarters?: number;
   };
   read: { verdict: string; why: string; basis?: string };
+  basis?: string;
+  annual_only?: boolean;
+  seasonal_qoq?: {
+    status: string;
+    as_of?: string;
+    fiscal_period?: string;
+    qoq_pct?: number;
+    seasonal_norm_pct?: number;
+    surprise_pp?: number;
+    n_same_quarter?: number;
+    note?: string;
+  };
 }
 
 export interface FundRollup {
@@ -531,6 +543,8 @@ export interface FundRollup {
   n: number;
   verdicts?: Record<string, number>;
   median_revenue_acceleration_pp?: number | null;
+  median_annual_acceleration_pp?: number | null;
+  n_annual_excluded?: number;
   capturing?: string[];
   rolling_over?: string[];
   leaders?: string[];

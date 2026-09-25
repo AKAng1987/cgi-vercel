@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+import statistics
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
@@ -58,6 +59,31 @@ MIN_YOY_POINTS = 2
 # A 20-F/40-F filer reports annually, so 270 days old is current for them and
 # would be four quarters stale for anyone else.
 ANNUAL_STALE_DAYS = 400
+
+# Seasonally-adjusted sequential growth.
+#
+# WHY IT EXISTS: year-on-year cannot see a one-quarter inflection. MU turned on
+# 2025-05-29 (sequential -7.5% -> +15.5%) while its YoY was still falling, so
+# the acceleration metric read -1.7pp -- "decelerating" -- at the exact quarter
+# the business turned, and YoY did not confirm for two more.
+#
+# WHY IT IS NOT AN ALERT: it was backtested before being allowed to notify, and
+# it failed. Across 134 companies and 4,949 company-quarters, the share of
+# fires followed by YoY acceleration turning positive the NEXT quarter was:
+#
+#     surprise >= 0.0pp   750 fires   46.3%
+#     surprise >= 4.0pp   223 fires   45.7%
+#     surprise >= 12.2pp   67 fires   52.2%
+#     surprise >= 20.6pp   26 fires   46.2%
+#     base rate (any quarter)         50.5%
+#
+# Lift 0.91x to 1.03x -- a coin flip at every threshold. MU was one anecdote.
+# So this is reported as DESCRIPTIVE only: it says how the latest quarter
+# compares with that company's own typical same-quarter, which is genuinely
+# useful to read, and it makes no claim about what happens next.
+SEASONAL_MIN_OBS = 4
+SEASONAL_PCTL = {"p50": 0.0, "p75": 4.0, "p90": 12.2, "p95": 20.6, "p5": -16.6,
+                 "n": 5262, "companies": 134, "on": "2026-09-26"}
 _logger = logging.getLogger("cgi_api.fundamentals_data")
 
 # ---------------------------------------------------------------------------
@@ -165,12 +191,15 @@ AI_LAYERS: dict[str, list[str]] = {
     "energy": ["VST", "CEG", "NRG", "ETN"],
     "chips": ["NVDA", "AMD", "AVGO", "MU"],
     "infrastructure": ["VRT", "ANET", "DLR", "SMCI"],
-    # PLTR only. SPCX was proposed for this layer as "the first models IPO",
-    # but CIK 1181412 resolves to SPACE EXPLORATION TECHNOLOGIES CORP -- SpaceX,
-    # not an AI-model company -- so it is deliberately absent. OpenAI and
-    # Anthropic are not filers. PLTR also appears under applications; a name
-    # can legitimately sit in two layers.
-    "models": ["PLTR"],
+    # SPCX is included at the user's instruction, on his thesis that the listed
+    # entity is primarily an AI-model exposure. Recorded for accuracy: CIK
+    # 1181412 is SPACE EXPLORATION TECHNOLOGIES CORP (Nasdaq, SIC 7370), and
+    # Grok is built by xAI -- a separate Musk company SpaceX invested in, not
+    # this filer. It also produces no reading yet: only 2 quarterly revenue
+    # points exist, so it cannot yield a year-on-year figure until it has four
+    # more quarters. It will start contributing on its own once it does.
+    # PLTR also appears under applications; a name can sit in two layers.
+    "models": ["SPCX", "PLTR"],
     "applications": ["CRM", "NOW", "PLTR", "DDOG", "TWLO", "PANW"],
 }
 
@@ -279,6 +308,36 @@ def _ttm(s: dict[str, float], n: int = 4) -> Optional[float]:
     return sum(s[d] for d in sorted(s, reverse=True)[:n])
 
 
+def _seasonal_qoq(f: dict) -> dict:
+    """Latest sequential growth against that company's own median for the same
+    fiscal quarter. Descriptive -- see SEASONAL_PCTL for why it is not a signal."""
+    rev = sx.series(f, "revenue")
+    fp = sx.fiscal_periods(f, "revenue")
+    q = sx.qoq(rev)
+    if not q:
+        return {"status": "no data"}
+    buckets: dict[str, list[float]] = {}
+    for d, v in q:
+        buckets.setdefault(fp.get(d) or f"M{d[5:7]}", []).append(v)
+    d, v = q[0]
+    key = fp.get(d) or f"M{d[5:7]}"
+    peers = buckets.get(key, [])
+    if len(peers) < SEASONAL_MIN_OBS:
+        return {"status": "insufficient history", "n_same_quarter": len(peers),
+                "qoq_pct": round(v * 100, 2)}
+    norm = statistics.median(peers)
+    return {
+        "status": "ok", "as_of": d, "fiscal_period": key,
+        "qoq_pct": round(v * 100, 2),
+        "seasonal_norm_pct": round(norm * 100, 2),
+        "surprise_pp": round((v - norm) * 100, 2),
+        "n_same_quarter": len(peers),
+        "note": ("how this quarter compares with this company's own typical "
+                 + key + ". Descriptive: backtested and it does NOT predict "
+                 "year-on-year turning (0.91-1.03x lift, 4,949 company-quarters)."),
+    }
+
+
 def _company(sym: str) -> dict:
     f = sx.company_facts(sym)
     if not f:
@@ -333,6 +392,8 @@ def _company(sym: str) -> dict:
     out["annual_only"] = annual_mode
     out["revenue"] = _trend(sx.yoy(rev), "revenue")
     out["margin"] = _margin_trend(f)
+    # Quarterly filers only: a 20-F filer has no sequential quarters at all.
+    out["seasonal_qoq"] = {"status": "n/a (annual filer)"} if annual_mode else _seasonal_qoq(f)
     out["operating_income"] = _trend(sx.yoy(sx.series(f, "operating_income")), "operating income")
 
     # 3 return to shareholders, as a share of the cash actually generated.
@@ -530,6 +591,7 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
             "Constituents are the top 5 by weight of what each theme's ETFs actually hold (State Street daily files, else SEC N-PORT).",
             "N-PORT names holdings but never tickers, so foreign listings that do not resolve to a US symbol are dropped -- EWY is 55% SK Hynix and Samsung, neither of which can be reached this way.",
             "Korea/DRAM has no readable constituent at all: SK Hynix's OTC line files no XBRL, and the Korean bank ADRs (KB, SHG) last filed usable figures in 2023 and 2024. This is a wall in what the SEC holds, not a gap in the code.",
+            "Seasonal sequential growth is DESCRIPTIVE, not a signal: it was backtested over 4,949 company-quarters and does not predict year-on-year turning (0.91-1.03x lift vs a 50.5% base rate).",
             "20-F/40-F filers are read ANNUALLY and marked so; their acceleration is reported as a separate annual median and never mixed into the quarterly one.",
             "MTH files no consolidated revenue concept in companyfacts at all -- its largest 2026 fact is operating cash flow -- so it cannot be read from this source.",
             "An ETF does not always mean what its theme label says: KBE/KRE are equal-weighted REGIONAL banks, so the banks theme derives small regionals rather than the majors.",
