@@ -1,8 +1,5 @@
-"use client";
-
 import { PlotlyChart } from "./PlotlyChart";
-import { layoutFor, gridFor, COLORS } from "@/lib/macroConstants";
-import { useTheme } from "@/lib/useTheme";
+import { COLORS } from "@/lib/macroConstants";
 import type { FomcProbabilities } from "@/lib/macroTypes";
 import type { Data } from "plotly.js";
 
@@ -11,7 +8,6 @@ import type { Data } from "plotly.js";
  * outcome probabilities, plus a table of the next 3-4 meetings.
  */
 export function FomcProbabilityPanel({ probs }: { probs: FomcProbabilities }) {
-  const theme = useTheme();
   const rows = probs.probabilities;
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No upcoming meetings with futures data found.</p>;
@@ -43,12 +39,11 @@ export function FomcProbabilityPanel({ probs }: { probs: FomcProbabilities }) {
         height={200}
         data={data}
         layout={{
-          ...layoutFor(theme),
           title: {
             text: `Next FOMC: ${nextDate}  (implied avg ${next.implied_avg.toFixed(3)}%)`,
             font: { size: 12, color: "#9CA3AF" },
           },
-          xaxis: { range: [0, 110], gridcolor: gridFor(theme), title: { text: "Probability (%)" } },
+          xaxis: { range: [0, 110], title: { text: "Probability (%)" } },
           yaxis: { gridcolor: "rgba(0,0,0,0)" },
         }}
       />

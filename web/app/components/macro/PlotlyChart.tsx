@@ -9,6 +9,8 @@
  */
 import dynamic from "next/dynamic";
 import type { Data, Layout, Config } from "plotly.js";
+import { layoutFor, gridFor } from "@/lib/macroConstants";
+import { useTheme } from "@/lib/useTheme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -20,10 +22,34 @@ interface PlotlyChartProps {
 }
 
 export function PlotlyChart({ data, layout, height = 300, config }: PlotlyChartProps) {
+  // The theme is resolved HERE, in the one component that was already a client
+  // component and already worked.
+  //
+  // It was previously resolved in each chart wrapper, which meant adding
+  // "use client" + useTheme to LineChart -- until then a SERVER component.
+  // That conversion broke it: next/dynamic with ssr:false renders nothing on
+  // the server and never loaded in the newly-converted tree, so all six
+  // LineChart panels on MACRO produced correctly-sized but completely empty
+  // divs while every BarChart (already a client component) rendered fine.
+  //
+  // Centralising it means the wrappers stay server components, there is one
+  // place that knows about themes instead of five, and the grid colour is
+  // applied to whichever axes a caller actually passed.
+  const theme = useTheme();
+  const grid = gridFor(theme);
+  const axis = (a: unknown) =>
+    a && typeof a === "object" ? { gridcolor: grid, ...(a as object) } : a;
+  const themed: Partial<Layout> = {
+    ...layoutFor(theme),
+    ...layout,
+    xaxis: axis(layout.xaxis) as Layout["xaxis"],
+    yaxis: axis(layout.yaxis) as Layout["yaxis"],
+    ...(layout.yaxis2 ? { yaxis2: axis(layout.yaxis2) as Layout["yaxis2"] } : {}),
+  };
   return (
     <Plot
       data={data}
-      layout={{ ...layout, height, autosize: true }}
+      layout={{ ...themed, height, autosize: true }}
       // The height is set on the STYLE as well as in the layout, deliberately.
       //
       // Plotly with autosize + useResizeHandler re-measures its container on

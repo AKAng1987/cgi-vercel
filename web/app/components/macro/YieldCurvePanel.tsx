@@ -1,8 +1,4 @@
-"use client";
-
 import { PlotlyChart } from "./PlotlyChart";
-import { layoutFor, gridFor } from "@/lib/macroConstants";
-import { useTheme } from "@/lib/useTheme";
 import type { TreasuryCurveResponse, TreasuryCurveSnapshotRow } from "@/lib/macroTypes";
 import type { Data, Layout } from "plotly.js";
 
@@ -28,7 +24,6 @@ const SNAPSHOT_COLORS: Record<TreasuryCurveSnapshotRow["label"], string> = {
  * changing what's rendered (same rows, same algorithm, just moved).
  */
 export function YieldCurvePanel({ data }: { data: TreasuryCurveResponse }) {
-  const theme = useTheme();
   if (data.snapshot.length === 0) return null;
 
   const avail = TENOR_ORDER.filter((t) => data.snapshot.some((p) => p[t] != null));
@@ -64,12 +59,11 @@ export function YieldCurvePanel({ data }: { data: TreasuryCurveResponse }) {
       data={[...snapshotTraces, historyTrace]}
       layout={
         {
-          ...layoutFor(theme),
           grid: { rows: 1, columns: 2, pattern: "independent" },
-          xaxis: { gridcolor: gridFor(theme), domain: [0, 0.36] },
-          yaxis: { gridcolor: gridFor(theme), title: { text: "Yield (%)" } },
-          xaxis2: { gridcolor: gridFor(theme), domain: [0.42, 1] },
-          yaxis2: { gridcolor: gridFor(theme), title: { text: "Yield (%)" }, anchor: "x2" },
+          xaxis: { domain: [0, 0.36] },
+          yaxis: { title: { text: "Yield (%)" } },
+          xaxis2: { domain: [0.42, 1] },
+          yaxis2: { title: { text: "Yield (%)" }, anchor: "x2" },
           annotations: [
             { text: "Curve Snapshot", x: 0.18, y: 1.08, xref: "paper", yref: "paper", showarrow: false, font: { size: 11, color: "#9CA3AF" } },
             { text: "10Y Historical", x: 0.71, y: 1.08, xref: "paper", yref: "paper", showarrow: false, font: { size: 11, color: "#9CA3AF" } },

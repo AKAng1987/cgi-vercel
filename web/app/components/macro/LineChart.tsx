@@ -1,8 +1,5 @@
-"use client";
-
 import { PlotlyChart } from "./PlotlyChart";
-import { layoutFor, gridFor, zeroLineFor } from "@/lib/macroConstants";
-import { useTheme } from "@/lib/useTheme";
+import { ZERO_LINE_COLOR } from "@/lib/macroConstants";
 import type { Data, Layout } from "plotly.js";
 
 // Plotly's TS defs use regex-literal types for axis refs ("y2", "x2", ...)
@@ -50,7 +47,6 @@ export function LineChart({
   hLineLabel,
   hLines = [],
 }: LineChartProps) {
-  const theme = useTheme();
   const hasY2 = series.some((s) => s.yaxis === "y2");
 
   const data: Data[] = series.map((s) => ({
@@ -83,7 +79,7 @@ export function LineChart({
       yref: "y",
       y0: hLineY,
       y1: hLineY,
-      line: { color: hLineY === 0 ? zeroLineFor(theme) : "#6B7280", width: 1, dash: hLineY === 0 ? "solid" : "dot" },
+      line: { color: hLineY === 0 ? ZERO_LINE_COLOR : "#6B7280", width: 1, dash: hLineY === 0 ? "solid" : "dot" },
     });
     if (hLineLabel) {
       annotations.push({
@@ -105,12 +101,11 @@ export function LineChart({
       data={data}
       layout={
         {
-          ...layoutFor(theme),
           title: title ? { text: title, font: { size: 11, color: "#9CA3AF" } } : undefined,
-          xaxis: { gridcolor: gridFor(theme) },
-          yaxis: { gridcolor: gridFor(theme), title: yTitle ? { text: yTitle } : undefined },
+          xaxis: {},
+          yaxis: { title: yTitle ? { text: yTitle } : undefined },
           yaxis2: hasY2
-            ? { gridcolor: gridFor(theme), title: y2Title ? { text: y2Title } : undefined, overlaying: "y", side: "right" }
+            ? { title: y2Title ? { text: y2Title } : undefined, overlaying: "y", side: "right" }
             : undefined,
           shapes,
           annotations,
