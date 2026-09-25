@@ -48,6 +48,7 @@ from typing import Optional
 
 import cache
 import etf_holdings as eh
+import fundamentals_history as fh
 import sec_xbrl as sx
 import themes_data as td
 
@@ -421,6 +422,14 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     comp = {r["symbol"]: r for r in rows}
     ok = {k: v for k, v in comp.items() if v.get("status") == "ok"}
 
+    # Record any newly-filed quarter and collect what changed. Safe on every
+    # build: a company whose as_of is unchanged writes nothing.
+    try:
+        changes = fh.record(list(ok.values()))
+    except Exception:
+        _logger.exception("[fundamentals] history record failed")
+        changes = []
+
     themes = [{"theme": t, "constituents": names, "is_live": t in active,
                "source": ("hand-seeded fallback" if t in fell_back
                           else "derived from ETF holdings"),
@@ -449,6 +458,9 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
             "Concept chains are MERGED, not chosen between: filers switch tags mid-history and reading only the first would truncate the series silently.",
             "Any series whose newest quarter is over 200 days old is refused as stale rather than reported -- IFRS filers (AEM) have no us-gaap revenue concept and drop out here.",
         ],
+        "changes": changes,
+        "surprise_thresholds": {"up_pp": fh.SURPRISE_UP, "down_pp": fh.SURPRISE_DOWN,
+                                "measured": fh.MEASURED},
         "companies": [ok[s] for s in sorted(ok)],
         "themes": themes,
         "ai_layers": layers,

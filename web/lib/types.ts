@@ -546,6 +546,18 @@ export interface FundLink {
   confidence: string;
 }
 
+export interface FundChange {
+  kind: string;
+  symbol: string;
+  as_of?: string;
+  detail: string;
+  from?: string;
+  to?: string;
+  direction?: string;
+  acceleration_pp?: number;
+  yoy_pct?: number;
+}
+
 export interface FundamentalsResponse {
   as_of: string;
   source: string;
@@ -558,6 +570,12 @@ export interface FundamentalsResponse {
   };
   constituent_provenance?: Record<string, unknown>;
   limits: string[];
+  changes?: FundChange[];
+  surprise_thresholds?: {
+    up_pp: number;
+    down_pp: number;
+    measured: { n: number; companies: number; on: string; p95: number; p5: number; p50: number };
+  };
   companies: FundCompany[];
   themes: ({
     theme: string;

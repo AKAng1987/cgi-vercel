@@ -175,6 +175,41 @@ export default async function FundamentalsPage() {
         revenue growth is decelerating while still growing fast.
       </p>
 
+      {d.changes && d.changes.length > 0 && (
+        <section className="mb-7">
+          <div className="mb-2 flex items-baseline gap-3">
+            <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
+              Changed on the latest filings · {d.changes.length}
+            </div>
+            {d.surprise_thresholds && (
+              <div className="text-[0.65rem] text-slate-500">
+                &ldquo;sudden&rdquo; is {d.surprise_thresholds.up_pp}pp / {d.surprise_thresholds.down_pp}pp
+                — the p95 and p5 of {d.surprise_thresholds.measured.n.toLocaleString()} measured
+                company-quarters, not a round number
+              </div>
+            )}
+          </div>
+          <div className="space-y-1">
+            {d.changes.map((c, i) => (
+              <div
+                key={i}
+                className={`flex flex-wrap items-baseline gap-2 border-l-2 pl-2 text-[0.72rem] ${
+                  c.kind === "fundamentals_surprise"
+                    ? c.direction === "up"
+                      ? "border-emerald-700"
+                      : "border-rose-700"
+                    : "border-slate-700"
+                }`}
+              >
+                <span className="font-mono text-slate-200">{c.symbol}</span>
+                <span className="text-slate-600">{c.as_of}</span>
+                <span className="text-slate-300">{c.detail}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="mb-7">
         <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[#8b9dc3]">
           The AI layer cake · are the layers moving together?
