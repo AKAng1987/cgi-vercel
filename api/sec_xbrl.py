@@ -85,6 +85,12 @@ CONCEPTS: dict[str, list[str]] = {
         # while RevenuesNetOfInterestExpense stayed current. Non-banks do not
         # carry this tag at all, so leading with it costs them nothing.
         "RevenuesNetOfInterestExpense",
+        # HWC and ONB use this and nothing else that is current -- their
+        # RevenuesNetOfInterestExpense stops in 2011, so without it both looked
+        # like dead companies. It is GROSS interest income, not net of interest
+        # expense, so a bank whose history spans both concepts has a genuine
+        # discontinuity at the join; that is still better than losing 15 years.
+        "InterestAndDividendIncomeOperating",
         "RevenueFromContractWithCustomerExcludingAssessedTax",
         "RevenueFromContractWithCustomerIncludingAssessedTax",
         "Revenues",
@@ -116,6 +122,32 @@ CONCEPTS: dict[str, list[str]] = {
     # the refinancing wall, where the filer tags it
     "debt_due_1y": ["LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths",
                     "LongTermDebtMaturitiesRepaymentsOfPrincipalInNextRollingTwelveMonths"],
+}
+
+# Foreign private issuers file under IFRS, in the ifrs-full namespace, and
+# carry no us-gaap facts worth reading -- AEM's us-gaap revenue stops in 2010
+# while ifrs-full:Revenue runs to 2025. Checked only after us-gaap yields
+# nothing, so a domestic filer is unaffected.
+IFRS_CONCEPTS: dict[str, list[str]] = {
+    "revenue": ["Revenue", "RevenueFromContractsWithCustomers"],
+    "cost_of_revenue": ["CostOfSales"],
+    "gross_profit": ["GrossProfit"],
+    "operating_income": ["ProfitLossFromOperatingActivities"],
+    "net_income": ["ProfitLoss"],
+    "buybacks": ["PaymentsForRepurchaseOfEntitysOwnEquityInstruments"],
+    "dividends": ["DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid"],
+    "interest_expense": ["FinanceCosts", "InterestExpense"],
+    "op_cash_flow": ["CashFlowsFromUsedInOperatingActivities"],
+    "capex": ["PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"],
+    "assets": ["Assets"],
+    "liabilities": ["Liabilities"],
+    "equity": ["Equity", "EquityAttributableToOwnersOfParent"],
+    "retained_earnings": ["RetainedEarnings"],
+    "cash": ["CashAndCashEquivalents"],
+    "current_assets": ["CurrentAssets"],
+    "current_liabilities": ["CurrentLiabilities"],
+    "debt_current": ["ShorttermBorrowings", "CurrentPortionOfLongtermBorrowings"],
+    "debt_noncurrent": ["LongtermBorrowings", "NoncurrentPortionOfLongtermBorrowings"],
 }
 
 INSTANT = {"assets", "liabilities", "equity", "retained_earnings", "cash",
@@ -154,7 +186,10 @@ def cik_map() -> dict[str, int]:
 # immediately -- peak memory becomes one payload per worker rather than the
 # whole universe. This ran fine locally on a machine with room and would have
 # died in production; it is the same mistake class as the 33s LIVE load.
-_WANTED: frozenset[str] = frozenset(t for tags in CONCEPTS.values() for t in tags)
+_WANTED: frozenset[str] = frozenset(
+    [t for tags in CONCEPTS.values() for t in tags]
+    + [t for tags in IFRS_CONCEPTS.values() for t in tags]
+)
 
 
 def company_facts(ticker: str) -> Optional[dict]:
@@ -174,12 +209,10 @@ def company_facts(ticker: str) -> Optional[dict]:
     except Exception as e:                      # network/timeout: one name, not the page
         _logger.warning("[sec] %s (CIK %s) -> %s", ticker, cik, e)
         return None
-    g = full.get("facts", {}).get("us-gaap", {})
-    return {
-        "entityName": full.get("entityName"),
-        "cik": full.get("cik"),
-        "facts": {"us-gaap": {k: v for k, v in g.items() if k in _WANTED}},
-    }
+    src = full.get("facts", {})
+    keep = {ns: {k: v for k, v in src.get(ns, {}).items() if k in _WANTED}
+            for ns in ("us-gaap", "ifrs-full") if ns in src}
+    return {"entityName": full.get("entityName"), "cik": full.get("cik"), "facts": keep}
 
 
 def _days(a: str, b: str) -> int:
@@ -196,8 +229,17 @@ def _nodes(facts: dict, measure: str) -> list[tuple[str, dict]]:
     quarter. Filers switch concepts, so the chain has to be MERGED, not
     chosen between.
     """
-    g = facts.get("facts", {}).get("us-gaap", {})
-    return [(t, g[t]) for t in CONCEPTS.get(measure, []) if t in g]
+    f = facts.get("facts", {})
+    g = f.get("us-gaap", {})
+    ifrs = f.get("ifrs-full", {})
+    # BOTH namespaces, us-gaap first, appended rather than chosen between.
+    # Returning early on any us-gaap hit was wrong: AEM carries a us-gaap
+    # Revenues tag that died in 2010 alongside a live ifrs-full Revenue, so
+    # "us-gaap exists" short-circuited to the dead one -- the same mistake as
+    # taking the first tag in a chain. series() merges per period, so the
+    # freshest source wins where they overlap.
+    return ([(t, g[t]) for t in CONCEPTS.get(measure, []) if t in g]
+            + [(t, ifrs[t]) for t in IFRS_CONCEPTS.get(measure, []) if t in ifrs])
 
 
 def _usd_rows(node: dict) -> list[dict]:
@@ -282,6 +324,28 @@ def series(facts: dict, measure: str) -> dict[str, float]:
 def tags_used(facts: dict, measure: str) -> list[str]:
     """Which tags actually fed a measure -- for auditing a filer that switched."""
     return [t for t, _ in _nodes(facts, measure)]
+
+
+def annual(facts: dict, measure: str) -> dict[str, float]:
+    """end_date -> value, for ANNUAL periods only.
+
+    20-F and 40-F filers report once a year, so they have no quarterly facts to
+    derive anything from. Reading them annually is the difference between the
+    company appearing with a slower measure and vanishing entirely.
+    """
+    nodes = _nodes(facts, measure)
+    if not nodes or measure in INSTANT:
+        return {}
+    best: dict[str, tuple[str, float]] = {}
+    for _tag, node in nodes:
+        for r in _usd_rows(node):
+            st, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
+            if not (st and e) or v is None:
+                continue
+            if ANNUAL_DAYS[0] <= _days(st, e) <= ANNUAL_DAYS[1]:
+                if e not in best or filed > best[e][0]:
+                    best[e] = (filed, float(v))
+    return {e: v for e, (_f, v) in best.items()}
 
 
 def yoy(s: dict[str, float]) -> list[tuple[str, float]]:

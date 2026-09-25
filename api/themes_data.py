@@ -84,7 +84,10 @@ THEMES: dict[str, list[str]] = {
     # Korea is the memory trade -- Samsung and SK Hynix are about half the
     # index, so EWY is the cleanest liquid DRAM proxy available at ETF level.
     "Korea / DRAM": ["EWY"],
-    "agriculture": ["DBA", "CORN", "WEAT"],
+    # MOO leads: DBA, CORN and WEAT hold FUTURES, so the theme had no equity
+    # constituents to derive at all. MOO (VanEck Agribusiness) gives it an
+    # equity leg for both fundamentals and RS, beside the commodity legs.
+    "agriculture": ["MOO", "DBA", "CORN", "WEAT"],
 }
 
 

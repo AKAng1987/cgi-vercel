@@ -47,12 +47,17 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 import cache
+import cgi_state
 import etf_holdings as eh
 import fundamentals_history as fh
 import sec_xbrl as sx
 import themes_data as td
 
 MIN_YOY_POINTS = 2
+
+# A 20-F/40-F filer reports annually, so 270 days old is current for them and
+# would be four quarters stale for anyone else.
+ANNUAL_STALE_DAYS = 400
 _logger = logging.getLogger("cgi_api.fundamentals_data")
 
 # ---------------------------------------------------------------------------
@@ -95,6 +100,21 @@ FALLBACK_CONSTITUENTS: dict[str, list[str]] = {
 TOP_PER_THEME = 5
 
 
+def _unreachable() -> set[str]:
+    """Symbols the last build could not read, so the next derivation can skip
+    them and take the next holding by weight instead.
+
+    Without this a theme loses a slot for every OTC line N-PORT names that is
+    not an SEC filer at all (CAHPF, GLCNF and four others), leaving three
+    usable constituents where five were asked for. Self-healing: a name that
+    starts filing drops off the list on the next build.
+    """
+    try:
+        return set(cgi_state.get("unreachable_symbols").get("symbols", []))
+    except Exception:
+        return set()
+
+
 def derive_constituents() -> dict:
     """theme -> constituents, from the funds' own books, with provenance.
 
@@ -104,8 +124,10 @@ def derive_constituents() -> dict:
     def _compute() -> dict:
         out, prov = {}, {}
         for theme, proxies in td.THEMES.items():
-            tickers, p = eh.top_constituents(proxies, n=12, min_weight=0.5)
-            out[theme] = tickers[:TOP_PER_THEME]
+            tickers, p = eh.top_constituents(proxies, n=20, min_weight=0.5)
+            skip = _unreachable()
+            usable = [t for t in tickers if t not in skip]
+            out[theme] = usable[:TOP_PER_THEME]
             prov[theme] = p
         return {"as_of": dt.date.today().isoformat(),
                 "top_per_theme": TOP_PER_THEME,
@@ -143,7 +165,12 @@ AI_LAYERS: dict[str, list[str]] = {
     "energy": ["VST", "CEG", "NRG", "ETN"],
     "chips": ["NVDA", "AMD", "AVGO", "MU"],
     "infrastructure": ["VRT", "ANET", "DLR", "SMCI"],
-    "models": [],   # SPCX is the first IPO; OpenAI/Anthropic expected to follow
+    # PLTR only. SPCX was proposed for this layer as "the first models IPO",
+    # but CIK 1181412 resolves to SPACE EXPLORATION TECHNOLOGIES CORP -- SpaceX,
+    # not an AI-model company -- so it is deliberately absent. OpenAI and
+    # Anthropic are not filers. PLTR also appears under applications; a name
+    # can legitimately sit in two layers.
+    "models": ["PLTR"],
     "applications": ["CRM", "NOW", "PLTR", "DDOG", "TWLO", "PANW"],
 }
 
@@ -262,6 +289,28 @@ def _company(sym: str) -> dict:
                  "name": f.get("entityName"), "cik": f.get("cik")}
 
     rev = sx.series(f, "revenue")
+    today = dt.date.today()
+
+    def _age(d: str) -> int:
+        return (today - dt.date.fromisoformat(d)).days
+
+    # Annual mode. A 20-F/40-F filer reports once a year and has no quarterly
+    # facts at all, so the quarterly path finds nothing (or something ancient)
+    # and the company would vanish. Reading it annually is the difference
+    # between a slower measure and no measure. An annual filer is not stale at
+    # 270 days, so the guard is relaxed to ANNUAL_STALE_DAYS for this path only.
+    annual_mode = False
+    # Fall back to annual when the quarterly path is absent, stale, OR cannot
+    # produce a year-on-year pair. That last case is the one that matters for
+    # 20-F filers: the Korean names (SKHY, KB, SHG, PKX, WF) each expose a
+    # handful of ~90-day facts, so the quarterly path looked alive and current
+    # while yoy() found nothing a year apart -- five companies reported as
+    # "insufficient history" when their annual figures were right there.
+    if not rev or _age(max(rev)) > sx.STALE_DAYS or len(sx.yoy(rev)) < MIN_YOY_POINTS:
+        ann = sx.annual(f, "revenue")
+        if (ann and _age(max(ann)) <= ANNUAL_STALE_DAYS
+                and len(sx.yoy(ann)) >= MIN_YOY_POINTS):
+            rev, annual_mode = ann, True
 
     # Staleness guard. A dead concept reads exactly like a current one, which
     # is how the NVDA tag-switch bug reported FY2020 revenue as the latest
@@ -269,17 +318,19 @@ def _company(sym: str) -> dict:
     # reporting cycle is refused outright rather than shown.
     if rev:
         newest = max(rev)
-        age = (dt.date.today() - dt.date.fromisoformat(newest)).days
-        if age > sx.STALE_DAYS:
+        age = _age(newest)
+        if age > (ANNUAL_STALE_DAYS if annual_mode else sx.STALE_DAYS):
             return {"symbol": sym, "status": "stale",
                     "name": f.get("entityName"), "cik": f.get("cik"),
                     "latest_quarter": newest, "stale_days": age,
                     "tags_seen": sx.tags_used(f, "revenue"),
                     "read": {"verdict": "unknown",
                              "why": (f"newest filing concept CGI can read ends {newest}, "
-                                     f"{age}d ago -- likely an IFRS filer or a concept this "
-                                     f"module does not map yet")}}
+                                     f"{age}d ago -- likely a concept this module does "
+                                     f"not map yet")}}
 
+    out["basis"] = "annual (20-F/40-F filer)" if annual_mode else "quarterly"
+    out["annual_only"] = annual_mode
     out["revenue"] = _trend(sx.yoy(rev), "revenue")
     out["margin"] = _margin_trend(f)
     out["operating_income"] = _trend(sx.yoy(sx.series(f, "operating_income")), "operating income")
@@ -395,11 +446,27 @@ def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
     counts: dict[str, int] = {}
     for c in have:
         counts[c["read"]["verdict"]] = counts.get(c["read"]["verdict"], 0) + 1
-    accel = sorted(c["revenue"]["acceleration_pp"] for c in have
-                   if c.get("revenue", {}).get("acceleration_pp") is not None)
+    # Annual filers are excluded from the acceleration median on purpose: a
+    # change in YoY measured over a YEAR is not the same quantity as one
+    # measured over a quarter, and averaging them would quietly corrupt every
+    # theme rollup an annual name happens to sit in.
+    def _acc(annual: bool) -> list[float]:
+        return sorted(c["revenue"]["acceleration_pp"] for c in have
+                      if c.get("revenue", {}).get("acceleration_pp") is not None
+                      and bool(c.get("annual_only")) is annual)
+
+    accel = _acc(False)
+    # Reported SEPARATELY rather than folded in. Gold, China and Japan derive
+    # entirely from 20-F/40-F filers, so a quarterly median is genuinely None
+    # for them -- but showing nothing at all would hide a real reading. Two
+    # numbers, never one blended number.
+    accel_annual = _acc(True)
     return {
         "status": "ok", "n": len(have), "verdicts": counts,
         "median_revenue_acceleration_pp": accel[len(accel) // 2] if accel else None,
+        "n_annual_excluded": sum(1 for c in have if c.get("annual_only")),
+        "median_annual_acceleration_pp": (accel_annual[len(accel_annual) // 2]
+                                          if accel_annual else None),
         "capturing": [c["symbol"] for c in have if c["read"]["verdict"] == "capturing"],
         "rolling_over": [c["symbol"] for c in have if c["read"]["verdict"] == "rolling over"],
         "leaders": [c["symbol"] for c in sorted(
@@ -421,6 +488,17 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
         rows = list(ex.map(_company, universe))
     comp = {r["symbol"]: r for r in rows}
     ok = {k: v for k, v in comp.items() if v.get("status") == "ok"}
+
+    # Feed the fall-through. Only names that genuinely could not be read are
+    # recorded, so a transient SEC hiccup does not permanently exile a company.
+    try:
+        bad = sorted(k for k, v in comp.items()
+                     if v.get("status") in ("no SEC data", "stale"))
+        if bad:
+            cgi_state.put("unreachable_symbols", {"symbols": bad,
+                                                  "as_of": dt.date.today().isoformat()})
+    except Exception:
+        _logger.exception("[fundamentals] could not record unreachable symbols")
 
     # Record any newly-filed quarter and collect what changed. Safe on every
     # build: a company whose as_of is unchanged writes nothing.
@@ -451,6 +529,9 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
             "No valuation: SEC filings carry no share price, so this says whether a business is capturing the theme, not whether it is cheap.",
             "Constituents are the top 5 by weight of what each theme's ETFs actually hold (State Street daily files, else SEC N-PORT).",
             "N-PORT names holdings but never tickers, so foreign listings that do not resolve to a US symbol are dropped -- EWY is 55% SK Hynix and Samsung, neither of which can be reached this way.",
+            "Korea/DRAM has no readable constituent at all: SK Hynix's OTC line files no XBRL, and the Korean bank ADRs (KB, SHG) last filed usable figures in 2023 and 2024. This is a wall in what the SEC holds, not a gap in the code.",
+            "20-F/40-F filers are read ANNUALLY and marked so; their acceleration is reported as a separate annual median and never mixed into the quarterly one.",
+            "MTH files no consolidated revenue concept in companyfacts at all -- its largest 2026 fact is operating cash flow -- so it cannot be read from this source.",
             "An ETF does not always mean what its theme label says: KBE/KRE are equal-weighted REGIONAL banks, so the banks theme derives small regionals rather than the majors.",
             "Return to shareholders is a share of operating cash flow, not a yield, for the same reason.",
             "Altman Z'' uses book equity and still flatters asset-light balance sheets.",
