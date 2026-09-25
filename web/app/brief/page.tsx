@@ -162,11 +162,11 @@ export default async function BriefPage({
         </Panel>
       )}
 
+      {/* BreadthStrip renders its own heading, so no Panel wrapper here --
+          wrapping it printed "BREADTH · net new highs is the primary" twice. */}
       {breadth &&
         (breadth.status === "ok" ? (
-          <Panel title="Breadth" note="net new highs is the primary; the gauges confirm">
-            <BreadthStrip t={breadth.body as TechnicalsResponse} />
-          </Panel>
+          <BreadthStrip t={breadth.body as TechnicalsResponse} />
         ) : (
           <Panel title="Breadth">
             <Unavailable s={breadth} />
