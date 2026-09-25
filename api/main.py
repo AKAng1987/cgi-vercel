@@ -18,6 +18,7 @@ import policy_watch
 import notes_data
 import fundamentals_data
 import brief_data
+import customer_links
 import technicals_data
 import themes_data
 import signals_data
@@ -245,6 +246,21 @@ def brief(cadence: str = "daily"):
     # load, and a cold miss was measured at 31s on the landing page -- so serve
     # the previous value and refresh behind it. Only the first ever call blocks.
     return cache.get_or_fetch_bg(key, lambda: brief_data.build_brief(cadence))
+
+
+@app.get("/api/customer-links", dependencies=[Depends(require_bearer_token)])
+def customer_links_endpoint():
+    """Revenue-concentration disclosures from 10-Ks, as CANDIDATES.
+
+    Scoped to the AI layer cake plus the standing-theme watchlist rather than
+    the full universe: a 10-K is 2-10MB and the filings change once a year.
+    Cached for a week for the same reason.
+    """
+    import fundamentals_data as fdm
+    syms = sorted({s for v in fdm.AI_LAYERS.values() for s in v}
+                  | {"TWLO", "DDOG", "CRM", "PLTR", "PANW", "AMD"})
+    return cache.get_or_fetch("customer_links",
+                              lambda: customer_links.build_customer_links(syms))
 
 
 @app.get("/api/watchlists")
