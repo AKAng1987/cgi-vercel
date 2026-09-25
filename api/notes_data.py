@@ -191,6 +191,65 @@ FINDINGS: list[dict] = [
         "source": "docs/TRADING_SYSTEM.md",
     },
     {
+        "date": "2026-09-25", "scope": "factor:fundamentals",
+        "title": "The AI layer cake is NOT moving together -- and chips contradict the thesis",
+        "body": ("Median revenue acceleration by layer, from SEC filings: chips +46.1pp "
+                 "(all four capturing), applications +3.3pp, infrastructure +2.3pp, energy "
+                 "-0.4pp. Infrastructure slowing and utilities falling are CONFIRMED (CEG "
+                 "-10.3pp, NRG -9.7pp, VRT -6.0pp, SMCI -29.5pp). But the standing thesis "
+                 "says AMD is working while NVDA decelerates, and the filings say the "
+                 "opposite: NVDA is accelerating +46.1pp against AMD's +12.3pp. The chips "
+                 "layer is not splitting -- it is the strongest layer in the cake."),
+        "source": "fundamentals_data, SEC XBRL",
+    },
+    {
+        "date": "2026-09-25", "scope": "factor:fundamentals",
+        "title": "Applications are BUYING their growth",
+        "body": ("Four of six applications names read 'buying growth' -- revenue "
+                 "accelerating while margin fails to expand: NOW -6.80pp of margin, PANW "
+                 "-5.66pp, DDOG -1.34pp, TWLO -0.65pp. PLTR is the exception and the only "
+                 "one capturing (+92.8% YoY, margin +3.88pp). This is exactly the "
+                 "real-revenue-versus-press-release question the capex thesis asks, and "
+                 "the answer is that the layer is spending to grow."),
+        "source": "fundamentals_data, SEC XBRL",
+    },
+    {
+        "date": "2026-09-25", "scope": "theme:Korea / DRAM",
+        "title": "MU is the strongest fundamental in the entire universe",
+        "body": ("Revenue +345.7% YoY, acceleration +149.4pp, gross margin +46.85pp, Z'' "
+                 "10.75. The sequence is a sustained ramp, not a spike: +36.6, +46.0, "
+                 "+56.7, +196.3, +345.7. The DRAM/HBM shortage is in the filings, and it "
+                 "confirms the Korea/DRAM theme the detector flagged on EWY at 607 days."),
+        "source": "fundamentals_data, SEC XBRL",
+    },
+    {
+        "date": "2026-09-25", "scope": "theme:copper",
+        "title": "Copper's price trend and its fundamentals disagree",
+        "body": ("FCX reads 'rolling over' -- revenue -8.1% YoY, acceleration -20.3pp, "
+                 "margin -4.24pp -- while COPX/CPER were running on RS. A theme can run on "
+                 "price while the companies inside it deteriorate; that gap is the reason "
+                 "this factor exists."),
+        "source": "fundamentals_data, SEC XBRL",
+    },
+    {
+        "date": "2026-09-25", "scope": "factor:fundamentals",
+        "title": "Refiners and upstream both confirmed by filings",
+        "body": ("Energy pricing power shows up in the numbers, not just the tape. "
+                 "Refiners: MPC +45.3pp, PSX +46.1pp, VLO +41.8pp acceleration. Upstream: "
+                 "DVN +73.9pp (margin +55.76pp), COP +50.1pp, EOG +35.3pp."),
+        "source": "fundamentals_data, SEC XBRL",
+    },
+    {
+        "date": "2026-09-25", "scope": "global",
+        "title": "FMP free tier gates per symbol, not per endpoint",
+        "body": ("AMD and NVDA returned data; MU and CRM were ACCESS DENIED on the "
+                 "identical call. It also caps quarterly history at 5 rows and returns "
+                 "sequential QoQ growth, not YoY. SEC XBRL has no such limits, needs no "
+                 "key, covers 10,413 filers and gives 35 quarters where FMP gave 5 -- so "
+                 "no vendor is in the fundamentals path at all."),
+        "source": "endpoint mapping 2026-09-25",
+    },
+    {
         "date": "2026-09-24", "scope": "global",
         "title": "Price history repaired -- earlier backtests were wrong",
         "body": ("MarketStack served three securities under MAGS; 32 splits were "
