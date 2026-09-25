@@ -3,17 +3,19 @@ import "./globals.css";
 import { ThemeToggle } from "./components/ThemeToggle";
 
 /**
- * Applied before first paint, so a light-mode user never sees a dark flash.
- * Must stay inline and synchronous -- a React effect runs after paint, which
- * is exactly one frame too late. Wrapped in try/catch because localStorage
- * throws in a private window.
+ * Resolves the theme before first paint, so nobody sees a flash of the wrong
+ * one. Must stay inline and synchronous: a React effect runs after paint,
+ * which is exactly one frame too late.
+ *
+ * No stored value means "follow the computer", which is the default -- a
+ * first-time visitor gets their own machine's setting rather than ours. The
+ * system preference is resolved to a concrete light|dark here so the CSS only
+ * ever needs one [data-theme="light"] block; duplicating the palette into a
+ * prefers-color-scheme media query would mean two copies to keep identical.
+ *
+ * try/catch because localStorage throws in a private window.
  */
-const NO_FLASH = `try{var t=localStorage.getItem('cgi-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}`;
-
-export const metadata: Metadata = {
-  title: "CGI — Compass Grid Identifier",
-  description: "Macro regime dashboard: regime, themes, breadth, positioning.",
-};
+const NO_FLASH = `(function(){try{var m=localStorage.getItem('cgi-theme');if(m!=='light'&&m!=='dark'){m=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',m)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()`;
 
 export default function RootLayout({
   children,
