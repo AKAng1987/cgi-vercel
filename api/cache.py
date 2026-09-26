@@ -55,6 +55,7 @@ TTL_HOURS: dict[str, float] = {
     "liquidity": 12.0,  # weekly Fed data; 12h is ample
     "customer_links": 168.0,  # 10-Ks change once a year; each is 2-10MB
     "brief_weekly": 24.0,
+    "countries": 6.0,        # FX and ETF legs move daily; macro prints monthly
     "context_tables": 24.0,  # decades of history; only the tail ever changes
 }
 
@@ -89,6 +90,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "liquidity": 1,
     "customer_links": 1,
     "brief_weekly": 1,
+    "countries": 1,
     "context_tables": 4,  # 2026-09-26: NameError fix; v3 never actually served.  # 2026-09-26: Warsh added + chair carries a confirmation date.  # fed_episodes -> derived rate_cycles + balance_sheet
     "fundamentals": 10,  # 2026-09-26: traded data removed from the public response.  # 2026-09-26: proper median + n.  # 2026-09-26: traded universe unioned.  # 2026-09-26: cadence-aware reads.  # 2026-09-26: sector per company.  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
                         # v1 read dead concepts for 48 of 65 names (NVDA reported FY2020)

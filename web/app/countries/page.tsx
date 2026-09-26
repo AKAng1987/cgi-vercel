@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { COMPASS_Q_MAP, GRID_Q_MAP } from "@/lib/regimeConstants";
-import { RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse } from "@/lib/types";
+import { MacroPoint, RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse, TenorReturns } from "@/lib/types";
 
 /**
  * COUNTRIES — what a regime means for each country and currency.
@@ -135,6 +135,37 @@ function Row({ c }: { c: RegimeCountry }) {
       </td>
       <td className="py-2 pr-3">
         <Fx cell={c.currency} note={c.currency_note} />
+        {c.market?.fx && (
+          <div className="mt-0.5">
+            <Rets r={c.market.fx} />
+          </div>
+        )}
+      </td>
+      <td className="py-2 pr-3 text-[0.72rem]">
+        {c.macro ? (
+          <div className="space-y-0.5">
+            <div><span className="text-slate-500">rate </span><Macro p={c.macro.policy_rate} /></div>
+            <div><span className="text-slate-500">CPI </span><Macro p={c.macro.cpi_yoy} /></div>
+            <div><span className="text-slate-500">GDP </span><Macro p={c.macro.gdp_yoy} /></div>
+            <div>
+              <span className="text-slate-500">loans </span>
+              <Macro p={c.macro.loan_growth_yoy ?? c.macro.loans_level} />
+            </div>
+          </div>
+        ) : (
+          <span className="text-slate-600">not onboarded</span>
+        )}
+      </td>
+      <td className="py-2 pr-3">
+        <Rets r={c.market?.etf ?? null} />
+        {c.excess_vs_tide !== null && c.excess_vs_tide !== undefined && (
+          <div className="mt-0.5 text-[0.68rem]" title="this country's regime return minus the average of all countries in this regime">
+            <span className="text-slate-500">vs tide </span>
+            <span className={`tabular-nums ${c.excess_vs_tide > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {c.excess_vs_tide > 0 ? "+" : ""}{c.excess_vs_tide.toFixed(2)}pp
+            </span>
+          </div>
+        )}
       </td>
       <td className="py-2 pr-3 text-[0.72rem]">
         {rk ? (
@@ -169,7 +200,9 @@ function Table({ rows, caption }: { rows: RegimeCountry[]; caption: string }) {
             <th className="py-1.5 pr-3 font-medium">country</th>
             <th className="py-1.5 pr-3 font-medium">trade</th>
             <th className="py-1.5 pr-3 font-medium">equity — hit / avg</th>
-            <th className="py-1.5 pr-3 font-medium">currency</th>
+            <th className="py-1.5 pr-3 font-medium">currency · 1m 3m 6m 1y</th>
+            <th className="py-1.5 pr-3 font-medium">own conditions</th>
+            <th className="py-1.5 pr-3 font-medium">ETF 1m 3m 6m 1y</th>
             <th className="py-1.5 pr-3 font-medium">pays best / worst in</th>
           </tr>
         </thead>
@@ -213,6 +246,42 @@ function Picker({ compass, grid }: { compass: number; grid: number }) {
   );
 }
 
+/** A rate's yearly change is in percentage POINTS, a level's is a percentage.
+ *  They arrive as separate fields so this cannot print one as the other —
+ *  CPI going 1.5 → 6.1 is +4.6pp, not "+306%". */
+function Macro({ p }: { p?: MacroPoint }) {
+  if (!p) return <span className="text-slate-600">—</span>;
+  const yoy = p.yoy_pp !== undefined ? `${p.yoy_pp > 0 ? "+" : ""}${p.yoy_pp.toFixed(2)}pp`
+            : p.yoy_pct !== undefined ? `${p.yoy_pct > 0 ? "+" : ""}${p.yoy_pct.toFixed(1)}%` : null;
+  const yv = p.yoy_pp ?? p.yoy_pct;
+  const level = p.kind === "level"
+    ? `${(p.latest / 1e12).toFixed(2)}tn`
+    : `${p.latest.toFixed(2)}%`;
+  return (
+    <span className="flex flex-wrap items-baseline gap-x-1.5" title={`${p.label} · ${p.symbol} · ${p.cadence ?? "?"} · as of ${p.as_of}`}>
+      <span className="tabular-nums text-slate-200">{level}</span>
+      {p.kind === "level" && <span className="text-[0.62rem] text-slate-500">{p.unit}</span>}
+      {yoy && (
+        <span className={`tabular-nums text-[0.7rem] ${yv! > 0 ? "text-emerald-400" : yv! < 0 ? "text-rose-400" : "text-slate-500"}`}>
+          {yoy}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Rets({ r }: { r: TenorReturns | null }) {
+  if (!r) return <span className="text-slate-600">—</span>;
+  const cell = (v?: number) =>
+    v === undefined ? <span className="text-slate-600">—</span>
+      : <span className={`tabular-nums ${v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-400"}`}>{v > 0 ? "+" : ""}{v.toFixed(1)}</span>;
+  return (
+    <span className="flex gap-2 text-[0.72rem]" title={`${r.symbol} · 1m / 3m / 6m / 1y %`}>
+      {cell(r.ret_1m)}{cell(r.ret_3m)}{cell(r.ret_6m)}{cell(r.ret_1y)}
+    </span>
+  );
+}
+
 export default async function ForeignPage({
   searchParams,
 }: {
@@ -224,7 +293,7 @@ export default async function ForeignPage({
   if (sp.grid) q.set("grid_q", sp.grid);
   const qs = q.toString();
 
-  const m = await apiFetch<RegimeMatrixResponse>(`/api/regime-matrix${qs ? `?${qs}` : ""}`);
+  const m = await apiFetch<RegimeMatrixResponse>(`/api/countries${qs ? `?${qs}` : ""}`);
 
   if (m.error) {
     return (
@@ -282,6 +351,19 @@ export default async function ForeignPage({
         )}
       </section>
 
+      {m.tide && m.tide.avg_return_pct !== null && (
+        <div className="rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-[0.78rem]">
+          <span className="text-slate-400">In {m.regime}, the average country returns </span>
+          <span className={`tabular-nums ${m.tide.avg_return_pct > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {m.tide.avg_return_pct > 0 ? "+" : ""}{m.tide.avg_return_pct.toFixed(2)}%
+          </span>
+          <span className="text-slate-500"> across {m.tide.n_countries} countries. </span>
+          {/* Without this line the reader is looking at the common factor and
+              thinking it is country selection. */}
+          <span className="text-slate-500">{m.tide.explanation}</span>
+        </div>
+      )}
+
       <Table rows={focus} caption="in the order you asked for" />
       <Table rows={rest} caption="the rest of what the backtest already covers" />
 
@@ -301,6 +383,12 @@ export default async function ForeignPage({
       <footer className="space-y-1 border-t border-slate-800 pt-3 text-[0.72rem] text-slate-500">
         <p>{m.fx_convention}</p>
         <p>{m.caveat}</p>
+        {m.edge_caveat && <p className="text-amber-300/80">{m.edge_caveat}</p>}
+        <p>
+          &ldquo;Own conditions&rdquo; is that country&rsquo;s domestic macro and is NOT the regime the trade
+          is conditioned on &mdash; that is the US Compass &times; Grid at the top. Rates show their
+          year-on-year change in percentage <em>points</em>; levels show a percentage.
+        </p>
         <p>
           Exporter / importer is a hand-set economic judgement, not a measurement — it decides the sign of the currency
           read, so correct it where it is wrong.

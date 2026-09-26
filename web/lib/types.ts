@@ -692,6 +692,14 @@ export type RegimeRankRow = {
 };
 
 export type RegimeCountry = {
+  macro?: CountryMacro | null;
+  macro_note?: string | null;
+  market?: {
+    etf: TenorReturns | null;
+    fx: TenorReturns | null;
+    rs_vs_spy: { status: string; age_days?: number; rs_gain_pct?: number; persistence?: number } | null;
+  } | null;
+  excess_vs_tide?: number | null;
   code: string;
   name: string;
   focus: boolean;
@@ -718,6 +726,8 @@ export type RegimeMatrixResponse = {
   thin_below: number;
   focus_order: string[];
   countries: RegimeCountry[];
+  tide?: { avg_return_pct: number | null; n_countries: number; explanation: string };
+  edge_caveat?: string;
   extra_pairs: RegimeFxCell[];
   fx_convention: string;
   caveat: string;
@@ -827,4 +837,45 @@ export interface ContextResponse {
     }>;
     caveat: string;
   };
+}
+
+// ── COUNTRIES macro + market blocks (api/country_data.py) ───────────────────
+export interface MacroPoint {
+  symbol: string;
+  label: string;
+  unit: string;
+  kind: "rate" | "level";
+  as_of: string;
+  latest: number;
+  n_obs: number;
+  cadence: string | null;
+  age_days: number;
+  prior?: number;
+  change_since_prior?: number;
+  direction?: "up" | "down" | "flat";
+  a_year_ago?: number;
+  yoy_lag_bars?: number;
+  // A rate's yearly change is in percentage POINTS; a level's is a percentage.
+  // They are different fields on purpose so the UI cannot print one as the other.
+  yoy_pp?: number;
+  yoy_pct?: number;
+}
+export interface TenorReturns {
+  symbol: string;
+  as_of: string;
+  last: number;
+  ret_1m?: number;
+  ret_3m?: number;
+  ret_6m?: number;
+  ret_1y?: number;
+  quoted?: string;
+  usd_3m?: "stronger" | "weaker" | "flat";
+  local_3m?: "stronger" | "weaker" | "flat";
+}
+export interface CountryMacro {
+  policy_rate?: MacroPoint;
+  cpi_yoy?: MacroPoint;
+  gdp_yoy?: MacroPoint;
+  loan_growth_yoy?: MacroPoint;
+  loans_level?: MacroPoint;
 }

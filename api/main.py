@@ -28,6 +28,7 @@ import watchlists as watchlists_data
 import regime_matrix
 import release_calendar
 import context_tables
+import country_data
 
 load_dotenv()
 
@@ -379,3 +380,27 @@ def context():
     24h cache: the inputs go back to 1927 and only the tail ever moves.
     """
     return cache.get_or_fetch("context_tables", context_tables.build_context)
+
+
+@app.get("/api/countries", dependencies=[Depends(require_bearer_token)])
+def countries(compass_q: Optional[int] = None, grid_q: Optional[int] = None, min_n: int = 5):
+    """The COUNTRIES tab: the regime matrix plus per-country macro and market
+    blocks -- policy rate, CPI, GDP, loan growth, ETF and FX returns, RS vs SPY.
+
+    Defaults to the current regime, resolved server-side like
+    /api/backtest/current, so the page needs no prior round trip.
+
+    Cached 6h rather than 24h: the FX and ETF legs move daily even though the
+    macro prints are monthly, and a stale FX direction is the leg most likely
+    to be read as a live signal.
+    """
+    if compass_q is not None and compass_q not in (1, 2, 3, 4):
+        raise HTTPException(status_code=400, detail="compass_q must be 1-4")
+    if grid_q is not None and grid_q not in (1, 2, 3, 4):
+        raise HTTPException(status_code=400, detail="grid_q must be 1-4")
+    key = f"countries" if (compass_q is None and grid_q is None) else None
+    build = lambda: country_data.build_countries(compass_q, grid_q, min_n=min_n)
+    # Only the DEFAULT (current-regime) view is cached; an explicitly requested
+    # cell is computed fresh rather than adding 16 cache keys for a page the
+    # user clicks through occasionally.
+    return cache.get_or_fetch(key, build) if key else build()
