@@ -45,7 +45,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 6  # 6: 1d tenor added; FX direction states its window
+SCHEMA_VERSION = 7  # 7: M2 added, with the money-vs-credit gap
 
 BENCH = "SPY"
 
@@ -75,6 +75,7 @@ MACRO = [
     ("gdp_yoy", "{c}_GDP_YOY", "%", "GDP YoY", "rate"),
     ("loan_growth_yoy", "{c}_LOAN_GROWTH_YOY", "%", "loan growth YoY", "rate"),
     ("loans_level", "{c}_LOANS_PRIVATE", "local", "loans to private sector", "level"),
+    ("m2", "{c}_M2", "local", "M2 money supply", "level"),
 ]
 
 # Curve tenors, in the existing US03MY / US01Y / US02Y / US10Y naming so they
@@ -309,6 +310,25 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
                 pt["unit"] = CURRENCY.get(code, "local") if unit == "local" else unit
                 pt["kind"] = kind
                 macro[key] = pt
+        # Howell's two halves side by side. Money growing faster than credit is
+        # liquidity that is not transmitting into lending; the reverse is credit
+        # expansion outrunning the money base. Neither is visible from one leg.
+        m2 = macro.get("m2", {}).get("yoy_pct") if macro else None
+        credit = None
+        if macro:
+            lg = macro.get("loan_growth_yoy")
+            credit = lg.get("latest") if lg else (macro.get("loans_level") or {}).get("yoy_pct")
+        if m2 is not None and credit is not None:
+            macro["money_vs_credit"] = {
+                "m2_yoy_pct": m2,
+                "credit_yoy_pct": credit,
+                "gap_pp": round(m2 - credit, 2),
+                "reads_as": ("money outrunning credit -- liquidity not transmitting into lending"
+                             if m2 - credit > 1.0 else
+                             "credit outrunning money -- lending expanding faster than the money base"
+                             if m2 - credit < -1.0 else
+                             "money and credit growing together"),
+            }
         c["macro"] = macro or None
         c["macro_note"] = (
             "This country's own conditions. It is NOT the regime the trade is "

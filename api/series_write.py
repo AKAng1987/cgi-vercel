@@ -115,6 +115,33 @@ ALLOWED = {
     # exactly a series nothing maintained and nobody checked.
     "PH03MY": ("tradingview", "1W", 0.0, 40.0, "TVC:PH03MY"),
     "PH01Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH01Y"),
+
+    # ── Per-country liquidity (Howell's two halves) ───────────────────────
+    # The credit half ({c}LG / {c}LPS) is already above. These are the money
+    # and central-bank halves. Still a PROXY, not Howell's index: no collateral
+    # multiplier, no repo or dealer data, no cross-border weighting.
+    #
+    # Levels in LOCAL currency, so bounds are wide -- CNM2 is ~357 quadrillion
+    # in yuan terms. Mislabelling the currency is the BOJ error, which put a
+    # balance sheet out by 1000x and still looked entirely plausible.
+    #
+    # FRESHNESS VARIES AND IS NOT ASSUMED: PHM2 is current to 2026-07 while
+    # PHCBBS lags to 2026-02. country_data reports age_days per series and
+    # cache.is_stale() judges each against its own cadence.
+    "PH_M2":        ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:PHM2"),
+    "CN_M2":        ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:CNM2"),
+    "JP_M2":        ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:JPM2"),
+    "KR_M2":        ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:KRM2"),
+    "GB_M2":        ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:GBM2"),
+    "EU_M2":        ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:EUM2"),
+
+    "PH_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:PHCBBS"),
+    "CN_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:CNCBBS"),
+    "JP_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:JPCBBS"),
+    "KR_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:KRCBBS"),
+    "GB_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:GBCBBS"),
+    "EU_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:EUCBBS"),
+
     "PH02Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH02Y"),
     "PH10Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH10Y"),
 }
