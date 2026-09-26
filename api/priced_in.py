@@ -210,3 +210,61 @@ def compare(actual_growth_pct: float, rate_pct: float,
             "note": "Where these disagree, that is information about the grid.",
         }
     return out
+
+
+# ── the actual multiple, so the grid has something to be compared against ──
+
+def trailing_pe(ticker: str, price: Optional[float] = None) -> dict:
+    """Market cap / trailing-twelve-month net income, from SEC filings and the
+    price history already held.
+
+    Market cap is the one input the financial statements do not contain, which
+    is why FUNDAMENTALS shipped without valuation. It is assembled here rather
+    than imported from a vendor: shares outstanding from the filer's own cover
+    page (dei), price from price-history. Every part is traceable, and when any
+    part is missing this returns why instead of a number.
+    """
+    import sec_xbrl as sx
+    facts = sx.company_facts(ticker)
+    if facts is None:
+        return {"ticker": ticker, "error": "no SEC facts for this ticker"}
+    sh = sx.shares_outstanding(facts)
+    if sh is None:
+        return {"ticker": ticker, "error": "filer reports no shares-outstanding tag"}
+
+    if price is None:
+        try:
+            import axis_drivers
+            d, v = axis_drivers._load_close(ticker)
+            price, price_as_of = (v[-1], d[-1]) if d else (None, None)
+        except Exception:  # noqa: BLE001
+            price, price_as_of = None, None
+    else:
+        price_as_of = "supplied"
+    if price is None:
+        return {"ticker": ticker, "error": f"no price history for {ticker}",
+                "shares": sh}
+
+    # TTM net income: the last four quarterly prints. Fewer than four and the
+    # multiple would be built on a partial year, which is worse than no number.
+    q = sx.periods(facts, "net_income") if hasattr(sx, "periods") else None
+    ni_rows = (q or [])[-4:]
+    if len(ni_rows) < 4:
+        return {"ticker": ticker, "error": "fewer than 4 quarters of net income",
+                "n_quarters": len(ni_rows), "shares": sh,
+                "price": {"value": price, "as_of": price_as_of}}
+    ttm = sum(r["val"] for r in ni_rows if r.get("val") is not None)
+    mcap = sh["shares"] * price
+    if ttm <= 0:
+        return {"ticker": ticker, "error": "trailing net income is not positive; "
+                                           "a P/E would be meaningless",
+                "ttm_net_income": ttm, "market_cap": mcap}
+    return {
+        "ticker": ticker,
+        "market_cap": round(mcap),
+        "price": {"value": round(price, 2), "as_of": price_as_of},
+        "shares": sh,
+        "ttm_net_income": round(ttm),
+        "ttm_quarters": [r.get("end") for r in ni_rows],
+        "trailing_pe": round(mcap / ttm, 2),
+    }

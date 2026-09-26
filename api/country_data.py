@@ -45,13 +45,20 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 5  # 5: priced-in suppressed where policy and front-end rates are not comparable
+SCHEMA_VERSION = 6  # 6: 1d tenor added; FX direction states its window
 
 BENCH = "SPY"
 
 # Standard tenors, matching dashboard_data._LOOKBACK so a return on this page
-# means the same thing as a return anywhere else on the site.
-TENORS = {"1m": 21, "3m": 63, "6m": 126, "1y": 252}
+# means the same thing as a return anywhere else on the site. 1d is the
+# latest session -- without it the shortest read on the page was a month, and
+# "what moved today" had no answer.
+TENORS = {"1d": 1, "1m": 21, "3m": 63, "6m": 126, "1y": 252}
+
+# The window the plain-English currency direction describes. Stated in the
+# payload and printed on the page: "PHP stronger" with no period attached is
+# exactly the ambiguity this label was meant to remove.
+FX_DIRECTION_TENOR = "3m"
 
 # symbol suffixes written by scripts/load_country_series.py
 # kind decides how a year-on-year change is expressed, and getting it wrong
@@ -203,10 +210,15 @@ def _fx(sym: Optional[str]) -> Optional[dict]:
     r = _returns(sym)
     if not r:
         return None
-    v = r.get("ret_3m")
+    v = r.get(f"ret_{FX_DIRECTION_TENOR}")
     if v is not None:
+        r["direction_tenor"] = FX_DIRECTION_TENOR
         r["usd_3m"] = "stronger" if v > 0 else "weaker" if v < 0 else "flat"
         r["local_3m"] = "weaker" if v > 0 else "stronger" if v < 0 else "flat"
+        r["direction_note"] = (
+            f"over {FX_DIRECTION_TENOR}, not today: the word describes the "
+            f"{FX_DIRECTION_TENOR} move, and the per-tenor returns beside it "
+            f"show every other window.")
     r["quoted"] = "USD per local unit (USDXXX): positive = USD strength"
     return r
 

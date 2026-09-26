@@ -865,6 +865,7 @@ export interface TenorReturns {
   symbol: string;
   as_of: string;
   last: number;
+  ret_1d?: number;
   ret_1m?: number;
   ret_3m?: number;
   ret_6m?: number;
@@ -872,6 +873,10 @@ export interface TenorReturns {
   quoted?: string;
   usd_3m?: "stronger" | "weaker" | "flat";
   local_3m?: "stronger" | "weaker" | "flat";
+  // The window the word describes. "PHP stronger" with no period attached is
+  // the ambiguity this field exists to remove.
+  direction_tenor?: string;
+  direction_note?: string;
 }
 export interface CountryCurve {
   tenors: Record<string, {

@@ -101,14 +101,19 @@ function InRegime({ regime, cell, excess }: { regime: string; cell: RegimeCell |
 /** Direction in words, taken from the server. Every pair is quoted USDXXX, so
  *  a positive return is DOLLAR strength — deriving that here from a bare sign
  *  is how an FX read gets silently inverted. */
-function FxDirection({ cell }: { cell: RegimeFxCell | null }) {
+function FxDirection({ cell, live }: { cell: RegimeFxCell | null; live?: TenorReturns | null }) {
   if (!cell) return null;
   const strong = cell.local === "stronger";
   const local = cell.symbol.replace(/^USD/, "");
+  // The window is printed, not implied. "PHP stronger" alone does not say
+  // whether that is today, this quarter or this year — which is the question
+  // it prompted the first time it shipped.
+  const win = live?.direction_tenor;
   return (
     <span className={strong ? "text-emerald-400" : cell.local === "weaker" ? "text-rose-400" : "text-slate-400"}
-          title={cell.note}>
+          title={live?.direction_note ?? cell.note}>
       {local} {strong ? "stronger" : cell.local === "weaker" ? "weaker" : "flat"}
+      {win && <span className="text-slate-500"> over {win}</span>}
     </span>
   );
 }
@@ -164,7 +169,7 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
           <>
             <span className="flex items-baseline gap-x-2">
               <Instrument symbol={c.currency.symbol} live={c.market?.fx ?? null} />
-              <FxDirection cell={c.currency} />
+              <FxDirection cell={c.currency} live={c.market?.fx ?? null} />
             </span>
             <Rets r={c.market?.fx ?? null} />
             <InRegime regime={regime} cell={c.currency} />
@@ -302,7 +307,7 @@ function Macro({ p }: { p?: MacroPoint }) {
 function Rets({ r }: { r: TenorReturns | null }) {
   if (!r) return <span className="text-slate-600">—</span>;
   const cells: [string, number | undefined][] = [
-    ["1m", r.ret_1m], ["3m", r.ret_3m], ["6m", r.ret_6m], ["1y", r.ret_1y],
+    ["1d", r.ret_1d], ["1m", r.ret_1m], ["3m", r.ret_3m], ["6m", r.ret_6m], ["1y", r.ret_1y],
   ];
   return (
     <span className="flex flex-wrap gap-x-2 text-[0.72rem]">
@@ -480,7 +485,7 @@ export default async function ForeignPage({
             {m.extra_pairs.map((p) => (
               <li key={p.symbol} className="flex items-baseline gap-x-2">
                 <span className="font-medium text-slate-200">{p.symbol}</span>
-                <FxDirection cell={p} />
+                <FxDirection cell={p} />  {/* no live leg here; the regime avg follows */}
                 <span className="text-[0.68rem]">
                   <span className="text-slate-500">in {m.regime}: </span>
                   {n(p.avg_return_pct, 2)}

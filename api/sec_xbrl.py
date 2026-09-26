@@ -202,6 +202,16 @@ _WANTED: frozenset[str] = frozenset(
     + [t for tags in IFRS_CONCEPTS.values() for t in tags]
 )
 
+# Shares outstanding lives in the `dei` namespace, not us-gaap or ifrs-full,
+# so the trim above drops it. It is kept separately because market cap is the
+# one input the priced-in layer cannot get from the financial statements, and
+# without it there is a justified multiple with nothing to compare against.
+# EntityCommonStockSharesOutstanding is the cover-page figure every filer
+# reports; the Common/Dei fallbacks catch the handful that do not.
+DEI_SHARES = ("EntityCommonStockSharesOutstanding",)
+SHARES_FALLBACK = ("CommonStockSharesOutstanding", "CommonStockSharesIssued")
+_WANTED_SHARES: frozenset[str] = frozenset(DEI_SHARES + SHARES_FALLBACK)
+
 
 def company_facts(ticker: str) -> Optional[dict]:
     """Fetch and immediately trim to the tags CONCEPTS can actually use.
@@ -223,7 +233,37 @@ def company_facts(ticker: str) -> Optional[dict]:
     src = full.get("facts", {})
     keep = {ns: {k: v for k, v in src.get(ns, {}).items() if k in _WANTED}
             for ns in ("us-gaap", "ifrs-full") if ns in src}
+    # dei carries shares outstanding; keep only that, not the whole namespace.
+    for ns in ("dei", "us-gaap"):
+        got = {k: v for k, v in src.get(ns, {}).items() if k in _WANTED_SHARES}
+        if got:
+            keep.setdefault(ns, {}).update(got)
     return {"entityName": full.get("entityName"), "cik": full.get("cik"), "facts": keep}
+
+
+def shares_outstanding(facts: dict) -> Optional[dict]:
+    """Most recent shares outstanding, with the date and tag it came from.
+
+    Returns the tag so a surprising market cap can be traced to its source
+    rather than argued about. None when no filer reports it -- the caller must
+    then say the multiple is unavailable, not guess one.
+    """
+    f = facts.get("facts", {})
+    best = None
+    for ns in ("dei", "us-gaap"):
+        for tag in DEI_SHARES + SHARES_FALLBACK:
+            node = f.get(ns, {}).get(tag)
+            if not node:
+                continue
+            for rows in node.get("units", {}).values():
+                for r in rows:
+                    end, val = r.get("end"), r.get("val")
+                    if not end or not val:
+                        continue
+                    if best is None or end > best["as_of"]:
+                        best = {"shares": float(val), "as_of": end,
+                                "tag": f"{ns}:{tag}", "filed": r.get("filed")}
+    return best
 
 
 _sector_cache: dict[str, Optional[str]] = {}
