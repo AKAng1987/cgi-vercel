@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime, timezone
 import threading
 from typing import Optional
 
@@ -25,6 +26,7 @@ import themes_data
 import signals_data
 import watchlists as watchlists_data
 import regime_matrix
+import release_calendar
 
 load_dotenv()
 
@@ -348,3 +350,19 @@ def universe():
         "groups": backtest_data.TICKER_GROUP_MAP,
         "excluded_groups": sorted(backtest_data.BACKTEST_EXCLUDE_GROUPS),
     }
+
+
+@app.get("/api/calendar", dependencies=[Depends(require_bearer_token)])
+def calendar(days: int = 45):
+    """The upcoming release calendar: what is coming and what it moves.
+
+    Deliberately NOT sourced from /api/markov, although that endpoint returns
+    the same `timeline`. build_markov_response() also computes signals, axis
+    drivers, the event log and daily runs -- LIVE was tuned down from ~10.8s to
+    ~4.9s by keeping every fetch in ONE wave, and adding a heavy call to that
+    wave would give the saving straight back. release_calendar.timeline() is a
+    pure date computation over a hardcoded schedule, so this route costs
+    essentially nothing.
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return {"as_of": today, "timeline": release_calendar.timeline(start=today, days=days)}

@@ -7,7 +7,11 @@ import { AxisDriversPanel } from "../components/markov/AxisDriversPanel";
 import { Timeline } from "../components/markov/Timeline";
 
 /**
- * MARKOV tab -- event-driven (Phase 1.5).
+ * CGI tab -- event-driven regime state (Phase 1.5). Renamed from MARKOV
+ * 2026-09-26: the tab is not a Markov model, it is CGI's own compass/grid
+ * state and the probabilities attached to it. The /api/markov endpoint and
+ * the components/markov/ directory keep their names -- only what the user
+ * sees changed.
  *
  * The discrete regime only moves on data releases, and each release moves
  * exactly one axis. So the forecast is one probability per upcoming
@@ -15,12 +19,12 @@ import { Timeline } from "../components/markov/Timeline";
  * release as it lands, scored by Brier. The daily Phase 1 rows remain the
  * pre-registered audit trail and are shown collapsed into runs below.
  */
-export default async function MarkovPage() {
+export default async function CgiPage() {
   const data = await apiFetch<MarkovResponse>("/api/markov");
 
   return (
     <main className="mx-auto max-w-7xl p-6">
-      <h1 className="mb-1 text-2xl font-bold">MARKOV — event-driven regime forecast</h1>
+      <h1 className="mb-1 text-2xl font-bold">CGI — regime state, and what could flip it</h1>
       <p className="mb-4 text-xs text-slate-400">
         The regime only moves on data releases — FOMC → Liquidity, SLOOS → Credit, CPI → Inflation,
         GDP → Growth. For each upcoming release: <span className="text-slate-300">History</span> is how

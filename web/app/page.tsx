@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse } from "@/lib/types";
+import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse, CalendarResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
@@ -7,6 +7,7 @@ import { ChangeStrip } from "./components/brief/ChangeStrip";
 import { PolicyNotes } from "./components/brief/PolicyNotes";
 import { StandingTheme } from "./components/brief/StandingTheme";
 import { ThemesTable } from "./components/brief/ThemesTable";
+import { Timeline } from "./components/markov/Timeline";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
 
 /**
@@ -17,7 +18,7 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live, tech, notes, brief, edgeNow] = await Promise.all([
+  const [themes, signals, live, tech, notes, brief, edgeNow, calendar] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
@@ -32,6 +33,7 @@ export default async function Live() {
     apiFetch<BacktestTableResponse & { compass_q: number; grid_q: number }>(
       "/api/backtest/current?min_occ=5"
     ).catch(() => null),
+    apiFetch<CalendarResponse>("/api/calendar").catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
@@ -65,6 +67,10 @@ export default async function Live() {
         <RegimeCard kind="grid" data={live.grid} />
       </section>
 
+      {calendar && calendar.timeline.length > 0 && (
+        <Timeline events={calendar.timeline} asOf={calendar.as_of} />
+      )}
+
       {tech && <BreadthStrip t={tech} />}
 
       <StandingTheme themes={themes.standing} />
@@ -82,7 +88,7 @@ export default async function Live() {
             </div>
             <div className="text-xs text-slate-500">
               announcements whose themes are still running on RS ·{" "}
-              <a href="/notes" className="underline hover:text-slate-300">all {notes.counts.policy}</a>
+              <a href="/policy" className="underline hover:text-slate-300">all {notes.counts.policy}</a>
             </div>
           </div>
           <PolicyNotes notes={notes.policy.filter((p) => p.is_live).slice(0, 5)} compact />

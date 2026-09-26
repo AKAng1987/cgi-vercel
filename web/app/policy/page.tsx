@@ -11,7 +11,7 @@ export default async function NotesPage() {
 
   return (
     <main className="mx-auto max-w-4xl p-6">
-      <h1 className="mb-1 text-2xl font-bold">NOTES</h1>
+      <h1 className="mb-1 text-2xl font-bold">POLICY</h1>
       <p className="mb-5 text-xs leading-relaxed text-slate-400">
         Three registers, kept apart because they decay and are trusted differently.{" "}
         <span className="text-slate-200">Policy</span> is dated announcements by country, each

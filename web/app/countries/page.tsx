@@ -3,7 +3,7 @@ import { COMPASS_Q_MAP, GRID_Q_MAP } from "@/lib/regimeConstants";
 import { RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse } from "@/lib/types";
 
 /**
- * FOREIGN — what a regime means for each country and currency.
+ * COUNTRIES — what a regime means for each country and currency.
  *
  * This page shows the regime leg only. The policy rate, the curve and the
  * currency trend per country are a later step; the matrix ships first because
@@ -196,7 +196,7 @@ function Picker({ compass, grid }: { compass: number; grid: number }) {
           return (
             <a
               key={`${c}-${g}`}
-              href={`/foreign?compass=${c}&grid=${g}`}
+              href={`/countries?compass=${c}&grid=${g}`}
               title={`Compass: liquidity ${liq} credit ${cr} · Grid: growth ${gr} inflation ${inf}`}
               className={`rounded px-2 py-1 text-center text-[0.72rem] tabular-nums transition ${
                 here
@@ -229,7 +229,7 @@ export default async function ForeignPage({
   if (m.error) {
     return (
       <main className="p-6">
-        <h1 className="text-lg font-medium text-slate-200">FOREIGN</h1>
+        <h1 className="text-lg font-medium text-slate-200">COUNTRIES</h1>
         <p className="mt-2 text-sm text-rose-400">{m.error}</p>
       </main>
     );
@@ -244,7 +244,7 @@ export default async function ForeignPage({
     <main className="space-y-6 p-6">
       <header className="space-y-1">
         <h1 className="text-lg font-medium text-slate-200">
-          FOREIGN <span className="text-slate-500">— regime → country / currency</span>
+          COUNTRIES <span className="text-slate-500">— regime → country / currency</span>
         </h1>
         <p className="text-[0.78rem] text-slate-500">
           Showing <span className="text-slate-300">{m.regime}</span>: liquidity {liq} credit {cr} · growth {gr}{" "}
@@ -270,7 +270,7 @@ export default async function ForeignPage({
                   <span className="text-slate-400">{r.type}</span>{" "}
                   <a
                     className="text-[color:var(--cgi-accent)] hover:underline"
-                    href={`/foreign?compass=${r.compass_q}&grid=${r.grid_q}`}
+                    href={`/countries?compass=${r.compass_q}&grid=${r.grid_q}`}
                   >
                     → {r.regime_if_flip}
                   </a>{" "}

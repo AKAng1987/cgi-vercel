@@ -35,11 +35,11 @@ export default function RootLayout({
             { href: "/tape", label: "TAPE", icon: "≡" },
             { href: "/backtest", label: "BACKTEST", icon: "⊞" },
             { href: "/macro", label: "MACRO", icon: "◎" },
-            { href: "/markov", label: "MARKOV", icon: "⇄" },
+            { href: "/cgi", label: "CGI", icon: "⇄" },
             { href: "/cot", label: "POSITIONING", icon: "⚖" },
             { href: "/fundamentals", label: "FUNDAMENTALS", icon: "⊟" },
-            { href: "/foreign", label: "FOREIGN", icon: "⊕" },
-            { href: "/notes", label: "NOTES", icon: "✎" },
+            { href: "/policy", label: "POLICY", icon: "✎" },
+            { href: "/countries", label: "COUNTRIES", icon: "⊕" },
           ].map((t) => (
             <a
               key={t.href}

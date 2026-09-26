@@ -726,3 +726,11 @@ export type RegimeMatrixResponse = {
     | null;
   error?: string;
 };
+
+// Slim release calendar for LIVE. Same TimelineEvent shape the CGI tab uses,
+// but served by /api/calendar rather than /api/markov -- see that route's
+// docstring for why LIVE must not pull the heavy one.
+export interface CalendarResponse {
+  as_of: string;
+  timeline: TimelineEvent[];
+}
