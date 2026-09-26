@@ -14,9 +14,14 @@ export function FomcProbabilityPanel({ probs }: { probs: FomcProbabilities }) {
   }
 
   const next = rows[0];
-  const outcomeLabels = ["Hike 25bp", "Hold", "Cut 25bp"];
-  const outcomeVals = [next.p_hike * 100, next.p_hold * 100, next.p_cut * 100];
-  const barColors = [COLORS.hike, COLORS.hold, COLORS.cut];
+  // Listed bottom-to-top: Plotly puts the FIRST category at the bottom of a
+  // horizontal bar chart, so this reads Hike / Hold / Cut top-to-bottom.
+  // Previously the order was reversed AND the y tick labels were clipped off
+  // the left edge (no automargin), leaving three unlabelled bars -- the 0.0%
+  // at the top was the CUT, and a reader reasonably took it for the hike.
+  const outcomeLabels = ["Cut 25bp", "Hold", "Hike 25bp"];
+  const outcomeVals = [next.p_cut * 100, next.p_hold * 100, next.p_hike * 100];
+  const barColors = [COLORS.cut, COLORS.hold, COLORS.hike];
 
   const data: Data[] = [
     {
@@ -40,13 +45,23 @@ export function FomcProbabilityPanel({ probs }: { probs: FomcProbabilities }) {
         data={data}
         layout={{
           title: {
-            text: `Next FOMC: ${nextDate}  (implied avg ${next.implied_avg.toFixed(3)}%)`,
+            text: `Next FOMC: ${nextDate} — implied avg ${next.implied_avg.toFixed(3)}%`,
             font: { size: 12, color: "#9CA3AF" },
           },
           xaxis: { range: [0, 110], title: { text: "Probability (%)" } },
-          yaxis: { gridcolor: "rgba(0,0,0,0)" },
+          // automargin: without it the category names are clipped and the
+          // chart shows three anonymous bars.
+          yaxis: { gridcolor: "rgba(0,0,0,0)", automargin: true },
         }}
       />
+      <p className="mt-1 text-[0.66rem] leading-relaxed text-slate-500">
+        CME FedWatch method: the futures-implied average for the meeting month is split into the
+        days before and after the meeting to back out the implied post-meeting rate, which is then
+        compared with the current target midpoint. It will not match CME exactly &mdash; they use
+        intraday settlement prices and a finer outcome grid. Note the sensitivity when a meeting
+        falls late in the month: with only a few days after it, a 1bp move in the implied average
+        is amplified roughly tenfold in the implied post-meeting rate.
+      </p>
       {rows.length > 1 && (
         <table className="mt-3 w-full text-left text-xs">
           <thead>
