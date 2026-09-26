@@ -66,6 +66,37 @@ TTL_HOURS: dict[str, float] = {
 # TTL_HOURS[key] more hours. Added 2026-09-11 after a bug class (Core
 # PCE, then fetch_spreads) where a code fix alone didn't change what
 # was being served until the stale cache object happened to expire.
+# Modules whose cache version is taken from the MODULE ITSELF rather than from
+# the table below. Map cache_key -> "module:CONSTANT".
+#
+# Why this exists: five separate times in this build a correct code change was
+# deployed and then served stale, because the response shape changed here and
+# the number in the table below did not. A note in BUILD.md did not fix it; the
+# two things are in different files, and the one you edit is not the one you
+# have to remember. Pointing the version at a constant that lives BESIDE the
+# code being changed makes the bump land in the same edit as the change.
+#
+# The referenced module must define that integer constant, and its build
+# function must be the thing whose shape is versioned.
+SCHEMA_FROM_MODULE: dict[str, str] = {
+    "countries": "country_data:SCHEMA_VERSION",
+    "context_tables": "context_tables:SCHEMA_VERSION",
+}
+
+
+def _expected_version(cache_key: str) -> str:
+    """The version a cached object must carry to be considered a hit."""
+    ref = SCHEMA_FROM_MODULE.get(cache_key)
+    if ref:
+        mod_name, const = ref.split(":")
+        try:
+            mod = __import__(mod_name)
+            return str(getattr(mod, const))
+        except Exception:  # noqa: BLE001 -- fall through to the table
+            _logger.warning("[cache] could not read %s; using table version", ref)
+    return str(CACHE_SCHEMA_VERSIONS[cache_key])
+
+
 CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "fed_funds_range": 1,
     "fomc_probabilities": 1,
@@ -130,7 +161,7 @@ def get(cache_key: str) -> Optional[dict]:
         return None
 
     cached_version = head.get("Metadata", {}).get("cache_version")
-    expected_version = str(CACHE_SCHEMA_VERSIONS[cache_key])
+    expected_version = _expected_version(cache_key)
     if cached_version != expected_version:
         _logger.info(
             "[cache] version mismatch for %r (cached=%r, expected=%r) -- "
@@ -163,7 +194,7 @@ def set(cache_key: str, value: dict) -> None:
         Key=s3_key,
         Body=json.dumps(value, allow_nan=False).encode("utf-8"),
         ContentType="application/json",
-        Metadata={"cache_version": str(CACHE_SCHEMA_VERSIONS[cache_key])},
+        Metadata={"cache_version": _expected_version(cache_key)},
     )
 
 

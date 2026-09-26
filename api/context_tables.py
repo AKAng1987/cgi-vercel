@@ -43,6 +43,8 @@ from typing import Optional
 
 import axis_drivers
 
+# See cache.py SCHEMA_FROM_MODULE: bumping this invalidates the cached payload,
+# so a shape change and its version bump are the same edit.
 SCHEMA_VERSION = 1
 
 # How far either side of an inversion to look for the market top it belongs to.

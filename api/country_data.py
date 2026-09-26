@@ -42,7 +42,10 @@ import axis_drivers as ad
 import regime_matrix
 import themes_data as td
 
-SCHEMA_VERSION = 1
+# Bumping this invalidates the "countries" cache automatically -- cache.py's
+# SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
+# same file as the shape change. 2: added the curve block.
+SCHEMA_VERSION = 2
 
 BENCH = "SPY"
 
