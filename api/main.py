@@ -325,3 +325,26 @@ def regime_matrix_route(
     except Exception:  # noqa: BLE001
         out = {**out, "next_regimes": None}
     return out
+
+
+@app.get("/api/universe")
+def universe():
+    """Public, read-only: the backtest ticker universe and its groups.
+
+    Exists so the backtest-refresher Lambda has ONE source of truth for the
+    universe instead of its own bundled copy of HUD_GROUPS. That copy carried
+    a "keep in sync manually" comment and drifted 38 tickers behind, which
+    meant EWQ and 37 sector/commodity ETFs were silently never backtested --
+    the ticker was in the declared universe, absent from the blob, and nothing
+    compared the two.
+
+    No bearer, same reasoning as /api/watchlists: a ticker list is not
+    sensitive, and the caller is a Lambda in another account-region whose
+    whole point is not to depend on Render's request path for compute.
+    """
+    return {
+        "count": len(backtest_data.BACKTEST_UNIVERSE),
+        "tickers": backtest_data.BACKTEST_UNIVERSE,
+        "groups": backtest_data.TICKER_GROUP_MAP,
+        "excluded_groups": sorted(backtest_data.BACKTEST_EXCLUDE_GROUPS),
+    }

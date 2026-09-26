@@ -201,6 +201,41 @@ def entered_from(o: dict, combo: Optional[str] = None) -> Optional[str]:
     return tl[i][1] if i >= 0 else None
 
 
+# ── universe drift ──────────────────────────────────────────────────────
+# The refresher Lambda used to bundle its own copy of HUD_GROUPS with a "keep
+# in sync manually" comment, and it drifted 38 tickers behind: EWQ and 37
+# sector/commodity ETFs were in the declared universe, absent from the blob,
+# and nothing compared the two. It stayed invisible for weeks.
+#
+# The Lambda now reads /api/universe instead, but it keeps a bundled fallback
+# so a Render outage cannot kill the nightly refresh -- which means a SILENT
+# STALE FALLBACK is still reachable. This check is what makes that loud: the
+# comparison runs on every read, against whatever the blob actually contains.
+
+
+def universe_drift(blob: Optional[dict] = None) -> Optional[dict]:
+    """Tickers declared in BACKTEST_UNIVERSE but missing from the blob, and
+    vice versa. Returns None when the two agree -- callers treat a present
+    value as something to show the user, not as a detail."""
+    blob = blob if blob is not None else _read_blob()
+    if blob is None:
+        return None
+    in_blob = set(blob.get("tickers", {}))
+    expected = set(BACKTEST_UNIVERSE)
+    missing, extra = sorted(expected - in_blob), sorted(in_blob - expected)
+    if not missing and not extra:
+        return None
+    return {
+        "missing_from_blob": missing,
+        "unexpected_in_blob": extra,
+        "blob_count": len(in_blob),
+        "expected_count": len(expected),
+        "universe_source": blob.get("universe_source"),
+        "note": ("the refresher ran against a different ticker list than the API "
+                 "declares; tickers listed as missing have no regime stats at all"),
+    }
+
+
 def build_table_response(
     compass_q: int,
     grid_q: int,
@@ -282,6 +317,8 @@ def build_table_response(
         "trend": trend or "all",
         "from_combo": from_combo or "all",
         "from_counts": dict(sorted(from_counts.items(), key=lambda kv: -kv[1])),
+        "universe_source": blob.get("universe_source"),
+        "universe_drift": universe_drift(blob),
         "rows": rows,
     }
 
