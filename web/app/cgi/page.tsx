@@ -23,8 +23,13 @@ import { ContextTables } from "../components/context/ContextTables";
 export default async function CgiPage() {
   const [data, ctx] = await Promise.all([
     apiFetch<MarkovResponse>("/api/markov"),
-    // Additive context; never allowed to break the page it hangs off.
-    apiFetch<ContextResponse>("/api/context").catch(() => null),
+    // Additive: a failure here must not take the page down. But it must not be
+    // INVISIBLE either -- a NameError in context_tables once made this whole
+    // section vanish while the page returned a healthy 200, and the silence is
+    // what made it hard to spot. The error is captured and rendered below.
+    apiFetch<ContextResponse>("/api/context").catch((e: unknown) => ({
+      __error: e instanceof Error ? e.message : String(e),
+    }) as unknown as ContextResponse & { __error: string }),
   ]);
 
   return (
@@ -64,7 +69,13 @@ export default async function CgiPage() {
         </p>
       </div>
 
-      {ctx && <ContextTables ctx={ctx} />}
+      {ctx && "__error" in ctx ? (
+        <div className="mt-8 rounded border border-amber-800 bg-amber-950/30 px-3 py-2 text-xs text-amber-300">
+          Context tables unavailable: {(ctx as { __error: string }).__error}
+        </div>
+      ) : (
+        ctx && <ContextTables ctx={ctx} />
+      )}
     </main>
   );
 }

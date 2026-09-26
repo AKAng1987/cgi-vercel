@@ -45,6 +45,12 @@ import axis_drivers
 
 SCHEMA_VERSION = 1
 
+# How far either side of an inversion to look for the market top it belongs to.
+# Module-level because joins() needs them too -- they previously lived inside
+# inversions() as locals, and joins() raised NameError, which build_context()
+# propagated and the page's .catch(() => null) then swallowed whole.
+LOOKBACK_M, LOOKAHEAD_M = 12, 36
+
 # Depth levels, in percent. Each is counted with its own reversal threshold.
 LEVELS = (5, 10, 15, 20, 35)
 BUCKETS = (
@@ -320,8 +326,6 @@ def inversions() -> dict:
             if prev is None or e["depth_pct"] < prev["depth_pct"]:
                 seen[e["peak_date"]] = e
     bears = sorted(seen.values(), key=lambda e: e["peak_date"])
-
-    LOOKBACK_M, LOOKAHEAD_M = 12, 36
 
     def nearest_peak(inv: str) -> Optional[dict]:
         """The market top belonging to this inversion: the deepest decline whose
