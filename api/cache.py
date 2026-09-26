@@ -81,7 +81,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "dot_plot": 1,
     "hud_extra": 1,
     "policy_watch": 1,
-    "cot": 1,
+    "cot": 2,  # 2026-09-27: trader_category on every reading + always-shown watched list
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "watchlists": 2,  # 2026-09-26: CGI earning-it list + NATGAS symbol fix

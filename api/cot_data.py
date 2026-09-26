@@ -130,6 +130,30 @@ def _series(names: list[str]) -> list[dict]:
     return out
 
 
+# Every reading carries its trader category explicitly. The module docstring
+# has always explained what commercials/large specs/small traders are, but the
+# NUMBERS went out as bare `spec`/`comm`/`small` keys, so the category had to be
+# inferred from a key name at the point of reading. A net position means the
+# opposite thing depending on who holds it -- commercials are price-insensitive
+# hedgers and specs are momentum -- so the label travels with the number.
+TRADER_CATEGORIES = [
+    ("spec", "large_specs", "Large specs",
+     "managed money, CTAs, macro funds",
+     "momentum; most long at tops and most short at bottoms, which is the edge"),
+    ("comm", "commercials", "Commercials",
+     "producers, refiners, utilities, merchants",
+     "hedging a business, price-insensitive; the other side of the specs"),
+    ("small", "small_traders", "Small traders",
+     "non-reportable positions",
+     "usually positioned with the specs"),
+]
+
+# Always reported whether or not they are at an extreme. An extremes-only view
+# makes a contract vanish in quiet weeks, which is precisely when knowing it is
+# NOT extreme is the useful fact.
+ALWAYS_SHOW = ("Gold", "Silver")
+
+
 def _index(vals: list[float], i: int, weeks: int | None) -> float | None:
     seg = vals[max(0, i - weeks + 1):i + 1] if weeks else vals[:i + 1]
     lo, hi = min(seg), max(seg)
@@ -161,6 +185,12 @@ def build_cot_response() -> dict:
                 "contract": label, "status": "ok",
                 "as_of": s[i]["date"], "open_interest": round(s[i]["oi"]),
                 "spec": round(s[i]["spec"]), "comm": round(s[i]["comm"]), "small": round(s[i]["small"]),
+                "positions": [
+                    {"category": cat, "label": lab, "who": who, "reads_as": reads,
+                     "net_contracts": round(s[i][key]),
+                     "net_change_4w": round(s[i][key] - s[max(0, i - 4)][key])}
+                    for key, cat, lab, who, reads in TRADER_CATEGORIES
+                ],
                 "spec_pct_oi": round(s[i]["spec_pct_oi"], 1),
                 "spec_change_4w": round(s[i]["spec"] - s[max(0, i - 4)]["spec"]),
                 "cot_index": idx, "cot_index_pct_oi": idx_oi,
@@ -175,8 +205,20 @@ def build_cot_response() -> dict:
         [c for c in ok if c["signal"]],
         key=lambda c: (c["cot_index"]["3y"] if c["cot_index"]["3y"] is not None else 50),
     )
+    watched = [c for c in ok if c["contract"] in ALWAYS_SHOW]
     return {
         "as_of": max((c["as_of"] for c in ok), default=None),
+        # Shown every week, extreme or not -- see ALWAYS_SHOW.
+        "watched": [{"contract": c["contract"], "as_of": c["as_of"],
+                     "cot_index_3y": c["cot_index"]["3y"],
+                     "cot_index_3y_pct_oi": c["cot_index_pct_oi"]["3y"],
+                     "positions": c["positions"],
+                     "signal": c["signal"],
+                     "at_extreme": c["signal"] is not None} for c in watched],
+        "trader_categories": [
+            {"category": cat, "label": lab, "who": who, "reads_as": reads}
+            for _k, cat, lab, who, reads in TRADER_CATEGORIES
+        ],
         "source": "CFTC Commitments of Traders, legacy futures-only (public API)",
         "groups": groups,
         "extremes": [{"contract": c["contract"], "cot_index_3y": c["cot_index"]["3y"],

@@ -404,3 +404,17 @@ def countries(compass_q: Optional[int] = None, grid_q: Optional[int] = None, min
     # cell is computed fresh rather than adding 16 cache keys for a page the
     # user clicks through occasionally.
     return cache.get_or_fetch(key, build) if key else build()
+
+
+@app.get("/api/cot/public")
+def cot_public():
+    """Public, read-only COT. Same payload as /api/cot.
+
+    No bearer, same reasoning as /api/watchlists and /api/universe: CFTC
+    Commitments of Traders is public data republished, and the caller is a
+    routine that cannot hold a secret. Gold and silver are in `watched` every
+    week whether or not they are at an extreme -- an extremes-only view makes a
+    contract vanish in exactly the quiet weeks when knowing it is NOT extreme
+    is the useful fact.
+    """
+    return cache.get_or_fetch("cot", cot_data.build_cot_response)
