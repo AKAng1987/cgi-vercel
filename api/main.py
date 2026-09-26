@@ -29,6 +29,7 @@ import regime_matrix
 import release_calendar
 import context_tables
 import country_data
+import priced_in
 
 load_dotenv()
 
@@ -418,3 +419,34 @@ def cot_public():
     is the useful fact.
     """
     return cache.get_or_fetch("cot", cot_data.build_cot_response)
+
+
+@app.get("/api/priced-in", dependencies=[Depends(require_bearer_token)])
+def priced_in_route(
+    growth_pct: float,
+    rate_pct: Optional[float] = None,
+    multiple: Optional[float] = None,
+    erp_pct: Optional[float] = None,
+    fade_years: Optional[int] = None,
+    terminal_growth_pct: Optional[float] = None,
+):
+    """What growth a multiple implies, two ways.
+
+    `growth_pct` is the company's reported revenue growth (from sec_xbrl.yoy on
+    the FUNDAMENTALS page). `rate_pct` defaults to the live US 10Y. `multiple`
+    is optional: without it you get the grid's justified multiple and the
+    honest note that there is nothing to compare it against, because market cap
+    is not in SEC filings.
+    """
+    if rate_pct is None:
+        try:
+            import axis_drivers
+            _d, v = axis_drivers._load_close("US10Y")
+            rate_pct = round(v[-1], 2)
+        except Exception:  # noqa: BLE001
+            raise HTTPException(status_code=503, detail="US10Y unavailable; pass rate_pct")
+    kw = {k: v for k, v in (("erp_pct", erp_pct), ("fade_years", fade_years),
+                            ("terminal_growth_pct", terminal_growth_pct)) if v is not None}
+    out = priced_in.compare(growth_pct, rate_pct, actual_multiple=multiple, **kw)
+    out["schema_version"] = priced_in.SCHEMA_VERSION
+    return out
