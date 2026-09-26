@@ -340,11 +340,18 @@ function Curve({ cv }: { cv?: CountryCurve | null }) {
           const t = cv.tenors[k];
           if (!t) return null;
           return (
-            <span key={k} title={t.symbol}>
+            <span key={k} title={t.substitute_for ? `${t.symbol} — ${t.substitute_for}` : t.symbol}>
               <span className="text-slate-500">{k} </span>
-              {t.yield_pct === null
-                ? <span className="text-slate-600">n/a</span>
-                : <span className="tabular-nums text-slate-200">{t.yield_pct.toFixed(2)}%</span>}
+              {t.yield_pct === null ? (
+                <span className="text-slate-600">n/a</span>
+              ) : (
+                <>
+                  <span className="tabular-nums text-slate-200">{t.yield_pct.toFixed(2)}%</span>
+                  {/* A stand-in is always marked. An unmarked substitute is how
+                      a German yield becomes "the euro-area 10y" by accident. */}
+                  {t.substitute_for && <span className="text-amber-300">*</span>}
+                </>
+              )}
             </span>
           );
         })}
@@ -357,7 +364,11 @@ function Curve({ cv }: { cv?: CountryCurve | null }) {
           <span>10y−3m <span className="tabular-nums text-slate-400">{cv.spreads["10y_3m"].toFixed(2)}</span></span>
         )}
       </div>
-      {cv.priced_in && (
+      {cv.priced_in && ("unavailable" in cv.priced_in && cv.priced_in.unavailable ? (
+        <div className="text-[0.66rem] text-slate-600" title={cv.priced_in.why}>
+          priced-in read n/a — policy and front-end rates not comparable
+        </div>
+      ) : (
         <div className="text-[0.66rem]" title="3m yield minus the policy rate">
           <span className={cv.priced_in.three_month_minus_policy_pp > 0 ? "text-rose-400" : "text-emerald-400"}>
             {cv.priced_in.reads_as}
@@ -366,6 +377,11 @@ function Curve({ cv }: { cv?: CountryCurve | null }) {
             {" "}({cv.priced_in.three_month_minus_policy_pp > 0 ? "+" : ""}
             {cv.priced_in.three_month_minus_policy_pp.toFixed(2)}pp vs policy)
           </span>
+        </div>
+      ))}
+      {Object.values(cv.tenors).some((t) => t.substitute_for) && (
+        <div className="text-[0.62rem] text-amber-300/70">
+          * {Object.values(cv.tenors).find((t) => t.substitute_for)?.substitute_for}
         </div>
       )}
     </div>

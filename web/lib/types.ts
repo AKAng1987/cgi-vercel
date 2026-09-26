@@ -874,9 +874,18 @@ export interface TenorReturns {
   local_3m?: "stronger" | "weaker" | "flat";
 }
 export interface CountryCurve {
-  tenors: Record<string, { symbol: string; yield_pct: number | null; as_of?: string; age_days?: number; unavailable?: boolean }>;
+  tenors: Record<string, {
+    symbol: string; yield_pct: number | null; as_of?: string; age_days?: number;
+    unavailable?: boolean;
+    // Set only when this is NOT the country's own series for the tenor —
+    // e.g. a German 10y standing in for the euro area. Never hidden.
+    substitute_for?: string | null;
+  }>;
   spreads: { "10y_2y"?: number; "10y_3m"?: number };
-  priced_in: { three_month_minus_policy_pp: number; reads_as: string } | null;
+  priced_in:
+    | { three_month_minus_policy_pp: number; reads_as: string; unavailable?: false }
+    | { unavailable: true; why: string }
+    | null;
   n_available: number;
   n_tenors: number;
 }

@@ -45,7 +45,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 3  # 3: PH01Y onboarded, so the 1y tenor is no longer n/a
+SCHEMA_VERSION = 5  # 5: priced-in suppressed where policy and front-end rates are not comparable
 
 BENCH = "SPY"
 
@@ -76,6 +76,36 @@ MACRO = [
 # traded, and a "+0.25pp" with no base does not tell you whether 3m sits above
 # or below the policy rate, which is the whole "what is priced in" read.
 CURVE = [("3m", "{c}03MY"), ("1y", "{c}01Y"), ("2y", "{c}02Y"), ("10y", "{c}10Y")]
+
+# Documented SUBSTITUTES, where no series exists for the country/tenor itself.
+# The substitute is stored under its OWN name and named on the page -- storing
+# a German yield as "EU10Y" would be the same class of error as a mining stock
+# stored as "GOLD", and that one went unnoticed for 1,121 days.
+#   (country, tenor) -> (symbol, what it actually is)
+CURVE_SUBSTITUTE = {
+    ("EU", "10y"): ("DE10Y", "German 10y, as the euro-area benchmark "
+                             "(the OECD euro-area series stopped updating 2026-01)"),
+    ("GB", "3m"): ("GBSONIA", "SONIA, an OVERNIGHT rate, as the UK front end "
+                              "(the OECD UK 3-month series stopped updating 2026-01)"),
+}
+
+# Whether this country's policy rate and its front-end market rate are on the
+# same footing, which is what makes "3m minus policy" mean anything.
+#
+# China is excluded: CNINTR is the Loan Prime Rate, a LENDING benchmark banks
+# charge borrowers, while CN03MY is an interbank FUNDING rate. The funding rate
+# sits structurally below the lending rate, so the gap is permanently negative
+# and the naive read prints "market pricing CUTS" forever. That is an artifact
+# of comparing two different kinds of rate, not a view about the PBoC.
+POLICY_COMPARABLE = {
+    "PH": True, "JP": True, "KR": True, "GB": True, "EU": True,
+    "CN": False,
+}
+POLICY_INCOMPARABLE_WHY = {
+    "CN": "CNINTR is the Loan Prime Rate (a lending benchmark); CN03MY is an "
+          "interbank funding rate. They sit at structurally different levels, "
+          "so the gap is not a policy expectation.",
+}
 
 # Local currency per country, for labelling levels. Getting this wrong is the
 # BOJ-balance-sheet error again: a number that is out by a currency still
@@ -191,12 +221,20 @@ def _curve(code: str, policy_rate: Optional[float]) -> dict:
     tenors, have = {}, 0
     for label, tmpl in CURVE:
         sym = tmpl.format(c=code)
+        sub = CURVE_SUBSTITUTE.get((code, label))
         dates, vals = _series(sym)
+        substituted = None
+        if not dates and sub:
+            sym, substituted = sub[0], sub[1]
+            dates, vals = _series(sym)
         if dates:
             have += 1
             tenors[label] = {"symbol": sym, "yield_pct": round(vals[-1], 3),
                              "as_of": dates[-1],
-                             "age_days": (dt.date.today() - dt.date.fromisoformat(dates[-1])).days}
+                             "age_days": (dt.date.today() - dt.date.fromisoformat(dates[-1])).days,
+                             # Present only when this is NOT the country's own
+                             # series for this tenor. The page must say so.
+                             "substitute_for": substituted}
         else:
             tenors[label] = {"symbol": sym, "yield_pct": None, "unavailable": True}
 
@@ -211,9 +249,12 @@ def _curve(code: str, policy_rate: Optional[float]) -> dict:
         spreads["10y_3m"] = round(y("10y") - y("3m"), 3)
 
     # The front of the curve against the policy rate IS the "what is priced in"
-    # read: a 3m well above the policy rate is the market pricing hikes.
+    # read: a 3m well above the policy rate is the market pricing hikes -- but
+    # only where the two rates are comparable. See POLICY_COMPARABLE.
     priced = None
-    if y("3m") is not None and policy_rate is not None:
+    if not POLICY_COMPARABLE.get(code, True):
+        priced = {"unavailable": True, "why": POLICY_INCOMPARABLE_WHY.get(code, "")}
+    elif y("3m") is not None and policy_rate is not None:
         gap = round(y("3m") - policy_rate, 3)
         priced = {"three_month_minus_policy_pp": gap,
                   "reads_as": ("market pricing HIKES" if gap > 0.15
