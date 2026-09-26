@@ -767,20 +767,35 @@ export interface InversionRow {
   drawdown_pct: number | null;
   no_match: boolean;
 }
-export interface FedEpisode {
+// Rate cycles are DERIVED from the policy rate series, so a new move changes
+// them the day it prints. Nothing here is hand-maintained except the chair.
+export interface RateCycle {
+  direction: "hike" | "cut";
   start: string;
-  end: string | null;
-  ongoing: boolean;
-  action: string;
-  chair: string;
-  kind: string;
+  end: string;
+  from_rate: number;
+  to_rate: number;
+  moves: number;
+  total_pp: number;
   duration_days: number;
-  spx_peak: { date: string; value: number } | null;
-  spx_trough: { date: string; value: number } | null;
+  chair_at_start: string | null;
   dxy_at_start: number | null;
   us10y_at_start: number | null;
   fed_balance_sheet_at_start: number | null;
   unemployment_at_start: number | null;
+  spx_peak: { date: string; value: number } | null;
+  spx_trough: { date: string; value: number } | null;
+}
+export interface BalanceSheetRegime {
+  state: "expanding" | "contracting";
+  start: string;
+  end: string;
+  from_tn: number;
+  to_tn: number;
+  change_pct: number;
+  duration_days: number;
+  label: string | null;
+  chair_at_start: string | null;
 }
 export interface ContextResponse {
   schema_version: number;
@@ -791,7 +806,19 @@ export interface ContextResponse {
     method: string;
   };
   inversions: Record<string, InversionRow[]>;
-  fed_episodes: { episodes: FedEpisode[]; computed_columns: string[] };
+  rate_cycles: {
+    cycles: RateCycle[];
+    current: {
+      as_of: string; rate: number; rate_source: string;
+      direction: "hike" | "cut" | null; cycle_began: string | null; last_move: string | null;
+      days_since_last_move: number | null; moves_this_cycle: number | null;
+      chair: string | null; chair_recorded_through: string;
+      previous_cycle: RateCycle | null;
+    };
+    computed_columns: string[];
+    method: string;
+  };
+  balance_sheet: { regimes: BalanceSheetRegime[]; window_days: number; threshold_pct: number; min_days: number; method: string };
   joins: {
     inversion_to_drawdown: Record<string, {
       window: string; n_cycles: number; n_matched_to_a_decline: number; n_led_the_peak: number;

@@ -1,4 +1,4 @@
-import { ContextResponse, DrawdownWindow, InversionRow } from "@/lib/types";
+import { BalanceSheetRegime, ContextResponse, DrawdownWindow, InversionRow, RateCycle } from "@/lib/types";
 
 /**
  * Historical context at the bottom of CGI.
@@ -128,6 +128,81 @@ function Inversions({ rows, label }: { rows: InversionRow[]; label: string }) {
   );
 }
 
+/** The derived current state. This block exists because the previous, hand-typed
+ *  version of this table described a cutting cycle that had already ended and
+ *  reversed — so the live answer now comes from the rate series itself. */
+function Current({ c }: { c: ContextResponse["rate_cycles"]["current"] }) {
+  const hiking = c.direction === "hike";
+  return (
+    <div className="mb-3 rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-sm">
+      <div>
+        <span className="text-slate-400">Policy rate </span>
+        <span className="tabular-nums text-slate-100">{c.rate.toFixed(2)}%</span>
+        <span className="text-slate-400"> — in a </span>
+        <span className={hiking ? "text-rose-400" : "text-emerald-400"}>{c.direction ?? "—"}ing cycle</span>
+        <span className="text-slate-400"> since </span>
+        <span className="tabular-nums text-slate-300">{c.cycle_began}</span>
+        <span className="text-slate-500"> ({c.moves_this_cycle} move{c.moves_this_cycle === 1 ? "" : "s"}); last move{" "}
+          {c.last_move}, {c.days_since_last_move}d ago.</span>
+      </div>
+      {c.previous_cycle && (
+        <div className="mt-0.5 text-[0.75rem] text-slate-500">
+          Previous: {c.previous_cycle.direction} {c.previous_cycle.start} → {c.previous_cycle.end},{" "}
+          <span className="tabular-nums">{c.previous_cycle.from_rate.toFixed(2)}% → {c.previous_cycle.to_rate.toFixed(2)}%</span>{" "}
+          ({c.previous_cycle.moves} moves).
+        </div>
+      )}
+      <div className="mt-0.5 text-[0.7rem] text-slate-500">
+        Chair:{" "}
+        {c.chair ?? (
+          <span className="text-amber-300" title={`CHAIRS is recorded only through ${c.chair_recorded_through}`}>
+            not recorded after {c.chair_recorded_through}
+          </span>
+        )}
+        <span className="ml-2 text-slate-600">{c.rate_source}</span>
+      </div>
+    </div>
+  );
+}
+
+function CycleRow({ c }: { c: RateCycle }) {
+  const bn = (n: number) => `$${(n / 1_000_000).toFixed(1)}tn`;
+  return (
+    <tr className="border-b border-slate-900 align-top">
+      <td className="py-1 pr-2 whitespace-nowrap">
+        <span className={`text-[0.62rem] uppercase ${c.direction === "hike" ? "text-rose-400" : "text-emerald-400"}`}>{c.direction}</span>
+        <div className="tabular-nums text-slate-300">{c.start}</div>
+        <div className="tabular-nums text-slate-500">{c.end}</div>
+      </td>
+      <td className="py-1 pr-2 tabular-nums text-slate-300">
+        {c.from_rate.toFixed(2)}% → {c.to_rate.toFixed(2)}%
+        <div className={c.total_pp > 0 ? "text-rose-400" : "text-emerald-400"}>{c.total_pp > 0 ? "+" : ""}{c.total_pp.toFixed(2)}pp</div>
+      </td>
+      <td className="py-1 pr-2 tabular-nums text-slate-400">{c.moves}</td>
+      <td className="py-1 pr-2 text-slate-400">{c.chair_at_start ?? <span className="text-slate-600">not recorded</span>}</td>
+      <td className="py-1 pr-2">{val(c.dxy_at_start, (n) => n.toFixed(1))}</td>
+      <td className="py-1 pr-2">{val(c.us10y_at_start, (n) => `${n.toFixed(2)}%`)}</td>
+      <td className="py-1 pr-2">{val(c.unemployment_at_start, (n) => `${n.toFixed(1)}%`)}</td>
+      <td className="py-1 pr-2 tabular-nums text-slate-400">
+        {c.spx_peak && c.spx_trough ? `${c.spx_peak.value.toLocaleString()} → ${c.spx_trough.value.toLocaleString()}` : "—"}
+      </td>
+    </tr>
+  );
+}
+
+function BsRow({ r }: { r: BalanceSheetRegime }) {
+  const up = r.state === "expanding";
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2 border-b border-slate-900 py-1">
+      <span className={`text-[0.62rem] uppercase ${up ? "text-emerald-400" : "text-rose-400"}`}>{r.state}</span>
+      <span className="tabular-nums text-slate-300">{r.start} → {r.end}</span>
+      <span className="tabular-nums text-slate-400">${r.from_tn.toFixed(2)}tn → ${r.to_tn.toFixed(2)}tn</span>
+      {pct(r.change_pct)}
+      {r.label && <span className="text-[0.7rem] text-[color:var(--cgi-accent)]">{r.label}</span>}
+    </div>
+  );
+}
+
 export function ContextTables({ ctx }: { ctx: ContextResponse }) {
   const j = ctx.joins.inversion_to_drawdown;
   const bn = (n: number) => `$${(n / 1_000_000).toFixed(1)}tn`; // WALCL is in $mn
@@ -174,50 +249,38 @@ export function ContextTables({ ctx }: { ctx: ContextResponse }) {
       </div>
 
       <div>
-        <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">Fed policy episodes</div>
+        <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">Fed rate cycles</div>
+        <Current c={ctx.rate_cycles.current} />
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[52rem] border-collapse text-[0.78rem]">
+          <table className="w-full min-w-[50rem] border-collapse text-[0.78rem]">
             <thead>
               <tr className="border-b border-slate-800 text-left text-[0.68rem] uppercase text-slate-500">
-                <th className="py-1 pr-2 font-medium">period</th>
-                <th className="py-1 pr-2 font-medium">action</th>
+                <th className="py-1 pr-2 font-medium">cycle</th>
+                <th className="py-1 pr-2 font-medium">rate</th>
+                <th className="py-1 pr-2 font-medium">moves</th>
                 <th className="py-1 pr-2 font-medium">chair</th>
                 <th className="py-1 pr-2 font-medium">DXY</th>
                 <th className="py-1 pr-2 font-medium">10Y</th>
-                <th className="py-1 pr-2 font-medium">balance sheet</th>
                 <th className="py-1 pr-2 font-medium">unemp.</th>
                 <th className="py-1 pr-2 font-medium">SPX peak → trough</th>
               </tr>
             </thead>
             <tbody>
-              {ctx.fed_episodes.episodes.map((e) => (
-                <tr key={`${e.start}-${e.action}`} className="border-b border-slate-900 align-top">
-                  <td className="py-1 pr-2 whitespace-nowrap">
-                    <div className="tabular-nums text-slate-200">{e.start}</div>
-                    <div className="tabular-nums text-slate-500">{e.end ?? <span className="text-emerald-400">ongoing</span>}</div>
-                  </td>
-                  <td className="py-1 pr-2 text-slate-300">
-                    {e.action}
-                    <span className={`ml-1 text-[0.62rem] uppercase ${e.kind === "easing" ? "text-emerald-400" : "text-rose-400"}`}>{e.kind}</span>
-                  </td>
-                  <td className="py-1 pr-2 text-slate-400">{e.chair}</td>
-                  <td className="py-1 pr-2">{val(e.dxy_at_start, (n) => n.toFixed(1))}</td>
-                  <td className="py-1 pr-2">{val(e.us10y_at_start, (n) => `${n.toFixed(2)}%`)}</td>
-                  <td className="py-1 pr-2">{val(e.fed_balance_sheet_at_start, bn)}</td>
-                  <td className="py-1 pr-2">{val(e.unemployment_at_start, (n) => `${n.toFixed(1)}%`)}</td>
-                  <td className="py-1 pr-2 tabular-nums text-slate-400">
-                    {e.spx_peak && e.spx_trough ? `${e.spx_peak.value.toLocaleString()} → ${e.spx_trough.value.toLocaleString()}` : "—"}
-                  </td>
-                </tr>
-              ))}
+              {[...ctx.rate_cycles.cycles].reverse().slice(0, 12).map((c) => <CycleRow key={c.start} c={c} />)}
             </tbody>
           </table>
         </div>
-        <p className="mt-1 text-[0.68rem] text-slate-500">
-          Episode boundaries and descriptions are curated; every market column is computed at the episode&rsquo;s start date from{" "}
-          {ctx.fed_episodes.computed_columns.join(", ")}.
-        </p>
+        <p className="mt-1 text-[0.68rem] text-slate-500">{ctx.rate_cycles.method}</p>
       </div>
+
+      <div>
+        <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">Fed balance sheet</div>
+        <div className="space-y-1 text-[0.78rem]">
+          {[...ctx.balance_sheet.regimes].reverse().slice(0, 8).map((r) => <BsRow key={r.start} r={r} />)}
+        </div>
+        <p className="mt-1 text-[0.68rem] text-slate-500">{ctx.balance_sheet.method}</p>
+      </div>
+
     </section>
   );
 }

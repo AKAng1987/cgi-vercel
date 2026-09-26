@@ -56,23 +56,53 @@ BUCKETS = (
 )
 POSTWAR_START = "1946-01-01"
 
-# Fed policy episodes. Boundaries and descriptions are CURATED -- they are
-# historical judgements, not measurements, and come from the user's own sheet.
-# Every market column beside them is computed from held history, so the table
-# cannot drift the way a fully hand-typed one does.
-FED_EPISODES: list[dict] = [
-    {"start": "2001-01-03", "end": "2003-06-25", "action": "Rate cuts: 6.5% -> 1.0%", "chair": "Greenspan", "kind": "easing"},
-    {"start": "2007-09-18", "end": "2008-12-16", "action": "Rate cuts: 5.25% -> 0.25%; QE1 starts", "chair": "Bernanke", "kind": "easing"},
-    {"start": "2008-11-25", "end": "2010-03-31", "action": "QE1: $600bn MBS/Treasuries", "chair": "Bernanke", "kind": "easing"},
-    {"start": "2010-11-03", "end": "2011-06-30", "action": "QE2: $600bn Treasuries", "chair": "Bernanke", "kind": "easing"},
-    {"start": "2012-09-13", "end": "2014-10-31", "action": "QE3: $85bn/mo MBS + Treasuries (open-ended)", "chair": "Bernanke", "kind": "easing"},
-    {"start": "2015-12-16", "end": "2018-12-19", "action": "Gradual hikes: 0.25% -> 2.5%", "chair": "Yellen -> Powell", "kind": "tightening"},
-    {"start": "2019-07-31", "end": "2019-10-30", "action": "Rate cuts: 2.5% -> 1.75%", "chair": "Powell", "kind": "easing"},
-    {"start": "2019-09-17", "end": "2020-03-31", "action": "Repo ops: $120bn/day liquidity injections", "chair": "Powell", "kind": "easing"},
-    {"start": "2020-03-03", "end": "2020-03-15", "action": "Emergency cuts to 0.25%; QE4 announced", "chair": "Powell", "kind": "easing"},
-    {"start": "2020-03-23", "end": "2021-12-31", "action": "Unlimited QE, corporate bonds, pandemic support", "chair": "Powell", "kind": "easing"},
-    {"start": "2022-03-16", "end": "2023-07-26", "action": "Hikes: 0.25% -> 5.25%", "chair": "Powell", "kind": "tightening"},
-    {"start": "2024-03-20", "end": None, "action": "Rate cuts initiated", "chair": "Powell", "kind": "easing"},
+# Fed policy history is DERIVED, not curated.
+#
+# The first version of this table hardcoded episode boundaries, and it went
+# stale immediately: it still described an ongoing cutting cycle that had in
+# fact ended and reversed, and it named a chair who had left. That is exactly
+# the spreadsheet problem this module exists to escape -- a table that has to
+# be maintained by hand will be wrong by the time anyone looks at it.
+#
+# So the cycles come from the rate series itself. A hike on 2026-09-17 ends the
+# easing cycle the moment it prints, with nobody editing anything.
+#
+# What genuinely CANNOT be derived is kept small and clearly separate:
+#   * QE programme NAMES ("QE2", "Operation Twist") are labels, not data.
+#     The balance-sheet EXPANSION they refer to is derived from WALCL below,
+#     so the annotation only supplies the name.
+#   * The Fed CHAIR is a fact about people, not a series. Where the date is
+#     past the last recorded chair, the table says so rather than carrying the
+#     previous name forward -- the failure that produced this rewrite.
+
+# Effective-average vs target-upper-bound differ by a few basis points, so the
+# join between them is a change of SOURCE and must not read as a policy move.
+FEDFUNDS_SPLICE_SYMBOL = "DFEDTARU"
+MIN_MOVE_PP = 0.05     # FEDFUNDS is an effective average and drifts a bp or two
+CYCLE_GAP_MONTHS = 18  # a hold this long ends a cycle even without a reversal
+
+# Curated, and the ONLY curated policy facts left. `until` is exclusive.
+CHAIRS = [
+    {"name": "Volcker", "from": "1979-08-06"},
+    {"name": "Greenspan", "from": "1987-08-11"},
+    {"name": "Bernanke", "from": "2006-02-01"},
+    {"name": "Yellen", "from": "2014-02-03"},
+    {"name": "Powell", "from": "2018-02-05"},
+]
+
+# Past this date the chair is NOT carried forward -- chair_on() returns None
+# and the page prints "not recorded". This exists because the previous version
+# of this table did carry the last name forward, and so kept naming a chair who
+# had left. Silence is the correct output for a fact nobody has supplied;
+# a stale name is not. Extend CHAIRS and move this date together.
+CHAIRS_RECORDED_THROUGH = "2025-12-31"
+
+# Balance-sheet programme names, joined to derived WALCL expansions by date.
+QE_LABELS = [
+    {"from": "2008-11-25", "to": "2010-03-31", "label": "QE1"},
+    {"from": "2010-11-03", "to": "2011-06-30", "label": "QE2"},
+    {"from": "2012-09-13", "to": "2014-10-31", "label": "QE3"},
+    {"from": "2020-03-23", "to": "2022-03-09", "label": "Unlimited QE / pandemic"},
 ]
 
 # Columns computed at each episode's start. A series that does not reach back
@@ -320,36 +350,166 @@ def inversions() -> dict:
     return out
 
 
-def fed_episodes() -> dict:
-    """The curated episode boundaries, with every market column computed."""
-    series = {name: _series(sym) for name, sym in AT_START}
+def _spliced_policy_rate() -> tuple[list[str], list[float], str]:
+    """The policy rate back to 1954: FEDFUNDS (monthly effective) before
+    DFEDTARU (daily target upper bound) begins, then DFEDTARU."""
+    fd, fv = _series("FEDFUNDS")
+    td, tv = _series(FEDFUNDS_SPLICE_SYMBOL)
+    splice = td[0]
+    dates = [d for d in fd if d < splice] + td
+    vals = [v for d, v in zip(fd, fv) if d < splice] + tv
+    return dates, vals, splice
+
+
+def _policy_moves(dates, vals, splice) -> list[dict]:
+    out = []
+    for i in range(1, len(vals)):
+        if dates[i] == splice:
+            continue  # source change, not a policy move
+        delta = vals[i] - vals[i - 1]
+        if abs(delta) >= MIN_MOVE_PP:
+            out.append({"date": dates[i], "from_rate": round(vals[i - 1], 2),
+                        "to_rate": round(vals[i], 2), "delta_pp": round(delta, 2)})
+    return out
+
+
+def chair_on(date: str) -> Optional[str]:
+    """None -- rendered as 'not recorded' -- once past the last chair we know
+    about. Carrying the previous name forward is what made the old table claim
+    a chair who had left."""
+    if date > CHAIRS_RECORDED_THROUGH:
+        return None
+    name = None
+    for c in CHAIRS:
+        if date >= c["from"]:
+            name = c["name"]
+    return name
+
+
+def rate_cycles() -> dict:
+    """Hiking and easing cycles, derived. A cycle ends on a reversal or after a
+    hold of CYCLE_GAP_MONTHS -- without the hold rule, ZIRP's seven move-less
+    years merged the 2015-2018 hiking cycle into a 2008 stub and reported a
+    ten-year 'cycle'."""
+    dates, vals, splice = _spliced_policy_rate()
+    moves = _policy_moves(dates, vals, splice)
+    cycles: list[dict] = []
+    cur: Optional[dict] = None
+    for m in moves:
+        dirn = "hike" if m["delta_pp"] > 0 else "cut"
+        gap = None
+        if cur:
+            gap = (dt.date.fromisoformat(m["date"]) - dt.date.fromisoformat(cur["end"])).days / 30.44
+        if cur is None or cur["direction"] != dirn or (gap is not None and gap > CYCLE_GAP_MONTHS):
+            if cur:
+                cycles.append(cur)
+            cur = {"direction": dirn, "start": m["date"], "end": m["date"],
+                   "from_rate": m["from_rate"], "to_rate": m["to_rate"], "moves": 1}
+        else:
+            cur["end"], cur["to_rate"] = m["date"], m["to_rate"]
+            cur["moves"] += 1
+    if cur:
+        cycles.append(cur)
+
+    today = dates[-1]
     spx_d, spx_v = _series("SPX")
-    today = dt.date.today().isoformat()
-    rows = []
-    for ep in FED_EPISODES:
-        start, end = ep["start"], ep["end"] or today
-        window = [(d, v) for d, v in zip(spx_d, spx_v) if start <= d <= end]
-        peak = max(window, key=lambda x: x[1]) if window else None
-        trough = min(window, key=lambda x: x[1]) if window else None
-        row = {
-            **ep,
-            "ongoing": ep["end"] is None,
-            "duration_days": (dt.date.fromisoformat(end) - dt.date.fromisoformat(start)).days,
-            "spx_peak": {"date": peak[0], "value": round(peak[1], 2)} if peak else None,
-            "spx_trough": {"date": trough[0], "value": round(trough[1], 2)} if trough else None,
-        }
+    ctx = {name: _series(sym) for name, sym in AT_START}
+    for c in cycles:
+        c["total_pp"] = round(c["to_rate"] - c["from_rate"], 2)
+        c["duration_days"] = (dt.date.fromisoformat(c["end"]) - dt.date.fromisoformat(c["start"])).days
+        c["chair_at_start"] = chair_on(c["start"])
+        # The market columns the hand-typed table carried, now attached to a
+        # cycle that derives its own boundaries. None means the series does not
+        # reach back this far and must render "unavailable".
         for name, sym in AT_START:
-            d, v = series[name]
-            val = _at(d, v, start)
-            # None means the series does not reach back this far. The page must
-            # print "unavailable" rather than a blank that reads as zero.
-            row[f"{name}_at_start"] = round(val, 2) if val is not None else None
-            row[f"{name}_source"] = sym
-        rows.append(row)
-    return {"episodes": rows, "computed_columns": [s for _, s in AT_START] + ["SPX"]}
+            d, v = ctx[name]
+            val = _at(d, v, c["start"])
+            c[f"{name}_at_start"] = round(val, 2) if val is not None else None
+        win = [(d, v) for d, v in zip(spx_d, spx_v) if c["start"] <= d <= c["end"]]
+        if win:
+            pk = max(win, key=lambda x: x[1])
+            tr = min(win, key=lambda x: x[1])
+            c["spx_peak"] = {"date": pk[0], "value": round(pk[1], 2)}
+            c["spx_trough"] = {"date": tr[0], "value": round(tr[1], 2)}
+        else:
+            c["spx_peak"] = c["spx_trough"] = None
+
+    last = cycles[-1] if cycles else None
+    prev_opposite = next((c for c in reversed(cycles[:-1]) if last and c["direction"] != last["direction"]), None)
+    return {
+        "cycles": cycles,
+        "current": {
+            "as_of": today,
+            "rate": round(vals[-1], 2),
+            "rate_source": f"{FEDFUNDS_SPLICE_SYMBOL} (target upper bound; a sheet quoting the lower bound will read 25bp lower)",
+            "direction": last["direction"] if last else None,
+            "cycle_began": last["start"] if last else None,
+            "last_move": last["end"] if last else None,
+            "days_since_last_move": (dt.date.fromisoformat(today) - dt.date.fromisoformat(last["end"])).days if last else None,
+            "moves_this_cycle": last["moves"] if last else None,
+            "chair": chair_on(today),
+            "chair_recorded_through": CHAIRS_RECORDED_THROUGH,
+            "previous_cycle": prev_opposite,
+        },
+        "computed_columns": [sym for _, sym in AT_START] + ["SPX"],
+        "method": ("Derived from FEDFUNDS spliced to DFEDTARU. A cycle ends on a reversal "
+                   f"or a hold longer than {CYCLE_GAP_MONTHS} months. Nothing here is typed in, "
+                   "so a new move changes this table the day it prints."),
+    }
 
 
-LOOKBACK_M, LOOKAHEAD_M = 12, 36
+def balance_sheet_regimes(window_days: int = 91, threshold_pct: float = 1.5,
+                          min_days: int = 60) -> dict:
+    """Expansion and contraction of the Fed balance sheet, derived from WALCL.
+
+    QE and QT are visible in the series itself; only the programme NAMES have
+    to be supplied, and those are joined on from QE_LABELS.
+    """
+    dates, vals = _series("WALCL")
+    import bisect
+    regimes: list[dict] = []
+    cur: Optional[dict] = None
+    for i, (d, v) in enumerate(zip(dates, vals)):
+        j = bisect.bisect_left(dates, (dt.date.fromisoformat(d) - dt.timedelta(days=window_days)).isoformat())
+        if j >= i:
+            continue
+        chg = (v / vals[j] - 1) * 100
+        state = "expanding" if chg >= threshold_pct else "contracting" if chg <= -threshold_pct else "flat"
+        if cur is None or cur["state"] != state:
+            if cur and cur["state"] != "flat":
+                regimes.append(cur)
+            cur = {"state": state, "start": d, "end": d, "from_level": vals[j], "to_level": v}
+        else:
+            cur["end"], cur["to_level"] = d, v
+    if cur and cur["state"] != "flat":
+        regimes.append(cur)
+
+    def label_for(r: dict) -> Optional[str]:
+        for q in QE_LABELS:
+            if r["start"] <= q["to"] and r["end"] >= q["from"]:
+                return q["label"]
+        return None
+
+    # A regime that lasted a week is measurement noise crossing a threshold,
+    # not a policy stance. Drop it rather than listing it beside QE3.
+    regimes = [r for r in regimes
+               if (dt.date.fromisoformat(r["end"]) - dt.date.fromisoformat(r["start"])).days >= min_days]
+    for r in regimes:
+        r["duration_days"] = (dt.date.fromisoformat(r["end"]) - dt.date.fromisoformat(r["start"])).days
+        r["change_pct"] = round((r["to_level"] / r["from_level"] - 1) * 100, 1)
+        r["from_tn"] = round(r["from_level"] / 1e6, 2)
+        r["to_tn"] = round(r["to_level"] / 1e6, 2)
+        r["label"] = label_for(r)
+        r["chair_at_start"] = chair_on(r["start"])
+    return {
+        "regimes": regimes,
+        "window_days": window_days,
+        "threshold_pct": threshold_pct,
+        "min_days": min_days,
+        "method": (f"A {window_days}-day change in WALCL beyond +/-{threshold_pct}% marks expansion or "
+                   "contraction. Programme names are annotations joined by date; the regime itself "
+                   "is measured."),
+    }
 
 
 def joins() -> dict:
@@ -391,6 +551,7 @@ def build_context() -> dict:
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "drawdowns": drawdowns(),
         "inversions": inversions(),
-        "fed_episodes": fed_episodes(),
+        "rate_cycles": rate_cycles(),
+        "balance_sheet": balance_sheet_regimes(),
         "joins": joins(),
     }
