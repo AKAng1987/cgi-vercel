@@ -693,6 +693,7 @@ export type RegimeRankRow = {
 
 export type RegimeCountry = {
   macro?: CountryMacro | null;
+  curve?: CountryCurve | null;
   macro_note?: string | null;
   market?: {
     etf: TenorReturns | null;
@@ -871,6 +872,13 @@ export interface TenorReturns {
   quoted?: string;
   usd_3m?: "stronger" | "weaker" | "flat";
   local_3m?: "stronger" | "weaker" | "flat";
+}
+export interface CountryCurve {
+  tenors: Record<string, { symbol: string; yield_pct: number | null; as_of?: string; age_days?: number; unavailable?: boolean }>;
+  spreads: { "10y_2y"?: number; "10y_3m"?: number };
+  priced_in: { three_month_minus_policy_pp: number; reads_as: string } | null;
+  n_available: number;
+  n_tenors: number;
 }
 export interface CountryMacro {
   policy_rate?: MacroPoint;

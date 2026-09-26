@@ -103,6 +103,19 @@ ALLOWED = {
     "PH_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:PHLPS"),
     "KR_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:KRLPS"),
     "GB_LOANS_PRIVATE": ("tradingview", "1Q", 0.0, 1e18, "ECONOMICS:GBLPS"),
+
+    # Philippine curve. Named to the existing US03MY/US02Y/US10Y convention so
+    # these land in the FOREIGN RATES group, which has declared PH10Y since
+    # before any data existed for it.
+    #
+    # THESE HAVE NO LAMBDA. FRED maintains the US curve nightly with no Claude
+    # in the path; TVC: symbols need the TradingView routine, which is the
+    # fragile leg. country_data._curve() reports age_days per tenor so a stale
+    # yield is visible rather than silently last-good -- the GOLD failure was
+    # exactly a series nothing maintained and nobody checked.
+    "PH03MY": ("tradingview", "1W", 0.0, 40.0, "TVC:PH03MY"),
+    "PH02Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH02Y"),
+    "PH10Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH10Y"),
 }
 
 # Symbols tested against TradingView and found NOT to resolve. Recorded so the

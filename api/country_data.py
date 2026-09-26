@@ -67,6 +67,13 @@ MACRO = [
     ("loans_level", "{c}_LOANS_PRIVATE", "local", "loans to private sector", "level"),
 ]
 
+# Curve tenors, in the existing US03MY / US01Y / US02Y / US10Y naming so they
+# land in the FOREIGN RATES group that already declares PH10Y, JP10Y and the
+# rest. A yield is reported as the YIELD -- the level is the thing being
+# traded, and a "+0.25pp" with no base does not tell you whether 3m sits above
+# or below the policy rate, which is the whole "what is priced in" read.
+CURVE = [("3m", "{c}03MY"), ("1y", "{c}01Y"), ("2y", "{c}02Y"), ("10y", "{c}10Y")]
+
 # Local currency per country, for labelling levels. Getting this wrong is the
 # BOJ-balance-sheet error again: a number that is out by a currency still
 # looks plausible.
@@ -171,6 +178,48 @@ def _fx(sym: Optional[str]) -> Optional[dict]:
     return r
 
 
+def _curve(code: str, policy_rate: Optional[float]) -> dict:
+    """Actual yields by tenor, plus the spreads and the policy-rate gap.
+
+    Missing tenors are reported as unavailable rather than omitted, so the
+    shape of what is missing is visible -- the FOREIGN RATES group declares
+    twelve symbols and currently holds none of them.
+    """
+    tenors, have = {}, 0
+    for label, tmpl in CURVE:
+        sym = tmpl.format(c=code)
+        dates, vals = _series(sym)
+        if dates:
+            have += 1
+            tenors[label] = {"symbol": sym, "yield_pct": round(vals[-1], 3),
+                             "as_of": dates[-1],
+                             "age_days": (dt.date.today() - dt.date.fromisoformat(dates[-1])).days}
+        else:
+            tenors[label] = {"symbol": sym, "yield_pct": None, "unavailable": True}
+
+    def y(k):
+        t = tenors.get(k)
+        return t["yield_pct"] if t and t["yield_pct"] is not None else None
+
+    spreads = {}
+    if y("10y") is not None and y("2y") is not None:
+        spreads["10y_2y"] = round(y("10y") - y("2y"), 3)
+    if y("10y") is not None and y("3m") is not None:
+        spreads["10y_3m"] = round(y("10y") - y("3m"), 3)
+
+    # The front of the curve against the policy rate IS the "what is priced in"
+    # read: a 3m well above the policy rate is the market pricing hikes.
+    priced = None
+    if y("3m") is not None and policy_rate is not None:
+        gap = round(y("3m") - policy_rate, 3)
+        priced = {"three_month_minus_policy_pp": gap,
+                  "reads_as": ("market pricing HIKES" if gap > 0.15
+                               else "market pricing CUTS" if gap < -0.15
+                               else "market pricing roughly no change")}
+    return {"tenors": tenors, "spreads": spreads, "priced_in": priced,
+            "n_available": have, "n_tenors": len(CURVE)}
+
+
 def _rs(sym: str) -> Optional[dict]:
     """Relative strength against SPY, reusing themes_data._run unchanged -- it
     takes two plain dicts and is not theme-specific."""
@@ -209,6 +258,8 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
             "This country's own conditions. It is NOT the regime the trade is "
             "conditioned on -- that is the US Compass/Grid above." if macro else None
         )
+        pr = (macro.get("policy_rate") or {}).get("latest") if macro else None
+        c["curve"] = _curve(code, pr)
         etf = (c.get("equity") or {}).get("symbol")
         c["market"] = {
             "etf": _returns(etf) if etf else None,

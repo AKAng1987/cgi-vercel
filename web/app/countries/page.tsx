@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { COMPASS_Q_MAP, GRID_Q_MAP } from "@/lib/regimeConstants";
-import { MacroPoint, RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse, TenorReturns } from "@/lib/types";
+import { CountryCurve, MacroPoint, RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse, TenorReturns } from "@/lib/types";
 
 /**
  * COUNTRIES — what a regime means for each country and currency.
@@ -52,7 +52,7 @@ function N({ cell }: { cell: RegimeCell }) {
   );
 }
 
-function Equity({ cell }: { cell: RegimeCell | null }) {
+function Equity({ cell, live }: { cell: RegimeCell | null; live?: TenorReturns | null }) {
   if (!cell) return <span className="text-slate-600">—</span>;
   if (!cell.occurrences)
     return (
@@ -63,6 +63,11 @@ function Equity({ cell }: { cell: RegimeCell | null }) {
   return (
     <span className="flex flex-wrap items-baseline gap-x-2">
       <span className="font-medium text-slate-200">{cell.symbol}</span>
+      {live && (
+        <span className="tabular-nums text-slate-100" title={`last close, ${live.as_of}`}>
+          {live.last.toFixed(2)}
+        </span>
+      )}
       {hit(cell.hit_rate)}
       {n(cell.avg_return_pct)}
       <N cell={cell} />
@@ -72,7 +77,7 @@ function Equity({ cell }: { cell: RegimeCell | null }) {
 
 /** The FX leg states the direction in words, taken from the server. Deriving
  *  it here from the sign would be one more place for the inversion to happen. */
-function Fx({ cell, note }: { cell: RegimeFxCell | null; note: string | null }) {
+function Fx({ cell, note, live }: { cell: RegimeFxCell | null; note: string | null; live?: TenorReturns | null }) {
   if (!cell)
     return (
       <span className="text-slate-600" title={note ?? undefined}>
@@ -83,6 +88,11 @@ function Fx({ cell, note }: { cell: RegimeFxCell | null; note: string | null }) 
   return (
     <span className="flex flex-wrap items-baseline gap-x-2">
       <span className="font-medium text-slate-200">{cell.symbol}</span>
+      {live && (
+        <span className="tabular-nums text-slate-100" title={`spot, ${live.as_of}`}>
+          {live.last.toFixed(Math.abs(live.last) >= 100 ? 2 : 4)}
+        </span>
+      )}
       <span className={strong ? "text-emerald-400" : "text-rose-400"} title={cell.note}>
         {strong ? "local ↑" : cell.local === "weaker" ? "local ↓" : "flat"}
       </span>
@@ -117,7 +127,7 @@ function Row({ c }: { c: RegimeCountry }) {
         <Trade c={c} />
       </td>
       <td className="py-2 pr-3">
-        <Equity cell={c.equity} />
+        <Equity cell={c.equity} live={c.market?.etf ?? null} />
         {c.equity_alternates.length > 0 && (
           <div className="mt-1 space-y-0.5 text-[0.72rem] opacity-70">
             {c.equity_alternates.map((a) => (
@@ -134,10 +144,10 @@ function Row({ c }: { c: RegimeCountry }) {
         )}
       </td>
       <td className="py-2 pr-3">
-        <Fx cell={c.currency} note={c.currency_note} />
+        <Fx cell={c.currency} note={c.currency_note} live={c.market?.fx ?? null} />
         {c.market?.fx && (
           <div className="mt-0.5">
-            <Rets r={c.market.fx} />
+            <Rets r={c.market.fx} showLevel={false} />
           </div>
         )}
       </td>
@@ -151,6 +161,7 @@ function Row({ c }: { c: RegimeCountry }) {
               <span className="text-slate-500">loans </span>
               <Macro p={c.macro.loan_growth_yoy ?? c.macro.loans_level} />
             </div>
+            <Curve cv={c.curve} />
           </div>
         ) : (
           <span className="text-slate-600">not onboarded</span>
@@ -270,15 +281,76 @@ function Macro({ p }: { p?: MacroPoint }) {
   );
 }
 
-function Rets({ r }: { r: TenorReturns | null }) {
+/** Leads with the LEVEL, then the tenor changes.
+ *
+ *  A change without its base is unreadable on its own: "USDPHP local ↑ -0.17%"
+ *  says nothing about where the peso actually is, and neither does a column of
+ *  EPHE percentages without EPHE's price. The level is what tells you whether
+ *  62.7 is the strong end of the range or the weak one. */
+function Rets({ r, showLevel = true }: { r: TenorReturns | null; showLevel?: boolean }) {
   if (!r) return <span className="text-slate-600">—</span>;
   const cell = (v?: number) =>
     v === undefined ? <span className="text-slate-600">—</span>
       : <span className={`tabular-nums ${v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-400"}`}>{v > 0 ? "+" : ""}{v.toFixed(1)}</span>;
+  const dp = Math.abs(r.last) >= 100 ? 2 : Math.abs(r.last) >= 1 ? 2 : 4;
   return (
-    <span className="flex gap-2 text-[0.72rem]" title={`${r.symbol} · 1m / 3m / 6m / 1y %`}>
-      {cell(r.ret_1m)}{cell(r.ret_3m)}{cell(r.ret_6m)}{cell(r.ret_1y)}
+    <span className="flex flex-wrap items-baseline gap-x-2">
+      {showLevel && (
+        <span className="tabular-nums font-medium text-slate-100" title={`${r.symbol} last, ${r.as_of}`}>
+          {r.last.toFixed(dp)}
+        </span>
+      )}
+      <span className="flex gap-2 text-[0.72rem]" title={`${r.symbol} · 1m / 3m / 6m / 1y %`}>
+        {cell(r.ret_1m)}{cell(r.ret_3m)}{cell(r.ret_6m)}{cell(r.ret_1y)}
+      </span>
     </span>
+  );
+}
+
+/** Yields are shown as YIELDS. A "+0.25pp" with no base does not tell you
+ *  whether the 3m sits above or below the policy rate, and that gap IS the
+ *  what-is-priced-in read. Missing tenors say so rather than being dropped. */
+function Curve({ cv }: { cv?: CountryCurve | null }) {
+  if (!cv) return null;
+  const order = ["3m", "1y", "2y", "10y"];
+  if (cv.n_available === 0)
+    return <div className="text-[0.66rem] text-slate-600">curve not onboarded</div>;
+  return (
+    <div className="mt-1 border-t border-slate-900 pt-1">
+      <div className="flex flex-wrap gap-x-2 text-[0.7rem]">
+        {order.map((k) => {
+          const t = cv.tenors[k];
+          if (!t) return null;
+          return (
+            <span key={k} title={t.symbol}>
+              <span className="text-slate-500">{k} </span>
+              {t.yield_pct === null
+                ? <span className="text-slate-600">n/a</span>
+                : <span className="tabular-nums text-slate-200">{t.yield_pct.toFixed(2)}%</span>}
+            </span>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-2 text-[0.66rem] text-slate-500">
+        {cv.spreads["10y_2y"] !== undefined && (
+          <span>10y−2y <span className="tabular-nums text-slate-400">{cv.spreads["10y_2y"].toFixed(2)}</span></span>
+        )}
+        {cv.spreads["10y_3m"] !== undefined && (
+          <span>10y−3m <span className="tabular-nums text-slate-400">{cv.spreads["10y_3m"].toFixed(2)}</span></span>
+        )}
+      </div>
+      {cv.priced_in && (
+        <div className="text-[0.66rem]" title="3m yield minus the policy rate">
+          <span className={cv.priced_in.three_month_minus_policy_pp > 0 ? "text-rose-400" : "text-emerald-400"}>
+            {cv.priced_in.reads_as}
+          </span>
+          <span className="tabular-nums text-slate-500">
+            {" "}({cv.priced_in.three_month_minus_policy_pp > 0 ? "+" : ""}
+            {cv.priced_in.three_month_minus_policy_pp.toFixed(2)}pp vs policy)
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
