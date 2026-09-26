@@ -72,7 +72,7 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
         "USCI",
     )),
     ("COMMODITIES CONT.", (
-        ["USCI", "USOIL", "NATGAS", "GOLD", "SILVER", "COPPER",
+        ["USCI", "USOIL", "NATGAS", "XAUUSD", "SILVER", "COPPER",
          "NICKEL", "LITHIUM", "SLX", "WOOD", "URANIUM", "COAL"],
         "USCI",
     )),
