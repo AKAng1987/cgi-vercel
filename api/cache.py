@@ -312,3 +312,41 @@ def get_or_fetch(cache_key: str, fetch_fn) -> dict:
 
     set(cache_key, fresh)
     return fresh
+
+
+# ── staleness, measured against a series' own cadence ───────────────────
+#
+# The obvious guard -- "blank any input older than N days" -- is wrong for
+# anything that is not daily, and dangerously so. GDPNOW is QUARTERLY: FRED
+# dates each observation to the quarter START, so 2026-07-01 is the label for
+# Q3, and its value (5.0163) is revised continuously through the quarter. Its
+# FRED last_updated is 2026-09-25. A flat 14-day rule would blank a perfectly
+# live input for about 85% of every quarter, and the growth axis would quietly
+# lose its nowcast.
+#
+# So staleness is judged against the EXPECTED cadence, with a grace margin for
+# publication lag. The same reasoning as sec_xbrl.STALE_BY_CADENCE and
+# country_data._bars_per_year, which derives cadence from observed spacing
+# rather than trusting a declaration.
+CADENCE_DAYS = {"daily": 1, "weekly": 7, "monthly": 31, "quarterly": 92, "annual": 366}
+STALE_GRACE = 2.0   # a print may be this many cadences late before it is stale
+
+
+def is_stale(as_of: str, cadence: str, today: Optional[str] = None) -> dict:
+    """Whether an observation dated `as_of` is overdue for its cadence.
+
+    Returns the verdict WITH its inputs, because a staleness call that cannot
+    be checked is just another opinion.
+    """
+    from datetime import date
+    t = date.fromisoformat(today) if today else date.today()
+    age = (t - date.fromisoformat(as_of)).days
+    period = CADENCE_DAYS.get(cadence)
+    if period is None:
+        return {"stale": False, "age_days": age, "cadence": cadence,
+                "reason": "unknown cadence; not judging"}
+    limit = period * (1 + STALE_GRACE)
+    return {"stale": age > limit, "age_days": age, "cadence": cadence,
+            "expected_every_days": period, "stale_after_days": round(limit),
+            "reason": (f"{age}d old against a {cadence} cadence"
+                       + (" -- overdue" if age > limit else " -- within tolerance"))}
