@@ -61,9 +61,35 @@ _FOMC = [  # decision day (second day of the meeting); 2026 + 2027
 _SLOOS_2026 = ["2026-02-02", "2026-05-04", "2026-08-03", "2026-11-02"]
 
 
+# BEA publishes three estimates of each quarter, one a month: the advance in
+# the first month after the quarter closes, then the second and third. They are
+# NOT interchangeable -- the advance carries the most new information and the
+# third the least -- but the flip-rate machinery counted all twelve a year
+# identically, so a third estimate was treated as being as likely to move the
+# growth axis as an advance.
+GDP_SUBTYPES = ("advance", "second", "third")
+
+
+def gdp_subtype(date_iso: str) -> str:
+    """Which of the three estimates a GDP release date is.
+
+    Derived from the month rather than tabulated, so it works for historical
+    dates the hardcoded calendar does not contain: months 1/4/7/10 are the
+    first month after a quarter close and carry the advance.
+    """
+    m = int(date_iso[5:7])
+    return GDP_SUBTYPES[(m - 1) % 3]
+
+
 def _rows(kind: str, dates: list[str]) -> list[dict]:
     axis = AXIS_OF[kind]
-    return [{"date": d, "type": kind, "axis": axis, "model": MODEL_OF[axis]} for d in dates]
+    out = []
+    for d in dates:
+        r = {"date": d, "type": kind, "axis": axis, "model": MODEL_OF[axis]}
+        if kind == "GDP":
+            r["subtype"] = gdp_subtype(d)
+        out.append(r)
+    return out
 
 
 RELEASES: list[dict] = sorted(

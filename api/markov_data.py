@@ -190,6 +190,61 @@ def _gdpnow_context() -> Optional[dict]:
 
 # ── public ───────────────────────────────────────────────────────────────────
 
+def _gdp_flip_by_estimate(log: list[dict]) -> dict:
+    """Growth-axis flip rate split by which GDP estimate it was.
+
+    BEA publishes three estimates of every quarter, one a month. _flip_rates()
+    counts all twelve a year identically, so a third estimate -- which carries
+    the least new information of the three -- is treated as exactly as likely
+    to move the growth axis as an advance. That is an assumption, not a
+    measurement, and this is the measurement.
+
+    n is small by construction (roughly four of each per year over the track
+    record) and travels with every rate. Where a bucket is too thin to mean
+    anything the pooled rate is the honest answer, and the caller is told so.
+    """
+    MIN_N = 5
+    buckets: dict[str, dict] = {k: {"releases": 0, "flips": 0} for k in cal.GDP_SUBTYPES}
+    for e in log:
+        if e.get("type") != "GDP" or not e.get("scheduled"):
+            continue
+        st = cal.gdp_subtype(e["date"])
+        buckets[st]["releases"] += 1
+        if e.get("flipped"):
+            buckets[st]["flips"] += 1
+
+    total_r = sum(b["releases"] for b in buckets.values())
+    total_f = sum(b["flips"] for b in buckets.values())
+    pooled = (total_f / total_r) if total_r else None
+
+    out = {}
+    for st, b in buckets.items():
+        n = b["releases"]
+        rate = (b["flips"] / n) if n else None
+        thin = n < MIN_N
+        out[st] = {
+            "n_releases": n,
+            "n_flips": b["flips"],
+            "flip_rate": round(rate, 3) if rate is not None else None,
+            "thin": thin,
+            # A rate over 3 observations is not a rate. Say which number to use.
+            "use": ("pooled" if thin else "own"),
+            "effective_rate": round(pooled, 3) if (thin and pooled is not None)
+                              else (round(rate, 3) if rate is not None else None),
+        }
+    return {
+        "by_estimate": out,
+        "pooled": {"n_releases": total_r, "n_flips": total_f,
+                   "flip_rate": round(pooled, 3) if pooled is not None else None},
+        "min_n_for_own_rate": MIN_N,
+        "note": ("BEA's advance, second and third estimates are not "
+                 "interchangeable -- the advance carries the most new "
+                 "information. Buckets below the minimum fall back to the "
+                 "pooled rate rather than quoting a rate over three "
+                 "observations."),
+    }
+
+
 def build_markov_response() -> dict:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     hist = {m: _load_model(f"{m}_US") for m in ("compass", "grid")}
@@ -385,4 +440,5 @@ def build_markov_response() -> dict:
         "n_daily_rows": len(daily),
         "drivers": drivers,
         "timeline": cal.timeline(start=today, days=45),
+        "gdp_flip_by_estimate": _gdp_flip_by_estimate(log),
     }
