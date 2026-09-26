@@ -812,7 +812,8 @@ export interface ContextResponse {
       as_of: string; rate: number; rate_source: string;
       direction: "hike" | "cut" | null; cycle_began: string | null; last_move: string | null;
       days_since_last_move: number | null; moves_this_cycle: number | null;
-      chair: string | null; chair_recorded_through: string;
+      chair: string | null;
+      chair_confidence: { name: string | null; confirmed_on: string; assumed: boolean; days_since_confirmed: number; stale: boolean };
       previous_cycle: RateCycle | null;
     };
     computed_columns: string[];

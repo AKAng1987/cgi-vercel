@@ -153,11 +153,19 @@ function Current({ c }: { c: ContextResponse["rate_cycles"]["current"] }) {
         </div>
       )}
       <div className="mt-0.5 text-[0.7rem] text-slate-500">
-        Chair:{" "}
-        {c.chair ?? (
-          <span className="text-amber-300" title={`CHAIRS is recorded only through ${c.chair_recorded_through}`}>
-            not recorded after {c.chair_recorded_through}
+        Chair: <span className="text-slate-300">{c.chair_confidence.name ?? "not recorded"}</span>
+        {/* The name is carried forward, but never without saying when it was last
+            checked — a chair serves for years, so blanking it daily would be its
+            own kind of wrong, and carrying it silently is how this table came to
+            name a chair who had left. */}
+        {c.chair_confidence.stale ? (
+          <span className="ml-1 text-amber-300" title={`last confirmed ${c.chair_confidence.confirmed_on}`}>
+            (unconfirmed for {Math.round(c.chair_confidence.days_since_confirmed / 30.44)} months — check this)
           </span>
+        ) : c.chair_confidence.assumed ? (
+          <span className="ml-1 text-slate-600">(as recorded {c.chair_confidence.confirmed_on})</span>
+        ) : (
+          <span className="ml-1 text-slate-600">(confirmed {c.chair_confidence.confirmed_on})</span>
         )}
         <span className="ml-2 text-slate-600">{c.rate_source}</span>
       </div>

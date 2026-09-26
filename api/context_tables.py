@@ -88,14 +88,22 @@ CHAIRS = [
     {"name": "Bernanke", "from": "2006-02-01"},
     {"name": "Yellen", "from": "2014-02-03"},
     {"name": "Powell", "from": "2018-02-05"},
+    {"name": "Warsh", "from": "2026-05-22"},
 ]
 
-# Past this date the chair is NOT carried forward -- chair_on() returns None
-# and the page prints "not recorded". This exists because the previous version
-# of this table did carry the last name forward, and so kept naming a chair who
-# had left. Silence is the correct output for a fact nobody has supplied;
-# a stale name is not. Extend CHAIRS and move this date together.
-CHAIRS_RECORDED_THROUGH = "2025-12-31"
+# The date this list was last CONFIRMED against reality. Past it the current
+# chair is still reported -- a chair serves for years and blanking the name
+# every day would be its own kind of wrong -- but it is reported WITH this date
+# attached, so a stale entry is visible rather than silent.
+#
+# The failure being guarded against: the first version of this table carried
+# the last known name forward with nothing attached, and so went on naming
+# Powell months after Warsh had taken over. The fix is not silence, it is
+# provenance.
+CHAIRS_CONFIRMED_ON = "2026-09-26"
+
+# How long a confirmation is trusted before the page calls it stale.
+CHAIR_STALE_DAYS = 365
 
 # Balance-sheet programme names, joined to derived WALCL expansions by date.
 QE_LABELS = [
@@ -374,16 +382,25 @@ def _policy_moves(dates, vals, splice) -> list[dict]:
 
 
 def chair_on(date: str) -> Optional[str]:
-    """None -- rendered as 'not recorded' -- once past the last chair we know
-    about. Carrying the previous name forward is what made the old table claim
-    a chair who had left."""
-    if date > CHAIRS_RECORDED_THROUGH:
-        return None
+    """Who chaired the Fed on `date`, or None before the first recorded chair."""
     name = None
     for c in CHAIRS:
         if date >= c["from"]:
             name = c["name"]
     return name
+
+
+def chair_confidence(as_of: str) -> dict:
+    """Whether the chair for `as_of` rests on a confirmation or on an
+    assumption that nothing has changed since CHAIRS_CONFIRMED_ON."""
+    stale_days = (dt.date.fromisoformat(as_of) - dt.date.fromisoformat(CHAIRS_CONFIRMED_ON)).days
+    return {
+        "name": chair_on(as_of),
+        "confirmed_on": CHAIRS_CONFIRMED_ON,
+        "assumed": stale_days > 0,
+        "days_since_confirmed": max(stale_days, 0),
+        "stale": stale_days > CHAIR_STALE_DAYS,
+    }
 
 
 def rate_cycles() -> dict:
@@ -448,7 +465,7 @@ def rate_cycles() -> dict:
             "days_since_last_move": (dt.date.fromisoformat(today) - dt.date.fromisoformat(last["end"])).days if last else None,
             "moves_this_cycle": last["moves"] if last else None,
             "chair": chair_on(today),
-            "chair_recorded_through": CHAIRS_RECORDED_THROUGH,
+            "chair_confidence": chair_confidence(today),
             "previous_cycle": prev_opposite,
         },
         "computed_columns": [sym for _, sym in AT_START] + ["SPX"],
