@@ -104,6 +104,31 @@ export default async function BacktestPage({
         </div>
       )}
 
+      {data.universe_drift && (
+        <div className="mb-4 rounded border border-yellow-800 bg-yellow-950/40 px-3 py-2 text-xs text-yellow-300">
+          ⚠ The refresher ran against a different ticker list than this API declares:{" "}
+          <span className="tabular-nums">{data.universe_drift.blob_count}</span> tickers in the
+          data vs <span className="tabular-nums">{data.universe_drift.expected_count}</span>{" "}
+          expected. The tickers below are missing entirely — they have no regime stats at all, in
+          any regime.
+          {data.universe_drift.missing_from_blob.length > 0 && (
+            <div className="mt-1 font-mono text-[0.7rem] text-yellow-200/90">
+              missing: {data.universe_drift.missing_from_blob.join(" ")}
+            </div>
+          )}
+          {data.universe_drift.unexpected_in_blob.length > 0 && (
+            <div className="mt-1 font-mono text-[0.7rem] text-yellow-200/90">
+              unexpected: {data.universe_drift.unexpected_in_blob.join(" ")}
+            </div>
+          )}
+          <div className="mt-1 text-yellow-400/80">
+            universe source: {data.universe_source ?? "unknown (blob predates the field)"}. A
+            source beginning &ldquo;fallback&rdquo; means the refresher could not reach
+            /api/universe and used its own bundled list.
+          </div>
+        </div>
+      )}
+
       <BacktestClient
         compassQ={compassQ}
         gridQ={gridQ}

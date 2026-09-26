@@ -68,6 +68,18 @@ export interface BacktestTableResponse {
   lookback: string;
   from_combo?: string;
   from_counts?: Record<string, number>; // "C2G3" -> distinct regime windows entered from there
+  // Which ticker list the refresher actually used ("api" | "fallback: <why>"),
+  // and how it differs from the one the API declares. Present only when they
+  // disagree -- a drift means the listed tickers have no regime stats at all.
+  universe_source?: string | null;
+  universe_drift?: {
+    missing_from_blob: string[];
+    unexpected_in_blob: string[];
+    blob_count: number;
+    expected_count: number;
+    universe_source: string | null;
+    note: string;
+  } | null;
   rows: BacktestRow[];
   error?: string;
 }
