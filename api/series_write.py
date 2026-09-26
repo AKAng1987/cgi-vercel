@@ -36,6 +36,74 @@ ALLOWED = {
     "ISM_SVC_ACTIVITY": ("tradingview", "1M", 0.0, 100.0, "ECONOMICS:USNMBA"),
     "CHALLENGER":       ("challenger_gray", "1M", 0.0, 2_000_000.0, "ECONOMICS:USJC"),
     "BDI":              ("tradingview", "1W", 0.0, 20_000.0, "INDEX:BDI"),
+
+    # ── Country macro, added 2026-09-26 for the COUNTRIES tab ──────────────
+    # Policy rates: all seven tested and resolving. The inflation and GDP
+    # entries below are listed from the catalog and are verified by the
+    # onboarding script before their first write -- anything that fails moves
+    # into UNRESOLVED rather than sitting here looking real.
+    #
+    # Bounds are per-series and deliberately wide on the low side: JPINTR has
+    # traded at -0.1 and EUINTR at 0.0, so a 0.0 floor would silently reject
+    # exactly the observations that matter most.
+    "PH_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:PHINTR"),
+    "CN_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:CNINTR"),
+    "JP_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:JPINTR"),
+    "KR_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:KRINTR"),
+    "GB_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:GBINTR"),
+    "EU_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:EUINTR"),
+    "US_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:USINTR"),
+
+    # Inflation and GDP, both already YoY at source.
+    "PH_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:PHIRYY"),
+    "CN_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:CNIRYY"),
+    "JP_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:JPIRYY"),
+    "KR_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:KRIRYY"),
+    "GB_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:GBIRYY"),
+    "EU_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:EUIRYY"),
+    "US_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:USIRYY"),
+
+    "PH_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:PHGDPYY"),
+    "CN_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:CNGDPYY"),
+    "JP_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:JPGDPYY"),
+    "KR_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:KRGDPYY"),
+    "GB_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:GBGDPYY"),
+    "EU_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:EUGDPYY"),
+    "US_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:USGDPYY"),
+
+    # Loan growth. Two different measures, and which one a country gets is
+    # decided by what actually resolves, not by preference:
+    #
+    #   {c}LG  -- Loan Growth YoY, already YoY at source. Resolves for CN, JP,
+    #             EU ONLY. CNLG is +4.9%, matching the published China figure.
+    #   {c}LPS -- Loans to Private Sector, a LEVEL in local currency and a
+    #             NARROWER aggregate. YoY of CNLPS is -1.55% against CNLG's
+    #             +4.9% -- these are not substitutes, and the page must say
+    #             which one it is showing.
+    #
+    # US is served by BUSLOANS, already in price-history for the credit axis.
+    "CN_LOAN_GROWTH_YOY": ("tradingview", "1M", -50.0, 100.0, "ECONOMICS:CNLG"),
+    "JP_LOAN_GROWTH_YOY": ("tradingview", "1M", -50.0, 100.0, "ECONOMICS:JPLG"),
+    "EU_LOAN_GROWTH_YOY": ("tradingview", "1M", -50.0, 100.0, "ECONOMICS:EULG"),
+
+    # No LG series exists for these -- levels only, YoY derived at read time.
+    # Bounds are wide because these are local-currency levels: KRLPS is
+    # ~1.5 quadrillion won, GBLPS ~3.0 trillion pounds.
+    "PH_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:PHLPS"),
+    "KR_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:KRLPS"),
+    "GB_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:GBLPS"),
+}
+
+# Symbols tested against TradingView and found NOT to resolve. Recorded so the
+# next person does not spend the call finding out again.
+UNRESOLVED = {
+    # All four are listed in the economic-symbols catalog and all four return
+    # "invalid symbol". The catalog is a cross-product of indicator x country
+    # and does not check existence, so a listing is not evidence.
+    "ECONOMICS:PHLG": "invalid symbol -- use PHLPS (level) and derive YoY",
+    "ECONOMICS:USLG": "invalid symbol -- US loan growth comes from BUSLOANS",
+    "ECONOMICS:KRLG": "invalid symbol -- use KRLPS (level) and derive YoY",
+    "ECONOMICS:GBLG": "invalid symbol -- use GBLPS (level) and derive YoY",
 }
 
 _ddb = boto3.client("dynamodb", region_name=REGION)
