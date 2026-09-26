@@ -38,7 +38,15 @@ ALLOWED = {
     "BDI":              ("tradingview", "1W", 0.0, 20_000.0, "INDEX:BDI"),
 
     # ── Country macro, added 2026-09-26 for the COUNTRIES tab ──────────────
-    # Policy rates: all seven tested and resolving. The inflation and GDP
+    # Policy rates. SIX countries, not seven: the US is deliberately absent.
+    # It is already served by DFEDTARU (policy rate), CPIAUCSL (inflation) and
+    # GDP, which are the canonical series the Compass/Grid models themselves
+    # read. Adding US_POLICY_RATE alongside DFEDTARU would create two US rate
+    # series with no rule about which wins -- the same shape as the bundled
+    # HUD_GROUPS copy that drifted 38 tickers, and as GOLD sitting outside the
+    # commodities map. One source per fact.
+    #
+    # All six tested and resolving. The inflation and GDP
     # entries below are listed from the catalog and are verified by the
     # onboarding script before their first write -- anything that fails moves
     # into UNRESOLVED rather than sitting here looking real.
@@ -52,7 +60,6 @@ ALLOWED = {
     "KR_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:KRINTR"),
     "GB_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:GBINTR"),
     "EU_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:EUINTR"),
-    "US_POLICY_RATE":   ("tradingview", "1M", -5.0, 100.0, "ECONOMICS:USINTR"),
 
     # Inflation and GDP, both already YoY at source.
     "PH_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:PHIRYY"),
@@ -61,7 +68,6 @@ ALLOWED = {
     "KR_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:KRIRYY"),
     "GB_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:GBIRYY"),
     "EU_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:EUIRYY"),
-    "US_CPI_YOY":       ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:USIRYY"),
 
     "PH_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:PHGDPYY"),
     "CN_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:CNGDPYY"),
@@ -69,7 +75,6 @@ ALLOWED = {
     "KR_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:KRGDPYY"),
     "GB_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:GBGDPYY"),
     "EU_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:EUGDPYY"),
-    "US_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:USGDPYY"),
 
     # Loan growth. Two different measures, and which one a country gets is
     # decided by what actually resolves, not by preference:
@@ -89,9 +94,15 @@ ALLOWED = {
     # No LG series exists for these -- levels only, YoY derived at read time.
     # Bounds are wide because these are local-currency levels: KRLPS is
     # ~1.5 quadrillion won, GBLPS ~3.0 trillion pounds.
+    #
+    # FREQUENCY IS NOT UNIFORM and the YoY lag must follow it. PH and KR
+    # publish monthly (12-bar lag); GB publishes QUARTERLY (4-bar lag).
+    # Verified by bar spacing, not assumed: GBLPS bars are 90-92 days apart.
+    # Reading GB with a 12-bar lag gives +11.19% where the truth is +7.34% --
+    # a 3.85pp error that looks entirely plausible on a page.
     "PH_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:PHLPS"),
     "KR_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:KRLPS"),
-    "GB_LOANS_PRIVATE": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:GBLPS"),
+    "GB_LOANS_PRIVATE": ("tradingview", "1Q", 0.0, 1e18, "ECONOMICS:GBLPS"),
 }
 
 # Symbols tested against TradingView and found NOT to resolve. Recorded so the
