@@ -734,3 +734,69 @@ export interface CalendarResponse {
   as_of: string;
   timeline: TimelineEvent[];
 }
+
+// ── CGI context tables (api/context_tables.py) ──────────────────────────────
+export interface DrawdownBucket {
+  bucket: string;
+  definition: string;
+  n: number;
+  per_year: number;
+  prob_1plus_per_year: number;
+  median_days_to_trough: number | null;
+  median_depth_pct: number | null;
+  recent: { trough: string; depth_pct: number }[];
+}
+export interface DrawdownWindow {
+  label: string;
+  start: string;
+  end: string;
+  years: number;
+  at_least: { level_pct: number; n: number; per_year: number; prob_1plus_per_year: number; median_days_to_trough: number | null }[];
+  buckets: DrawdownBucket[];
+  deepest: { peak_date: string; trough_date: string; depth_pct: number; days_to_trough: number }[];
+}
+export interface InversionRow {
+  inverts: string;
+  deinverts: string | null;
+  days_inverted: number | null;
+  re_inverted?: boolean;
+  spx_peak_date: string | null;
+  months_inversion_to_peak: number | null;
+  led_the_peak: boolean;
+  spx_trough_date: string | null;
+  drawdown_pct: number | null;
+  no_match: boolean;
+}
+export interface FedEpisode {
+  start: string;
+  end: string | null;
+  ongoing: boolean;
+  action: string;
+  chair: string;
+  kind: string;
+  duration_days: number;
+  spx_peak: { date: string; value: number } | null;
+  spx_trough: { date: string; value: number } | null;
+  dxy_at_start: number | null;
+  us10y_at_start: number | null;
+  fed_balance_sheet_at_start: number | null;
+  unemployment_at_start: number | null;
+}
+export interface ContextResponse {
+  schema_version: number;
+  generated_at: string;
+  drawdowns: {
+    windows: DrawdownWindow[];
+    now: { as_of: string; spx: number; running_high: number; running_high_date: string; drawdown_pct: number; band: string };
+    method: string;
+  };
+  inversions: Record<string, InversionRow[]>;
+  fed_episodes: { episodes: FedEpisode[]; computed_columns: string[] };
+  joins: {
+    inversion_to_drawdown: Record<string, {
+      window: string; n_cycles: number; n_matched_to_a_decline: number; n_led_the_peak: number;
+      median_months_lead: number | null; range_months_lead: [number, number] | null; median_drawdown_pct: number | null;
+    }>;
+    caveat: string;
+  };
+}

@@ -1,10 +1,11 @@
 import { apiFetch } from "@/lib/api";
-import { MarkovResponse } from "@/lib/types";
+import { ContextResponse, MarkovResponse } from "@/lib/types";
 import { UpcomingReleases } from "../components/markov/UpcomingReleases";
 import { EventLog } from "../components/markov/EventLog";
 import { DailyRuns } from "../components/markov/DailyRuns";
 import { AxisDriversPanel } from "../components/markov/AxisDriversPanel";
 import { Timeline } from "../components/markov/Timeline";
+import { ContextTables } from "../components/context/ContextTables";
 
 /**
  * CGI tab -- event-driven regime state (Phase 1.5). Renamed from MARKOV
@@ -20,7 +21,11 @@ import { Timeline } from "../components/markov/Timeline";
  * pre-registered audit trail and are shown collapsed into runs below.
  */
 export default async function CgiPage() {
-  const data = await apiFetch<MarkovResponse>("/api/markov");
+  const [data, ctx] = await Promise.all([
+    apiFetch<MarkovResponse>("/api/markov"),
+    // Additive context; never allowed to break the page it hangs off.
+    apiFetch<ContextResponse>("/api/context").catch(() => null),
+  ]);
 
   return (
     <main className="mx-auto max-w-7xl p-6">
@@ -58,6 +63,8 @@ export default async function CgiPage() {
           Calendar dates are hardcoded from the official BLS / BEA / Fed schedules.
         </p>
       </div>
+
+      {ctx && <ContextTables ctx={ctx} />}
     </main>
   );
 }
