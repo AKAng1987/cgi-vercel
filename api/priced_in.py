@@ -242,18 +242,29 @@ def trailing_pe(ticker: str, price: Optional[float] = None) -> dict:
     else:
         price_as_of = "supplied"
     if price is None:
-        return {"ticker": ticker, "error": f"no price history for {ticker}",
-                "shares": sh}
+        return {
+            "ticker": ticker,
+            "error": f"no price history for {ticker}",
+            # Say what would fix it. price-history holds the HUD universe --
+            # indices, ETFs, FX, commodities -- not single equities, so an
+            # individual name has no price here by design, not by accident.
+            "how_to_resolve": ("pass `price`, or onboard this ticker to "
+                               "price-history via metrics-source (marketstack) "
+                               "so the nightly updater carries it"),
+            "shares": sh,
+        }
 
     # TTM net income: the last four quarterly prints. Fewer than four and the
     # multiple would be built on a partial year, which is worse than no number.
-    q = sx.periods(facts, "net_income") if hasattr(sx, "periods") else None
-    ni_rows = (q or [])[-4:]
-    if len(ni_rows) < 4:
+    # periods() returns {end_date: value}, not rows -- getting that wrong is a
+    # silent shape error, so the dates are carried through and reported.
+    q = sx.periods(facts, "net_income", "quarterly") or {}
+    ends = sorted(q)[-4:]
+    if len(ends) < 4:
         return {"ticker": ticker, "error": "fewer than 4 quarters of net income",
-                "n_quarters": len(ni_rows), "shares": sh,
+                "n_quarters": len(ends), "shares": sh,
                 "price": {"value": price, "as_of": price_as_of}}
-    ttm = sum(r["val"] for r in ni_rows if r.get("val") is not None)
+    ttm = sum(q[e] for e in ends)
     mcap = sh["shares"] * price
     if ttm <= 0:
         return {"ticker": ticker, "error": "trailing net income is not positive; "
@@ -265,6 +276,6 @@ def trailing_pe(ticker: str, price: Optional[float] = None) -> dict:
         "price": {"value": round(price, 2), "as_of": price_as_of},
         "shares": sh,
         "ttm_net_income": round(ttm),
-        "ttm_quarters": [r.get("end") for r in ni_rows],
+        "ttm_quarters": ends,
         "trailing_pe": round(mcap / ttm, 2),
     }
