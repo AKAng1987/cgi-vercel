@@ -114,6 +114,7 @@ ALLOWED = {
     # yield is visible rather than silently last-good -- the GOLD failure was
     # exactly a series nothing maintained and nobody checked.
     "PH03MY": ("tradingview", "1W", 0.0, 40.0, "TVC:PH03MY"),
+    "PH01Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH01Y"),
     "PH02Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH02Y"),
     "PH10Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH10Y"),
 }

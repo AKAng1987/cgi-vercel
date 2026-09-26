@@ -45,7 +45,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3  # 3: PH01Y onboarded, so the 1y tenor is no longer n/a
 
 BENCH = "SPY"
 

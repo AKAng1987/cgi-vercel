@@ -52,52 +52,63 @@ function N({ cell }: { cell: RegimeCell }) {
   );
 }
 
-function Equity({ cell, live }: { cell: RegimeCell | null; live?: TenorReturns | null }) {
-  if (!cell) return <span className="text-slate-600">—</span>;
-  if (!cell.occurrences)
-    return (
-      <span className="text-slate-600" title={cell.reason}>
-        {cell.symbol} — no occurrences
-      </span>
-    );
+/** Symbol and its LEVEL only. The regime-conditioned figures live on their own
+ *  line, prefixed with the regime, so a backtest average over 8 occurrences
+ *  can never be read as a live return. */
+function Instrument({ symbol, live }: { symbol: string; live?: TenorReturns | null }) {
   return (
-    <span className="flex flex-wrap items-baseline gap-x-2">
-      <span className="font-medium text-slate-200">{cell.symbol}</span>
+    <span className="flex items-baseline gap-x-2">
+      <span className="font-medium text-slate-200">{symbol}</span>
       {live && (
-        <span className="tabular-nums text-slate-100" title={`last close, ${live.as_of}`}>
-          {live.last.toFixed(2)}
+        <span className="tabular-nums text-slate-100" title={`last, ${live.as_of}`}>
+          {live.last.toFixed(Math.abs(live.last) >= 100 ? 2 : Math.abs(live.last) >= 10 ? 2 : 4)}
         </span>
       )}
-      {hit(cell.hit_rate)}
-      {n(cell.avg_return_pct)}
-      <N cell={cell} />
     </span>
+  );
+}
+
+/** Regime-conditioned stats, always prefixed with the regime they belong to. */
+function InRegime({ regime, cell, excess }: { regime: string; cell: RegimeCell | null; excess?: number | null }) {
+  if (!cell || !cell.occurrences) {
+    return <div className="text-[0.68rem] text-slate-600">in {regime}: no occurrences</div>;
+  }
+  return (
+    <div className="text-[0.68rem]">
+      <span className="text-slate-500">in {regime}: </span>
+      {hit(cell.hit_rate)}
+      <span className="text-slate-600"> hit · </span>
+      {n(cell.avg_return_pct)}
+      <span className="text-slate-600"> avg · </span>
+      <N cell={cell} />
+      {excess !== null && excess !== undefined && (
+        <>
+          <span className="text-slate-600"> · </span>
+          <span title="this country's regime return minus the average of all countries in this regime">
+            <span className="text-slate-500">vs tide </span>
+            <span className={`tabular-nums ${excess > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {excess > 0 ? "+" : ""}{excess.toFixed(2)}pp
+            </span>
+          </span>
+        </>
+      )}
+    </div>
   );
 }
 
 /** The FX leg states the direction in words, taken from the server. Deriving
  *  it here from the sign would be one more place for the inversion to happen. */
-function Fx({ cell, note, live }: { cell: RegimeFxCell | null; note: string | null; live?: TenorReturns | null }) {
-  if (!cell)
-    return (
-      <span className="text-slate-600" title={note ?? undefined}>
-        {note ? "no pair" : "—"}
-      </span>
-    );
+/** Direction in words, taken from the server. Every pair is quoted USDXXX, so
+ *  a positive return is DOLLAR strength — deriving that here from a bare sign
+ *  is how an FX read gets silently inverted. */
+function FxDirection({ cell }: { cell: RegimeFxCell | null }) {
+  if (!cell) return null;
   const strong = cell.local === "stronger";
+  const local = cell.symbol.replace(/^USD/, "");
   return (
-    <span className="flex flex-wrap items-baseline gap-x-2">
-      <span className="font-medium text-slate-200">{cell.symbol}</span>
-      {live && (
-        <span className="tabular-nums text-slate-100" title={`spot, ${live.as_of}`}>
-          {live.last.toFixed(Math.abs(live.last) >= 100 ? 2 : 4)}
-        </span>
-      )}
-      <span className={strong ? "text-emerald-400" : "text-rose-400"} title={cell.note}>
-        {strong ? "local ↑" : cell.local === "weaker" ? "local ↓" : "flat"}
-      </span>
-      {n(cell.avg_return_pct, 2)}
-      <N cell={cell} />
+    <span className={strong ? "text-emerald-400" : cell.local === "weaker" ? "text-rose-400" : "text-slate-400"}
+          title={cell.note}>
+      {local} {strong ? "stronger" : cell.local === "weaker" ? "weaker" : "flat"}
     </span>
   );
 }
@@ -115,7 +126,7 @@ function Trade({ c }: { c: RegimeCountry }) {
   );
 }
 
-function Row({ c }: { c: RegimeCountry }) {
+function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
   const rk = c.regime_ranking;
   return (
     <tr className="border-b border-slate-900 align-top hover:bg-slate-900/40">
@@ -126,31 +137,43 @@ function Row({ c }: { c: RegimeCountry }) {
       <td className="py-2 pr-3">
         <Trade c={c} />
       </td>
-      <td className="py-2 pr-3">
-        <Equity cell={c.equity} live={c.market?.etf ?? null} />
+
+      {/* EQUITY — one column, not two. The ETF price used to appear here AND
+          in a separate ETF column; they describe the same instrument. */}
+      <td className="py-2 pr-3 space-y-0.5">
+        <Instrument symbol={c.equity?.symbol ?? "—"} live={c.market?.etf ?? null} />
+        <Rets r={c.market?.etf ?? null} />
+        <InRegime regime={regime} cell={c.equity} excess={c.excess_vs_tide} />
         {c.equity_alternates.length > 0 && (
-          <div className="mt-1 space-y-0.5 text-[0.72rem] opacity-70">
+          <div className="pt-0.5 opacity-70">
             {c.equity_alternates.map((a) => (
-              <div key={a.symbol}>
-                <Equity cell={a} />
-              </div>
+              <InRegime key={a.symbol} regime={`${regime} · ${a.symbol}`} cell={a} />
             ))}
           </div>
         )}
         {c.equity_absent && (
-          <div className="mt-1 text-[0.68rem] text-amber-300/80" title="in the ticker list but not in the backtest blob">
+          <div className="text-[0.68rem] text-amber-300/80" title="in the ticker list but not in the backtest blob">
             not backtested: {c.equity_absent.join(", ")}
           </div>
         )}
       </td>
-      <td className="py-2 pr-3">
-        <Fx cell={c.currency} note={c.currency_note} live={c.market?.fx ?? null} />
-        {c.market?.fx && (
-          <div className="mt-0.5">
-            <Rets r={c.market.fx} showLevel={false} />
-          </div>
+
+      {/* CURRENCY — same three lines: level, live trailing, regime-conditioned */}
+      <td className="py-2 pr-3 space-y-0.5">
+        {c.currency ? (
+          <>
+            <span className="flex items-baseline gap-x-2">
+              <Instrument symbol={c.currency.symbol} live={c.market?.fx ?? null} />
+              <FxDirection cell={c.currency} />
+            </span>
+            <Rets r={c.market?.fx ?? null} />
+            <InRegime regime={regime} cell={c.currency} />
+          </>
+        ) : (
+          <span className="text-slate-600" title={c.currency_note ?? undefined}>no pair</span>
         )}
       </td>
+
       <td className="py-2 pr-3 text-[0.72rem]">
         {c.macro ? (
           <div className="space-y-0.5">
@@ -167,17 +190,7 @@ function Row({ c }: { c: RegimeCountry }) {
           <span className="text-slate-600">not onboarded</span>
         )}
       </td>
-      <td className="py-2 pr-3">
-        <Rets r={c.market?.etf ?? null} />
-        {c.excess_vs_tide !== null && c.excess_vs_tide !== undefined && (
-          <div className="mt-0.5 text-[0.68rem]" title="this country's regime return minus the average of all countries in this regime">
-            <span className="text-slate-500">vs tide </span>
-            <span className={`tabular-nums ${c.excess_vs_tide > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {c.excess_vs_tide > 0 ? "+" : ""}{c.excess_vs_tide.toFixed(2)}pp
-            </span>
-          </div>
-        )}
-      </td>
+
       <td className="py-2 pr-3 text-[0.72rem]">
         {rk ? (
           <>
@@ -200,7 +213,7 @@ function Row({ c }: { c: RegimeCountry }) {
   );
 }
 
-function Table({ rows, caption }: { rows: RegimeCountry[]; caption: string }) {
+function Table({ rows, caption, regime }: { rows: RegimeCountry[]; caption: string; regime: string }) {
   if (rows.length === 0) return null;
   return (
     <div className="overflow-x-auto">
@@ -210,16 +223,15 @@ function Table({ rows, caption }: { rows: RegimeCountry[]; caption: string }) {
           <tr className="border-b border-slate-800 text-left text-[0.7rem] uppercase tracking-wide text-slate-500">
             <th className="py-1.5 pr-3 font-medium">country</th>
             <th className="py-1.5 pr-3 font-medium">trade</th>
-            <th className="py-1.5 pr-3 font-medium">equity — hit / avg</th>
-            <th className="py-1.5 pr-3 font-medium">currency · 1m 3m 6m 1y</th>
+            <th className="py-1.5 pr-3 font-medium">equity</th>
+            <th className="py-1.5 pr-3 font-medium">currency</th>
             <th className="py-1.5 pr-3 font-medium">own conditions</th>
-            <th className="py-1.5 pr-3 font-medium">ETF 1m 3m 6m 1y</th>
             <th className="py-1.5 pr-3 font-medium">pays best / worst in</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((c) => (
-            <Row key={c.code} c={c} />
+            <Row key={c.code} c={c} regime={regime} />
           ))}
         </tbody>
       </table>
@@ -287,22 +299,28 @@ function Macro({ p }: { p?: MacroPoint }) {
  *  says nothing about where the peso actually is, and neither does a column of
  *  EPHE percentages without EPHE's price. The level is what tells you whether
  *  62.7 is the strong end of the range or the weak one. */
-function Rets({ r, showLevel = true }: { r: TenorReturns | null; showLevel?: boolean }) {
+function Rets({ r }: { r: TenorReturns | null }) {
   if (!r) return <span className="text-slate-600">—</span>;
-  const cell = (v?: number) =>
-    v === undefined ? <span className="text-slate-600">—</span>
-      : <span className={`tabular-nums ${v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-400"}`}>{v > 0 ? "+" : ""}{v.toFixed(1)}</span>;
-  const dp = Math.abs(r.last) >= 100 ? 2 : Math.abs(r.last) >= 1 ? 2 : 4;
+  const cells: [string, number | undefined][] = [
+    ["1m", r.ret_1m], ["3m", r.ret_3m], ["6m", r.ret_6m], ["1y", r.ret_1y],
+  ];
   return (
-    <span className="flex flex-wrap items-baseline gap-x-2">
-      {showLevel && (
-        <span className="tabular-nums font-medium text-slate-100" title={`${r.symbol} last, ${r.as_of}`}>
-          {r.last.toFixed(dp)}
+    <span className="flex flex-wrap gap-x-2 text-[0.72rem]">
+      {cells.map(([lab, v]) => (
+        <span key={lab}>
+          {/* The tenor is labelled HERE, not only in the column header: the
+              header is out of view by the second row, and a bare "+1.3" next
+              to a regime average is unreadable. */}
+          <span className="text-slate-500">{lab} </span>
+          {v === undefined ? (
+            <span className="text-slate-600">—</span>
+          ) : (
+            <span className={`tabular-nums ${v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-400"}`}>
+              {v > 0 ? "+" : ""}{v.toFixed(1)}%
+            </span>
+          )}
         </span>
-      )}
-      <span className="flex gap-2 text-[0.72rem]" title={`${r.symbol} · 1m / 3m / 6m / 1y %`}>
-        {cell(r.ret_1m)}{cell(r.ret_3m)}{cell(r.ret_6m)}{cell(r.ret_1y)}
-      </span>
+      ))}
     </span>
   );
 }
@@ -436,16 +454,23 @@ export default async function ForeignPage({
         </div>
       )}
 
-      <Table rows={focus} caption="in the order you asked for" />
-      <Table rows={rest} caption="the rest of what the backtest already covers" />
+      <Table rows={focus} caption="in the order you asked for" regime={m.regime} />
+      <Table rows={rest} caption="the rest of what the backtest already covers" regime={m.regime} />
 
       {m.extra_pairs.length > 0 && (
         <section className="space-y-1">
           <div className="text-[0.7rem] uppercase tracking-wide text-slate-500">other currencies</div>
           <ul className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
             {m.extra_pairs.map((p) => (
-              <li key={p.symbol}>
-                <Fx cell={p} note={null} />
+              <li key={p.symbol} className="flex items-baseline gap-x-2">
+                <span className="font-medium text-slate-200">{p.symbol}</span>
+                <FxDirection cell={p} />
+                <span className="text-[0.68rem]">
+                  <span className="text-slate-500">in {m.regime}: </span>
+                  {n(p.avg_return_pct, 2)}
+                  <span className="text-slate-600"> avg · </span>
+                  <N cell={p} />
+                </span>
               </li>
             ))}
           </ul>
