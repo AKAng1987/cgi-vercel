@@ -38,6 +38,7 @@ export default function RootLayout({
             { href: "/markov", label: "MARKOV", icon: "⇄" },
             { href: "/cot", label: "POSITIONING", icon: "⚖" },
             { href: "/fundamentals", label: "FUNDAMENTALS", icon: "⊟" },
+            { href: "/foreign", label: "FOREIGN", icon: "⊕" },
             { href: "/notes", label: "NOTES", icon: "✎" },
           ].map((t) => (
             <a

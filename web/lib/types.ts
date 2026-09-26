@@ -645,3 +645,72 @@ export interface BriefResponse {
   note: string;
   generated_at: string;
 }
+
+// ── FOREIGN: regime -> country / currency matrix ────────────────────────────
+// Mirrors api/regime_matrix.py. Every stat cell carries `occurrences`, because
+// a regime has ~8 of them and a hit rate without its n is not a fact.
+export type RegimeCell = {
+  symbol: string;
+  occurrences: number;
+  thin?: boolean;
+  hit_rate?: number;
+  avg_return_pct?: number;
+  avg_high_pct?: number;
+  avg_low_pct?: number;
+  edge?: number | null;
+  reason?: string;
+};
+
+// FX cells add the direction IN WORDS. Every pair is quoted USDXXX, so a
+// positive return is dollar strength; the server states which side is which
+// rather than leaving the sign to be interpreted here.
+export type RegimeFxCell = RegimeCell & {
+  quoted: string;
+  usd: "stronger" | "weaker" | "flat";
+  local: "stronger" | "weaker" | "flat";
+  note: string;
+};
+
+export type RegimeRankRow = {
+  regime: string;
+  occurrences: number;
+  hit_rate: number;
+  avg_return_pct: number;
+  edge: number | null;
+};
+
+export type RegimeCountry = {
+  code: string;
+  name: string;
+  focus: boolean;
+  trade: "importer" | "exporter" | "mixed";
+  trade_why: string;
+  trade_basis: string;
+  equity: RegimeCell | null;
+  equity_alternates: RegimeCell[];
+  equity_absent: string[] | null;
+  currency: RegimeFxCell | null;
+  currency_absent: boolean;
+  currency_note: string | null;
+  regime_n: Record<string, number>;
+  regime_ranking: { min_n: number; best: RegimeRankRow; worst: RegimeRankRow; ranked: RegimeRankRow[] } | null;
+};
+
+export type RegimeMatrixResponse = {
+  schema_version: number;
+  last_refreshed_at: string | null;
+  compass_q: number;
+  grid_q: number;
+  regime: string;
+  min_n: number;
+  thin_below: number;
+  focus_order: string[];
+  countries: RegimeCountry[];
+  extra_pairs: RegimeFxCell[];
+  fx_convention: string;
+  caveat: string;
+  next_regimes:
+    | { date: string; type: string; axis: string; p_flip: number; regime_if_flip: string; compass_q: number; grid_q: number }[]
+    | null;
+  error?: string;
+};

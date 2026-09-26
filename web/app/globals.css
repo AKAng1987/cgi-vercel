@@ -58,6 +58,11 @@
   --color-red-800: oklch(0.885 0.062 18.334);
   --color-red-950: oklch(0.971 0.013 17.38);
 
+  /* FOREIGN's exporter/importer tags. Darkened for white like the other
+     accents rather than inverted, for the same reason. */
+  --color-sky-300: oklch(0.5 0.13 245);
+  --color-violet-300: oklch(0.5 0.16 295);
+
   --cgi-accent: #41527a;
 }
 

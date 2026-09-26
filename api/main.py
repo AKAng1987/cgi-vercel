@@ -24,6 +24,7 @@ import technicals_data
 import themes_data
 import signals_data
 import watchlists as watchlists_data
+import regime_matrix
 
 load_dotenv()
 
@@ -278,3 +279,49 @@ def watchlists():
     routine. Nothing sensitive, so no bearer -- the routine runs in an
     environment that cannot hold secrets."""
     return cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)
+
+
+@app.get("/api/regime-matrix", dependencies=[Depends(require_bearer_token)])
+def regime_matrix_route(
+    compass_q: Optional[int] = None,
+    grid_q: Optional[int] = None,
+    min_n: int = 5,
+):
+    """What a regime means for each country and currency.
+
+    Defaults to the regime we are in now, resolved server-side the same way
+    /api/backtest/current does it, so the caller needs no prior round trip.
+    Any of the 16 can be asked for explicitly.
+
+    Also returns the regimes the NEXT scheduled releases could move us into,
+    taken from markov's `upcoming` -- that is where "what is priced in" starts,
+    and it lets the page offer the forward cell without recomputing anything.
+    """
+    if compass_q is None or grid_q is None:
+        cur = {m: markov_data._load_model(f"{m}_US")[-1][1] for m in ("compass", "grid")}
+        compass_q = compass_q if compass_q is not None else cur["compass"]
+        grid_q = grid_q if grid_q is not None else cur["grid"]
+    if compass_q not in (1, 2, 3, 4) or grid_q not in (1, 2, 3, 4):
+        raise HTTPException(status_code=400, detail="compass_q and grid_q must each be 1-4")
+
+    # No S3 cache layer: the only input is the occurrences blob, which
+    # backtest_data already memoises in-process by ETag, and the rest is pure
+    # computation over it. Caching 16 regimes x 3 min_n values would add keys
+    # to CACHE_SCHEMA_VERSIONS for no measurable gain.
+    out = regime_matrix.build_matrix(compass_q, grid_q, min_n=min_n)
+
+    # Forward cells: additive and never allowed to break the page, since the
+    # matrix itself is the answer and the forecast is context.
+    try:
+        upcoming = markov_data.build_markov_response()["upcoming"]
+        nxt = []
+        for u in upcoming[:6]:
+            q = u["if_flip_quadrant"]
+            c, g = (q, grid_q) if u["model"] == "compass" else (compass_q, q)
+            nxt.append({"date": u["date"], "type": u["type"], "axis": u["axis"],
+                        "p_flip": u["p_flip"], "regime_if_flip": f"C{c}G{g}",
+                        "compass_q": c, "grid_q": g})
+        out = {**out, "next_regimes": nxt}
+    except Exception:  # noqa: BLE001
+        out = {**out, "next_regimes": None}
+    return out
