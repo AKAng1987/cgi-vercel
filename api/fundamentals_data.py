@@ -348,48 +348,44 @@ def _company(sym: str) -> dict:
                  "name": f.get("entityName"), "cik": f.get("cik"),
                  "sector": sx.sector(sym)}
 
-    rev = sx.series(f, "revenue")
     today = dt.date.today()
 
     def _age(d: str) -> int:
         return (today - dt.date.fromisoformat(d)).days
 
-    # Annual mode. A 20-F/40-F filer reports once a year and has no quarterly
-    # facts at all, so the quarterly path finds nothing (or something ancient)
-    # and the company would vanish. Reading it annually is the difference
-    # between a slower measure and no measure. An annual filer is not stale at
-    # 270 days, so the guard is relaxed to ANNUAL_STALE_DAYS for this path only.
-    annual_mode = False
-    # Fall back to annual when the quarterly path is absent, stale, OR cannot
-    # produce a year-on-year pair. That last case is the one that matters for
-    # 20-F filers: the Korean names (SKHY, KB, SHG, PKX, WF) each expose a
-    # handful of ~90-day facts, so the quarterly path looked alive and current
-    # while yoy() found nothing a year apart -- five companies reported as
-    # "insufficient history" when their annual figures were right there.
-    if not rev or _age(max(rev)) > sx.STALE_DAYS or len(sx.yoy(rev)) < MIN_YOY_POINTS:
-        ann = sx.annual(f, "revenue")
-        if (ann and _age(max(ann)) <= ANNUAL_STALE_DAYS
-                and len(sx.yoy(ann)) >= MIN_YOY_POINTS):
-            rev, annual_mode = ann, True
+    # Read the filer at ITS OWN cadence rather than assuming quarterly.
+    # Decided from the facts, not from domicile: a foreign issuer may file
+    # quarterly and a domestic one may not, and only the filing tells you
+    # which. BHP has eight half-year revenue facts and no quarterly ones at
+    # all, so a quarterly-shaped read saw a company with no data.
+    how = sx.cadence(f, "revenue")
+    rev = sx.periods(f, "revenue", how)
+    stale_days = sx.STALE_BY_CADENCE[how]
+    annual_mode = how != "quarterly"
 
     # Staleness guard. A dead concept reads exactly like a current one, which
     # is how the NVDA tag-switch bug reported FY2020 revenue as the latest
-    # quarter and produced a confident, wrong verdict. Anything older than a
-    # reporting cycle is refused outright rather than shown.
+    # quarter and produced a confident, wrong verdict. The bound now follows
+    # the cadence: 453 days is stale for a quarterly filer and normal for an
+    # annual one between filings.
     if rev:
         newest = max(rev)
         age = _age(newest)
-        if age > (ANNUAL_STALE_DAYS if annual_mode else sx.STALE_DAYS):
+        if age > stale_days:
             return {"symbol": sym, "status": "stale",
                     "name": f.get("entityName"), "cik": f.get("cik"),
+                    "sector": sx.sector(sym), "cadence": how,
                     "latest_quarter": newest, "stale_days": age,
                     "tags_seen": sx.tags_used(f, "revenue"),
                     "read": {"verdict": "unknown",
-                             "why": (f"newest filing concept CGI can read ends {newest}, "
-                                     f"{age}d ago -- likely a concept this module does "
-                                     f"not map yet")}}
+                             "why": (f"newest {how} figure ends {newest}, {age}d ago -- "
+                                     f"past the {stale_days}d bound for a {how} filer")}}
 
-    out["basis"] = "annual (20-F/40-F filer)" if annual_mode else "quarterly"
+    out["cadence"] = how
+    out["basis"] = ("quarterly" if how == "quarterly"
+                    else f"{how} (20-F/40-F filer)")
+    # Kept under the old name because rollups, the watchlist and the page all
+    # key off it: it means "not quarterly", i.e. excluded from quarterly medians.
     out["annual_only"] = annual_mode
     out["revenue"] = _trend(sx.yoy(rev), "revenue")
     out["margin"] = _margin_trend(f)

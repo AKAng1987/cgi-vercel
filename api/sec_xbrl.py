@@ -66,8 +66,18 @@ TICKERS = "https://www.sec.gov/files/company_tickers.json"
 SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 
 QUARTER_DAYS = (80, 100)
+SEMIANNUAL_DAYS = (165, 200)
 ANNUAL_DAYS = (350, 380)
 YOY_DAYS = (330, 400)      # same quarter, prior year
+
+# How long a filer may go between reports before its newest figure is stale.
+# Derived from the filer's OWN cadence rather than one global constant: BHP at
+# 453 days is not a dead company, it is an annual filer between filings, and a
+# single quarterly-shaped bound cannot express that difference.
+# An annual filer's figure is expected once a year PLUS a filing lag of up to
+# ~4 months, so 500 days tolerates BHP between filings (453) while still
+# refusing KB (999) and TSM (633), whose SEC data genuinely stops in 2023-24.
+STALE_BY_CADENCE = {"quarterly": 200, "semiannual": 300, "annual": 500}
 
 # A filer reports at least every ~92 days. If the newest quarter this module
 # can see is older than this, something is wrong with the CONCEPT MAPPING, not
@@ -391,6 +401,54 @@ def qoq(s: dict[str, float]) -> list[tuple[str, float]]:
             out.append((ds[i], s[ds[i]] / prev - 1.0))
     out.reverse()
     return out
+
+
+def _duration_series(facts: dict, measure: str, window: tuple[int, int]) -> dict[str, float]:
+    """end_date -> value for facts whose period length falls inside `window`.
+    Latest filing wins on restatement, as everywhere else."""
+    best: dict[str, tuple[str, float]] = {}
+    for _tag, node in _nodes(facts, measure):
+        for r in _usd_rows(node):
+            st, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
+            if not (st and e) or v is None:
+                continue
+            if window[0] <= _days(st, e) <= window[1]:
+                if e not in best or filed > best[e][0]:
+                    best[e] = (filed, float(v))
+    return {e: v for e, (_f, v) in best.items()}
+
+
+def semiannual(facts: dict, measure: str) -> dict[str, float]:
+    """Half-year periods. Australian and several Asian issuers report this way
+    -- BHP has 8 half-year revenue facts and no quarterly ones at all, so
+    without this it reads as a company with no data."""
+    return _duration_series(facts, measure, SEMIANNUAL_DAYS)
+
+
+def cadence(facts: dict, measure: str = "revenue") -> str:
+    """What rhythm this filer actually reports on.
+
+    Decided from the facts themselves rather than guessed from domicile: a
+    foreign issuer may file quarterly and a domestic one may not, and the
+    filing tells you which. Whichever period length yields the most USABLE
+    year-on-year pairs wins, because that is the thing the factor needs -- a
+    filer with many stale quarterly facts and a live annual series should be
+    read annually.
+    """
+    scored = []
+    for name, fn in (("quarterly", series), ("semiannual", semiannual), ("annual", annual)):
+        try:
+            scored.append((len(yoy(fn(facts, measure))), name))
+        except Exception:
+            scored.append((0, name))
+    scored.sort(key=lambda x: (-x[0], ("quarterly", "semiannual", "annual").index(x[1])))
+    return scored[0][1] if scored[0][0] else "quarterly"
+
+
+def periods(facts: dict, measure: str, how: str) -> dict[str, float]:
+    """The series at a given cadence -- one entry point so callers never have
+    to remember which of the three functions matches which rhythm."""
+    return {"quarterly": series, "semiannual": semiannual, "annual": annual}[how](facts, measure)
 
 
 def annual(facts: dict, measure: str) -> dict[str, float]:
