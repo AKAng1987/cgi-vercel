@@ -182,6 +182,19 @@ def theme_constituents() -> tuple[dict[str, list[str]], dict, list[str]]:
     return out, d.get("provenance", {}), fell_back
 
 
+# ---------------------------------------------------------------------------
+# The universe is derived from what each theme's ETFs actually hold.
+#
+# An earlier version also carried a hand-entered list of the user's own traded
+# positions. It was removed: this repository is PUBLIC, and so is
+# /api/fundamentals, so a position list written here is a position list
+# published to anyone who looks. Holdings are the user's private information
+# and do not belong in source control or in a public endpoint.
+#
+# If per-account coverage is wanted again it must come from a local file that
+# is gitignored and never serialised into the API response.
+
+
 # The AI layer cake, in your words. Kept SEPARATE from the theme map because
 # the thesis claim is that these layers are NOT moving together --
 # infrastructure slowing, utilities falling, chips splitting AMD from NVDA.
@@ -521,10 +534,20 @@ def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
     accel_annual = _acc(True)
     return {
         "status": "ok", "n": len(have), "verdicts": counts,
-        "median_revenue_acceleration_pp": accel[len(accel) // 2] if accel else None,
+        # statistics.median, not accel[len//2]: with an even sample the index
+        # form returns the UPPER of the two middle values, which on a sample of
+        # two is just the larger number wearing a median's name. URA reported
+        # +384.0pp that way -- UEC +40.6 and UUUU +384.0, with CCJ excluded as
+        # an annual filer -- when the honest answer is +212.3.
+        "median_revenue_acceleration_pp": (round(statistics.median(accel), 2)
+                                           if accel else None),
+        # The sample size travels with the median, because a median of two is
+        # not the same claim as a median of twelve.
+        "n_in_median": len(accel),
         "n_annual_excluded": sum(1 for c in have if c.get("annual_only")),
-        "median_annual_acceleration_pp": (accel_annual[len(accel_annual) // 2]
+        "median_annual_acceleration_pp": (round(statistics.median(accel_annual), 2)
                                           if accel_annual else None),
+        "n_in_annual_median": len(accel_annual),
         "capturing": [c["symbol"] for c in have if c["read"]["verdict"] == "capturing"],
         "rolling_over": [c["symbol"] for c in have if c["read"]["verdict"] == "rolling over"],
         "leaders": [c["symbol"] for c in sorted(
@@ -535,8 +558,9 @@ def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
 def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     active = set(active_themes or [])
     constituents, provenance, fell_back = theme_constituents()
-    universe = sorted({s for v in constituents.values() for s in v}
-                      | {s for v in AI_LAYERS.values() for s in v})
+    derived = {s for v in constituents.values() for s in v} | {s for v in AI_LAYERS.values() for s in v}
+
+    universe = sorted(derived)
 
     # One companyfacts request per name. Workers are held to 3 deliberately:
     # SEC would allow 10/sec, but each payload is multi-megabyte before
@@ -545,6 +569,8 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     with ThreadPoolExecutor(max_workers=3) as ex:
         rows = list(ex.map(_company, universe))
     comp = {r["symbol"]: r for r in rows}
+    for sym, c in comp.items():
+        c["why_present"] = ["theme"]
     ok = {k: v for k, v in comp.items() if v.get("status") == "ok"}
 
     # Feed the fall-through. Only names that genuinely could not be read are

@@ -494,6 +494,8 @@ export interface FundCompany {
   name?: string;
   cik?: number;
   sector?: string | null;
+  cadence?: string;
+  why_present?: string[];
   revenue: FundTrend;
   margin: FundMargin;
   operating_income: FundTrend;
@@ -546,6 +548,8 @@ export interface FundRollup {
   median_revenue_acceleration_pp?: number | null;
   median_annual_acceleration_pp?: number | null;
   n_annual_excluded?: number;
+  n_in_median?: number;
+  n_in_annual_median?: number;
   capturing?: string[];
   rolling_over?: string[];
   leaders?: string[];
