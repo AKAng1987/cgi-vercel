@@ -1,0 +1,396 @@
+"""
+Historical context tables for the CGI tab.
+
+These lived in a planning spreadsheet, where they were typed once and then
+went stale. Everything here that CAN be computed from held history IS
+computed, so the tables stay current without anyone maintaining them:
+
+  * S&P drawdown base rates        -- fully derived from SPX back to 1927
+  * Yield-curve inversion cycles   -- fully derived from T10Y3M / T10Y2Y
+  * Fed easing/tightening episodes -- boundaries curated, every market
+                                      column derived
+
+The point of the drawdown table is stated plainly by the user: to see the
+base rates often enough "to make the feelings even keel". So it leads with
+where we are NOW against the distribution, not with the distribution alone.
+
+METHOD NOTE, because it decides the numbers
+-------------------------------------------
+A decline is measured with a zigzag whose reversal threshold EQUALS the depth
+being counted: declines of "at least 10%" are found with a 10% threshold, "at
+least 35%" with a 35% threshold. This matters more than it sounds.
+
+  * Requiring recovery to the prior ALL-TIME high before a new episode can
+    start collapses 2000-2013 into one episode and reports 0.48 pullbacks a
+    year against the conventional 3-4.
+  * Using one small threshold for every depth does the opposite at the deep
+    end: a 5% reversal chops 2007-09's -56.8% into several -20% pieces and
+    finds only one >=35% decline since 1937.
+
+Per-depth thresholds avoid both. Validated against the user's own sheet on the
+post-war window: >=35% 4 vs their 4, 20-34.9% 11 vs 12, 10-14.9% 30 vs 29,
+15-19.9% 10 vs 13. The 5-9.9% bucket is 152 vs their 84 -- at that depth the
+count is very sensitive to the reversal rule, so it is a definition difference,
+not a data disagreement, and both windows are returned so it can be seen.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import math
+import statistics as st
+from typing import Optional
+
+import axis_drivers
+
+SCHEMA_VERSION = 1
+
+# Depth levels, in percent. Each is counted with its own reversal threshold.
+LEVELS = (5, 10, 15, 20, 35)
+BUCKETS = (
+    ("5-9.9%", 5, 10, "pullback"),
+    ("10-14.9%", 10, 15, "technical correction"),
+    ("15-19.9%", 15, 20, "deep correction"),
+    ("20-34.9%", 20, 35, "bear market"),
+    (">=35%", 35, None, "major crash / dislocation"),
+)
+POSTWAR_START = "1946-01-01"
+
+# Fed policy episodes. Boundaries and descriptions are CURATED -- they are
+# historical judgements, not measurements, and come from the user's own sheet.
+# Every market column beside them is computed from held history, so the table
+# cannot drift the way a fully hand-typed one does.
+FED_EPISODES: list[dict] = [
+    {"start": "2001-01-03", "end": "2003-06-25", "action": "Rate cuts: 6.5% -> 1.0%", "chair": "Greenspan", "kind": "easing"},
+    {"start": "2007-09-18", "end": "2008-12-16", "action": "Rate cuts: 5.25% -> 0.25%; QE1 starts", "chair": "Bernanke", "kind": "easing"},
+    {"start": "2008-11-25", "end": "2010-03-31", "action": "QE1: $600bn MBS/Treasuries", "chair": "Bernanke", "kind": "easing"},
+    {"start": "2010-11-03", "end": "2011-06-30", "action": "QE2: $600bn Treasuries", "chair": "Bernanke", "kind": "easing"},
+    {"start": "2012-09-13", "end": "2014-10-31", "action": "QE3: $85bn/mo MBS + Treasuries (open-ended)", "chair": "Bernanke", "kind": "easing"},
+    {"start": "2015-12-16", "end": "2018-12-19", "action": "Gradual hikes: 0.25% -> 2.5%", "chair": "Yellen -> Powell", "kind": "tightening"},
+    {"start": "2019-07-31", "end": "2019-10-30", "action": "Rate cuts: 2.5% -> 1.75%", "chair": "Powell", "kind": "easing"},
+    {"start": "2019-09-17", "end": "2020-03-31", "action": "Repo ops: $120bn/day liquidity injections", "chair": "Powell", "kind": "easing"},
+    {"start": "2020-03-03", "end": "2020-03-15", "action": "Emergency cuts to 0.25%; QE4 announced", "chair": "Powell", "kind": "easing"},
+    {"start": "2020-03-23", "end": "2021-12-31", "action": "Unlimited QE, corporate bonds, pandemic support", "chair": "Powell", "kind": "easing"},
+    {"start": "2022-03-16", "end": "2023-07-26", "action": "Hikes: 0.25% -> 5.25%", "chair": "Powell", "kind": "tightening"},
+    {"start": "2024-03-20", "end": None, "action": "Rate cuts initiated", "chair": "Powell", "kind": "easing"},
+]
+
+# Columns computed at each episode's start. A series that does not reach back
+# that far returns None and renders "unavailable" -- never blank, never carried
+# forward from a later date.
+AT_START = [("dxy", "DXY"), ("us10y", "US10Y"), ("fed_balance_sheet", "WALCL"), ("unemployment", "UNRATE")]
+
+
+# SPX alone is ~24,800 rows and is read by drawdowns(), inversions() AND
+# fed_episodes(). Each _load_close is a full paginated DynamoDB scan of that
+# symbol, so without this the endpoint pays for it three times over.
+_series_cache: dict[str, tuple[list[str], list[float]]] = {}
+
+
+def _series(sym: str) -> tuple[list[str], list[float]]:
+    if sym not in _series_cache:
+        _series_cache[sym] = axis_drivers._load_close(sym)
+    return _series_cache[sym]
+
+
+def _at(dates: list[str], vals: list[float], on: str) -> Optional[float]:
+    """Last value on or before `on`; None if the series starts after it."""
+    import bisect
+    i = bisect.bisect_right(dates, on) - 1
+    return vals[i] if i >= 0 else None
+
+
+def _years(a: str, b: str) -> float:
+    return (dt.date.fromisoformat(b) - dt.date.fromisoformat(a)).days / 365.25
+
+
+def declines(dates: list[str], vals: list[float], thresh: float) -> list[dict]:
+    """Every decline of at least `thresh`% from a local peak. The episode closes
+    once price has rallied `thresh`% off the trough -- NOT when it regains the
+    prior high, which is what lets a decade below an old peak still contain
+    countable pullbacks. See the module docstring for why the threshold tracks
+    the depth."""
+    out: list[dict] = []
+    peak, peak_d = vals[0], dates[0]
+    trough = trough_d = None
+    falling = False
+    for d, v in zip(dates, vals):
+        if not falling:
+            if v >= peak:
+                peak, peak_d = v, d
+            elif (v / peak - 1) * 100 <= -thresh:
+                falling, trough, trough_d = True, v, d
+        else:
+            if v < trough:
+                trough, trough_d = v, d
+            if (v / trough - 1) * 100 >= thresh:
+                out.append({
+                    "peak_date": peak_d, "trough_date": trough_d,
+                    "depth_pct": round((trough / peak - 1) * 100, 1),
+                    "days_to_trough": (dt.date.fromisoformat(trough_d) - dt.date.fromisoformat(peak_d)).days,
+                    "recovered": True,
+                })
+                falling, peak, peak_d = False, v, d
+    if falling:
+        out.append({
+            "peak_date": peak_d, "trough_date": trough_d,
+            "depth_pct": round((trough / peak - 1) * 100, 1),
+            "days_to_trough": (dt.date.fromisoformat(trough_d) - dt.date.fromisoformat(peak_d)).days,
+            "recovered": False,
+        })
+    return out
+
+
+def _rate_block(eps: list[dict], years: float) -> dict:
+    n = len(eps)
+    per_year = n / years if years else 0.0
+    return {
+        "n": n,
+        "per_year": round(per_year, 2),
+        # Poisson: chance of at least one in a year, given the measured rate.
+        # Stated as "at least one", because that is the question being asked.
+        "prob_1plus_per_year": round((1 - math.exp(-per_year)) * 100),
+        "median_days_to_trough": st.median([e["days_to_trough"] for e in eps]) if eps else None,
+        "median_depth_pct": round(st.median([e["depth_pct"] for e in eps]), 1) if eps else None,
+    }
+
+
+def _drawdown_window(dates, vals, label: str) -> dict:
+    years = _years(dates[0], dates[-1])
+    at_level = {t: [e for e in declines(dates, vals, t) if abs(e["depth_pct"]) >= t] for t in LEVELS}
+    at_least = [{"level_pct": t, **_rate_block(at_level[t], years)} for t in LEVELS]
+    buckets = []
+    for name, lo, hi, desc in BUCKETS:
+        sel = [e for e in at_level[lo] if hi is None or abs(e["depth_pct"]) < hi]
+        recent = sorted(sel, key=lambda e: e["trough_date"])[-3:]
+        buckets.append({
+            "bucket": name, "definition": desc, **_rate_block(sel, years),
+            "recent": [{"trough": e["trough_date"], "depth_pct": e["depth_pct"]} for e in reversed(recent)],
+        })
+    return {
+        "label": label,
+        "start": dates[0], "end": dates[-1], "years": round(years, 1),
+        "at_least": at_least,
+        "buckets": buckets,
+        "deepest": sorted(at_level[35], key=lambda e: e["depth_pct"])[:6],
+    }
+
+
+def drawdowns() -> dict:
+    dates, vals = _series("SPX")
+    full = _drawdown_window(dates, vals, "full history")
+    i0 = next((i for i, d in enumerate(dates) if d >= POSTWAR_START), 0)
+    post = _drawdown_window(dates[i0:], vals[i0:], "post-war")
+
+    # Where we are now, so the base rate is anchored to today rather than
+    # floating free. Running high, not all-time high, is the honest reference
+    # for "how far have we fallen".
+    peak, peak_d = vals[0], dates[0]
+    for d, v in zip(dates, vals):
+        if v >= peak:
+            peak, peak_d = v, d
+    now_dd = (vals[-1] / peak - 1) * 100
+    band = next((b for b, lo, hi, _ in BUCKETS if lo <= abs(now_dd) < (hi or 1e9)), None)
+
+    return {
+        "windows": [full, post],
+        "now": {
+            "as_of": dates[-1], "spx": round(vals[-1], 2),
+            "running_high": round(peak, 2), "running_high_date": peak_d,
+            "drawdown_pct": round(now_dd, 2),
+            "band": band or "at or near the high",
+        },
+        "method": ("Each depth is counted with its own reversal threshold; an episode "
+                   "closes when price rallies that same percentage off the trough. "
+                   "The 5-9.9% count is sensitive to that rule -- both windows are "
+                   "shown so the difference is visible."),
+    }
+
+
+def _crossings(sym: str) -> list[dict]:
+    """Zero crossings of a spread: when it inverts and when it de-inverts."""
+    dates, vals = _series(sym)
+    out = []
+    inv_date = None
+    for d, v in zip(dates, vals):
+        if v < 0 and inv_date is None:
+            inv_date = d
+        elif v >= 0 and inv_date is not None:
+            out.append({"inverts": inv_date, "deinverts": d,
+                        "days_inverted": (dt.date.fromisoformat(d) - dt.date.fromisoformat(inv_date)).days})
+            inv_date = None
+    if inv_date is not None:
+        out.append({"inverts": inv_date, "deinverts": None, "days_inverted": None})
+    # Brief dips through zero are noise, not a cycle.
+    out = [c for c in out if c["days_inverted"] is None or c["days_inverted"] >= 30]
+
+    # Merge inversions separated by a short pop back above zero: 1989-05 and
+    # 1989-07, and 2019-05 and 2019-07, are each ONE cycle that un-inverted for
+    # a few weeks, and counting them twice would double-count the sample that
+    # every statistic below is divided by.
+    merged: list[dict] = []
+    for c in out:
+        if merged and merged[-1]["deinverts"] and (
+            dt.date.fromisoformat(c["inverts"]) - dt.date.fromisoformat(merged[-1]["deinverts"])
+        ).days <= 180:
+            prev = merged[-1]
+            prev["deinverts"] = c["deinverts"]
+            prev["days_inverted"] = (
+                (dt.date.fromisoformat(c["deinverts"]) - dt.date.fromisoformat(prev["inverts"])).days
+                if c["deinverts"] else None
+            )
+            prev["re_inverted"] = True
+        else:
+            merged.append(dict(c))
+    return merged
+
+
+def _months(a: str, b: str) -> Optional[float]:
+    if not a or not b:
+        return None
+    return round((dt.date.fromisoformat(b) - dt.date.fromisoformat(a)).days / 30.44, 1)
+
+
+def inversions() -> dict:
+    """Curve inversion cycles, with the SPX peak that followed and how long it
+    took -- the "how many months before the peak" column, derived rather than
+    typed."""
+    spx_d, spx_v = _series("SPX")
+    # A CYCLICAL peak means the start of a real bear, so >=20%. At 15% the
+    # 2000 cycle picked up a secondary high in 2001-05 and reported a tidy
+    # 10-month lead, hiding the fact that the market had already topped in
+    # March 2000 -- BEFORE that curve inverted. An indicator that looks
+    # predictive only because the search started after the event is worse
+    # than no indicator.
+    # >=10%, not >=20%: a hard 20% cut made the 1989 inversion skip the 1990
+    # bear (-19.9%, a tenth of a point short) and match the 2000 top instead,
+    # reporting a 130-month "lead". Threshold cliffs manufacture nonsense, so
+    # take the DEEPEST decline in the window whatever its size and report that
+    # size alongside.
+    # The UNION across thresholds, deduped by peak date. One threshold cannot
+    # serve both ends: at 10% the 2000-2002 bear fragments into several legs so
+    # its real -49% top (2000-03-24) never exists to be matched, and the cycle
+    # gets attributed to a 2002 bear-market-rally high instead; at 20% the 1990
+    # bear (-19.9%) vanishes entirely. Taking every episode found at any
+    # threshold and picking the deepest in the window avoids both.
+    seen: dict[str, dict] = {}
+    for t in (10, 15, 20, 35):
+        for e in declines(spx_d, spx_v, t):
+            if abs(e["depth_pct"]) < t:
+                continue
+            prev = seen.get(e["peak_date"])
+            if prev is None or e["depth_pct"] < prev["depth_pct"]:
+                seen[e["peak_date"]] = e
+    bears = sorted(seen.values(), key=lambda e: e["peak_date"])
+
+    LOOKBACK_M, LOOKAHEAD_M = 12, 36
+
+    def nearest_peak(inv: str) -> Optional[dict]:
+        """The market top belonging to this inversion: the deepest decline whose
+        peak falls within 12 months BEFORE and 36 months AFTER the inversion.
+
+        Bounded on BOTH sides deliberately. Searching only forward, unbounded,
+        lets an inversion claim credit for a bear a decade later; allowing the
+        peak to precede is what exposes a curve that inverted only after the
+        market had already topped, which is what 2000 and 2022 both did."""
+        d0 = dt.date.fromisoformat(inv)
+        lo = (d0 - dt.timedelta(days=int(LOOKBACK_M * 30.44))).isoformat()
+        hi = (d0 + dt.timedelta(days=int(LOOKAHEAD_M * 30.44))).isoformat()
+        cand = [e for e in bears if lo <= e["peak_date"] <= hi]
+        return min(cand, key=lambda e: e["depth_pct"]) if cand else None
+
+    out = {}
+    for label, sym in (("10y-3m", "T10Y3M"), ("10y-2y", "T10Y2Y")):
+        rows = []
+        for c in _crossings(sym):
+            nxt = nearest_peak(c["inverts"])
+            lag = _months(c["inverts"], nxt["peak_date"]) if nxt else None
+            rows.append({
+                **c,
+                "spx_peak_date": nxt["peak_date"] if nxt else None,
+                # Signed: positive = the curve inverted BEFORE the peak (a lead),
+                # negative = it inverted after the market had already topped.
+                "months_inversion_to_peak": lag,
+                "led_the_peak": (lag is not None and lag > 0),
+                "spx_trough_date": nxt["trough_date"] if nxt else None,
+                "drawdown_pct": nxt["depth_pct"] if nxt else None,
+                "no_match": nxt is None,
+            })
+        out[label] = rows
+    return out
+
+
+def fed_episodes() -> dict:
+    """The curated episode boundaries, with every market column computed."""
+    series = {name: _series(sym) for name, sym in AT_START}
+    spx_d, spx_v = _series("SPX")
+    today = dt.date.today().isoformat()
+    rows = []
+    for ep in FED_EPISODES:
+        start, end = ep["start"], ep["end"] or today
+        window = [(d, v) for d, v in zip(spx_d, spx_v) if start <= d <= end]
+        peak = max(window, key=lambda x: x[1]) if window else None
+        trough = min(window, key=lambda x: x[1]) if window else None
+        row = {
+            **ep,
+            "ongoing": ep["end"] is None,
+            "duration_days": (dt.date.fromisoformat(end) - dt.date.fromisoformat(start)).days,
+            "spx_peak": {"date": peak[0], "value": round(peak[1], 2)} if peak else None,
+            "spx_trough": {"date": trough[0], "value": round(trough[1], 2)} if trough else None,
+        }
+        for name, sym in AT_START:
+            d, v = series[name]
+            val = _at(d, v, start)
+            # None means the series does not reach back this far. The page must
+            # print "unavailable" rather than a blank that reads as zero.
+            row[f"{name}_at_start"] = round(val, 2) if val is not None else None
+            row[f"{name}_source"] = sym
+        rows.append(row)
+    return {"episodes": rows, "computed_columns": [s for _, s in AT_START] + ["SPX"]}
+
+
+LOOKBACK_M, LOOKAHEAD_M = 12, 36
+
+
+def joins() -> dict:
+    """The association the user asked for: how often an inversion was followed
+    by a real drawdown, and at what lag.
+
+    Roughly six cycles. This is association on a handful of observations, not
+    cause, and it says so.
+    """
+    inv = inversions()
+    out = {}
+    for label, rows in inv.items():
+        done = [r for r in rows if r["months_inversion_to_peak"] is not None]
+        led = [r for r in done if r["led_the_peak"]]
+        lags = [r["months_inversion_to_peak"] for r in led]
+        dds = [r["drawdown_pct"] for r in done if r["drawdown_pct"] is not None]
+        out[label] = {
+            "window": f"deepest decline peaking within {LOOKBACK_M}m before and {LOOKAHEAD_M}m after the inversion",
+            "n_cycles": len(rows),
+            "n_matched_to_a_decline": len(done),
+            # Only cycles where the curve inverted BEFORE the top can be called
+            # a lead. Averaging the others in would manufacture a lead time.
+            "n_led_the_peak": len(led),
+            "median_months_lead": round(st.median(lags), 1) if lags else None,
+            "range_months_lead": [min(lags), max(lags)] if lags else None,
+            "median_drawdown_pct": round(st.median(dds), 1) if dds else None,
+        }
+    return {
+        "inversion_to_drawdown": out,
+        "caveat": ("Six or so cycles per curve. Every figure carries its n. This is "
+                   "association, not cause, and the sample is too small to be "
+                   "anything else."),
+    }
+
+
+def build_context() -> dict:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "drawdowns": drawdowns(),
+        "inversions": inversions(),
+        "fed_episodes": fed_episodes(),
+        "joins": joins(),
+    }

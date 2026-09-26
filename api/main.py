@@ -27,6 +27,7 @@ import signals_data
 import watchlists as watchlists_data
 import regime_matrix
 import release_calendar
+import context_tables
 
 load_dotenv()
 
@@ -366,3 +367,15 @@ def calendar(days: int = 45):
     """
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     return {"as_of": today, "timeline": release_calendar.timeline(start=today, days=days)}
+
+
+@app.get("/api/context", dependencies=[Depends(require_bearer_token)])
+def context():
+    """Historical context tables for the CGI tab: S&P drawdown base rates,
+    yield-curve inversion cycles, and Fed policy episodes.
+
+    These lived in a planning spreadsheet where they were typed once and went
+    stale. Everything computable is computed here, so they stay current.
+    24h cache: the inputs go back to 1927 and only the tail ever moves.
+    """
+    return cache.get_or_fetch("context_tables", context_tables.build_context)
