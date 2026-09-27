@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import calendar
 import datetime
+import math
 import os
 import re
 from typing import Optional
@@ -55,6 +56,17 @@ FOMC_2026 = [
     datetime.date(2026, 9, 16),
     datetime.date(2026, 10, 28),
 ]
+
+# Bumped whenever the shape or the METHOD of the fomc_probabilities payload
+# changes, and read by cache.SCHEMA_FROM_MODULE so the bump lands in the same
+# edit as the change rather than in a table in another file.
+SCHEMA_VERSION = 2
+
+# The most a monthly contract quote may be magnified to back out a
+# post-meeting rate before we stop trusting the result and reach for the
+# following month's contract instead. 3.0 means "no more than a third of the
+# month may be doing all the work".
+LEVER_CAP = 3.0
 
 _MONTH_CODE = {
     1: "F", 2: "G", 3: "H", 4: "J", 5: "K", 6: "M",
@@ -203,6 +215,53 @@ def fetch_spreads() -> list[dict]:
 
 # ── fomc_meeting_calendar (7d TTL) ────────────────────────────────────
 
+_MONTHS = {m: i for i, m in enumerate(
+    ["January", "February", "March", "April", "May", "June", "July",
+     "August", "September", "October", "November", "December"], start=1)}
+
+_PANEL_RE = re.compile(r'<a id="[^"]*">\s*(\d{4})\s+FOMC Meetings', re.I)
+_ROW_RE = re.compile(
+    r'fomc-meeting__month[^>]*>\s*<strong>\s*([A-Za-z]+)\s*</strong>.*?'
+    r'fomc-meeting__date[^>]*>\s*([0-9]{1,2})(?:\s*[-–]\s*([0-9]{1,2}))?',
+    re.I | re.S,
+)
+
+
+def _parse_fomc_panels(html: str) -> list[datetime.date]:
+    """Parse the year panels on fomccalendars.htm.
+
+    This is the only way to see FUTURE meetings. The YYYYMMDD regex below
+    matches statement and minutes links, which exist only for meetings that
+    have ALREADY happened -- so on its own it can never find the next one,
+    which is the entire point of the calendar. That is why the December 8-9
+    2026 meeting was missing: it has no statement to link to yet.
+
+    A meeting is a one- or two-day range and the decision lands on the LAST
+    day, which is the day the futures have to be split around. A range whose
+    second day is smaller than its first (January "31-1") runs into the next
+    month.
+    """
+    out: list[datetime.date] = []
+    panels = list(_PANEL_RE.finditer(html))
+    for i, pm in enumerate(panels):
+        year = int(pm.group(1))
+        seg = html[pm.end(): panels[i + 1].start() if i + 1 < len(panels) else len(html)]
+        for row in _ROW_RE.finditer(seg):
+            month_name, d1, d2 = row.group(1), int(row.group(2)), row.group(3)
+            month = _MONTHS.get(month_name.capitalize())
+            if not month:
+                continue
+            day = int(d2) if d2 else d1
+            y, m = year, month
+            if d2 and int(d2) < d1:          # e.g. January "31-1" -> February 1
+                y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+            try:
+                out.append(datetime.date(y, m, day))
+            except ValueError:
+                continue
+    return out
+
+
 def _scrape_fomc_dates() -> list[datetime.date]:
     try:
         resp = requests.get(
@@ -210,16 +269,19 @@ def _scrape_fomc_dates() -> list[datetime.date]:
             timeout=10,
         )
         resp.raise_for_status()
-        raw = re.findall(r"20[2-9][0-9][01][0-9][0-3][0-9]", resp.text)
-        dates = []
-        for s in sorted(set(raw)):
-            try:
-                dates.append(datetime.date(int(s[:4]), int(s[4:6]), int(s[6:8])))
-            except ValueError:
-                continue
-        return dates
-    except Exception:
+    except Exception:  # noqa: BLE001 -- caller falls back to the hardcoded list
         return []
+
+    dates = set(_parse_fomc_panels(resp.text))
+    # Past meetings also appear as YYYYMMDD statement links; keep them as a
+    # cross-check so a panel-markup change degrades to the old behaviour
+    # rather than to nothing.
+    for s in re.findall(r"20[2-9][0-9][01][0-9][0-3][0-9]", resp.text):
+        try:
+            dates.add(datetime.date(int(s[:4]), int(s[4:6]), int(s[6:8])))
+        except ValueError:
+            continue
+    return sorted(dates)
 
 
 def _fetch_fomc_meeting_calendar() -> list[dict]:
@@ -231,8 +293,15 @@ def _fetch_fomc_meeting_calendar() -> list[dict]:
     candidates = list(FOMC_2026)
     scraped = _scrape_fomc_dates()
     known = set(candidates)
+    # Take EVERY scraped date the hardcoded list does not already have, not
+    # just post-2026 ones. The old `d.year > 2026` filter meant the hardcoded
+    # FOMC_2026 acted as a ceiling rather than a fallback, and it was missing
+    # the Dec 8-9 2026 meeting -- so that meeting could never appear at all.
+    # It also left the calendar ending in October, which in turn stopped
+    # plan_contracts from proving November empty and forced the Oct 28 meeting
+    # onto its own 10.3x-levered contract. One stale list, two wrong numbers.
     for d in scraped:
-        if d.year > 2026 and d not in known:
+        if d not in known:
             candidates.append(d)
             known.add(d)
     return [{"date": d.isoformat()} for d in sorted(candidates)]
@@ -274,22 +343,121 @@ def _futures_ticker(year: int, month: int) -> str:
     return f"ZQ{_MONTH_CODE[month]}{str(year)[-2:]}.CBT"
 
 
+def _next_month(year: int, month: int) -> tuple[int, int]:
+    return (year + 1, 1) if month == 12 else (year, month + 1)
+
+
+def _lever(mtg: datetime.date) -> float:
+    """How much the meeting-month contract has to be magnified to back out the
+    post-meeting rate. A meeting on the 28th of a 31-day month leaves 3 days,
+    so the quote is multiplied by 10.3x -- and so is any error in it."""
+    total = calendar.monthrange(mtg.year, mtg.month)[1]
+    days_after = total - mtg.day
+    return float("inf") if days_after <= 0 else total / days_after
+
+
+def plan_contracts(meetings: list[datetime.date]) -> dict[datetime.date, dict]:
+    """Which contract prices which meeting, and how.
+
+    The monthly ZQ contract settles on the AVERAGE effective rate over its
+    month. For a meeting on day D of a T-day month, the post-meeting rate has
+    to be de-averaged out of the (T-D) days that follow it:
+
+        post = (avg*T - pre*D) / (T - D)
+
+    which multiplies the quote -- and every basis point of noise in it -- by
+    T/(T-D). Late in the month that factor is enormous: Oct 28 in a 31-day
+    month is 10.3x, Jul 29 is 15.5x. A 1bp wobble then becomes ~40 percentage
+    points of implied probability, which is how a hike probability can look
+    like a market view when it is quote noise.
+
+    CME's own method sidesteps this: when the meeting sits near the end of the
+    month, read the post-meeting rate straight off the NEXT month's contract,
+    whose entire month is post-meeting. No de-averaging, no lever.
+
+    That substitution is only exact if the next month holds no meeting of its
+    own. We only claim that when the meeting calendar demonstrably EXTENDS
+    past the next month -- otherwise "no meeting next month" may just mean our
+    list stops there, and a silent wrong answer is worse than a levered one.
+    """
+    known = sorted(meetings)
+    horizon = known[-1] if known else None
+    by_month = {(m.year, m.month) for m in known}
+
+    plan: dict[datetime.date, dict] = {}
+    for mtg in known:
+        lever = _lever(mtg)
+        ny, nm = _next_month(mtg.year, mtg.month)
+        next_has_meeting = (ny, nm) in by_month
+        # Does our calendar actually cover the next month, or does it merely
+        # stop before it? Only the former lets absence mean absence.
+        covered = horizon is not None and (horizon.year, horizon.month) > (ny, nm)
+
+        if lever > LEVER_CAP and not next_has_meeting and covered:
+            plan[mtg] = {
+                "year": ny, "month": nm, "method": "next_month",
+                "lever": 1.0, "own_lever": round(lever, 2), "confident": True,
+            }
+        else:
+            confident = lever <= LEVER_CAP
+            plan[mtg] = {
+                "year": mtg.year, "month": mtg.month, "method": "de_average",
+                "lever": round(lever, 2), "own_lever": round(lever, 2),
+                "confident": confident,
+            }
+    return plan
+
+
 def fetch_futures_for_meetings(meetings: list[datetime.date]) -> dict[datetime.date, float]:
-    """{meeting_date: implied_avg_rate_%} from ZQ monthly contracts via yfinance."""
+    """{meeting_date: implied_avg_rate_%} from the ZQ contract that PRICES that
+    meeting -- which is not always the meeting's own month. See plan_contracts."""
     import yfinance as yf
 
+    plan = plan_contracts(meetings)
+    quotes: dict[str, Optional[float]] = {}
     result: dict[datetime.date, float] = {}
-    for mtg in meetings:
-        ticker = _futures_ticker(mtg.year, mtg.month)
-        try:
-            hist = yf.Ticker(ticker).history(period="5d")
-            if hist.empty:
-                continue
-            price = float(hist["Close"].iloc[-1])
-            result[mtg] = round(100.0 - price, 6)
-        except Exception:
+    for mtg in sorted(meetings):
+        p = plan.get(mtg)
+        if not p:
             continue
+        ticker = _futures_ticker(p["year"], p["month"])
+        if ticker not in quotes:
+            try:
+                hist = yf.Ticker(ticker).history(period="5d")
+                quotes[ticker] = None if hist.empty else float(hist["Close"].iloc[-1])
+            except Exception:  # noqa: BLE001 -- reported as unavailable below
+                quotes[ticker] = None
+        price = quotes[ticker]
+        if price is not None:
+            result[mtg] = round(100.0 - price, 6)
     return result
+
+
+def _buckets(post_rate: float, base: float, increment: float) -> list[dict]:
+    """Split the implied move across whole 25bp steps.
+
+    A post-meeting rate 40bp above the base is not "a hike"; it is 60% one
+    hike and 40% two. The old code clamped to a single step and hard-zeroed
+    the opposite direction, so a second cut could never appear at all no
+    matter what the strip said."""
+    n = (post_rate - base) / increment
+    lo = math.floor(n)
+    hi = lo + 1
+    w_hi = n - lo
+    out = []
+    for steps, w in ((lo, 1.0 - w_hi), (hi, w_hi)):
+        if w > 1e-9:
+            out.append({"steps": steps, "prob": round(w, 4),
+                        "label": _move_label(steps, increment)})
+    return out
+
+
+def _move_label(steps: int, increment: float) -> str:
+    if steps == 0:
+        return "Hold"
+    bp = int(round(abs(steps) * increment * 100))
+    word = "Hike" if steps > 0 else "Cut"
+    return f"{word} {bp}bp"
 
 
 def compute_fomc_probs(
@@ -299,8 +467,23 @@ def compute_fomc_probs(
     lower_target: float,
     futures: dict[datetime.date, float],
 ) -> list[dict]:
-    """CME FedWatch methodology -- verbatim port of fomc_data.compute_fomc_probs,
-    adapted to take/return plain dicts instead of a DataFrame."""
+    """CME FedWatch methodology.
+
+    Three things this does that the first port did not:
+
+      1. Prices late-month meetings off the FOLLOWING contract rather than
+         de-averaging three days of the current one (see plan_contracts).
+      2. Carries the expected rate FORWARD. The base for each meeting is the
+         level expected to prevail going INTO it, not today's target, so a
+         second cut can show up as a second cut. The old code compared every
+         meeting to today's midpoint, which made cumulative paths impossible
+         to express.
+      3. Splits the implied move across whole 25bp steps instead of clamping
+         to one and hard-zeroing the other direction.
+
+    A meeting whose contract could not be read is returned with
+    available=False rather than dropped, so it cannot vanish silently.
+    """
     if effr_records:
         current_effr = float(sorted(effr_records, key=lambda r: r["date"])[-1]["value"])
     else:
@@ -308,56 +491,73 @@ def compute_fomc_probs(
 
     midpoint = (upper_target + lower_target) / 2
     increment = 0.25
+    plan = plan_contracts(meetings)
 
     results = []
     pre_rate = current_effr
+    # The base is the TARGET midpoint expected going into each meeting, held on
+    # the 25bp grid. pre_rate tracks the expected EFFR, which drifts off the
+    # grid as probabilities mix; the base must stay on it.
+    base = midpoint
 
     for mtg in sorted(meetings):
+        p = plan.get(mtg, {})
+        ticker = _futures_ticker(p.get("year", mtg.year), p.get("month", mtg.month))
+
         if mtg not in futures:
+            results.append({
+                "date": mtg.isoformat(), "ticker": ticker, "available": False,
+                "reason": f"no quote for {ticker}",
+                "method": p.get("method"), "lever": p.get("lever"),
+                "base_rate": round(base, 4),
+            })
             continue
 
         implied_avg = futures[mtg]
-        total_days = calendar.monthrange(mtg.year, mtg.month)[1]
-        days_before = mtg.day
-        days_after = total_days - mtg.day
+        method = p.get("method", "de_average")
 
-        if days_after <= 0:
+        if method == "next_month":
+            # The whole contract month is post-meeting: read it straight off.
             post_rate = implied_avg
         else:
-            post_rate = (implied_avg * total_days - pre_rate * days_before) / days_after
+            total_days = calendar.monthrange(mtg.year, mtg.month)[1]
+            days_before = mtg.day
+            days_after = total_days - mtg.day
+            if days_after <= 0:
+                post_rate = implied_avg
+            else:
+                post_rate = (implied_avg * total_days - pre_rate * days_before) / days_after
 
-        current_mid = midpoint
+        buckets = _buckets(post_rate, base, increment)
+        p_cut = round(sum(b["prob"] for b in buckets if b["steps"] < 0), 4)
+        p_hold = round(sum(b["prob"] for b in buckets if b["steps"] == 0), 4)
+        p_hike = round(sum(b["prob"] for b in buckets if b["steps"] > 0), 4)
 
-        if post_rate <= current_mid:
-            p_cut = min(1.0, max(0.0, (current_mid - post_rate) / increment))
-            p_hold = 1.0 - p_cut
-            p_hike = 0.0
-        else:
-            p_hike = min(1.0, max(0.0, (post_rate - current_mid) / increment))
-            p_hold = 1.0 - p_hike
-            p_cut = 0.0
-
-        if p_hold >= max(p_cut, p_hike):
-            most_likely, prob_ml = "Hold", p_hold
-        elif p_cut > p_hike:
-            most_likely, prob_ml = "Cut 25bp", p_cut
-        else:
-            most_likely, prob_ml = "Hike 25bp", p_hike
-
+        top = max(buckets, key=lambda b: b["prob"])
         results.append({
             "date": mtg.isoformat(),
-            "ticker": _futures_ticker(mtg.year, mtg.month),
+            "ticker": ticker,
+            "available": True,
+            "method": method,
+            "lever": p.get("lever"),
+            "own_lever": p.get("own_lever"),
+            "confident": p.get("confident", True),
             "implied_avg": round(implied_avg, 4),
+            "base_rate": round(base, 4),
             "pre_rate": round(pre_rate, 4),
             "post_rate": round(post_rate, 4),
-            "p_cut": round(p_cut, 4),
-            "p_hold": round(p_hold, 4),
-            "p_hike": round(p_hike, 4),
-            "most_likely": most_likely,
-            "prob_most_likely": round(prob_ml, 4),
+            "buckets": buckets,
+            "p_cut": p_cut,
+            "p_hold": p_hold,
+            "p_hike": p_hike,
+            "most_likely": top["label"],
+            "prob_most_likely": top["prob"],
         })
 
-        pre_rate = p_cut * (current_mid - increment) + p_hold * current_mid + p_hike * (current_mid + increment)
+        # Carry forward: the expected EFFR is the probability-weighted level,
+        # while the base moves to the single most likely grid point.
+        pre_rate = sum(b["prob"] * (base + b["steps"] * increment) for b in buckets)
+        base = base + top["steps"] * increment
 
     return results
 

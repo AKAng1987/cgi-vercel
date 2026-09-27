@@ -16,18 +16,53 @@ export interface FomcMeeting {
   date: string;
 }
 
-export interface FomcProbabilityRow {
+export interface FomcBucket {
+  /** Whole 25bp steps from the rate expected going INTO this meeting.
+   *  0 = hold, +1 = one hike, -2 = two cuts. */
+  steps: number;
+  prob: number;
+  label: string;
+}
+
+/** A meeting whose pricing contract could not be read. Returned rather than
+ *  dropped, so a missing quote shows as a gap instead of a shorter table. */
+export interface FomcUnavailableRow {
   date: string;
   ticker: string;
+  available: false;
+  reason: string;
+  method: string | null;
+  lever: number | null;
+  base_rate: number;
+}
+
+export interface FomcPricedRow {
+  date: string;
+  ticker: string;
+  available: true;
+  /** "next_month" = read straight off the following contract, whose whole
+   *  month is post-meeting. "de_average" = split out of this month's. */
+  method: "next_month" | "de_average";
+  /** How much the quote is magnified to get post_rate. 1.0 under next_month. */
+  lever: number;
+  /** The lever this meeting's OWN month would have required, kept so the
+   *  page can say what was avoided. */
+  own_lever: number;
+  confident: boolean;
   implied_avg: number;
+  /** The target midpoint expected going INTO this meeting, on the 25bp grid. */
+  base_rate: number;
   pre_rate: number;
   post_rate: number;
+  buckets: FomcBucket[];
   p_cut: number;
   p_hold: number;
   p_hike: number;
   most_likely: string;
   prob_most_likely: number;
 }
+
+export type FomcProbabilityRow = FomcPricedRow | FomcUnavailableRow;
 
 export interface FomcProbabilities {
   upper_target: number;

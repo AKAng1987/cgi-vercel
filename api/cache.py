@@ -81,6 +81,7 @@ TTL_HOURS: dict[str, float] = {
 SCHEMA_FROM_MODULE: dict[str, str] = {
     "countries": "country_data:SCHEMA_VERSION",
     "context_tables": "context_tables:SCHEMA_VERSION",
+    "fomc_probabilities": "macro_data:SCHEMA_VERSION",
 }
 
 
