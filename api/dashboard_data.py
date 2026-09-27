@@ -17,6 +17,8 @@ from collections import OrderedDict
 from io import BytesIO
 from typing import Optional
 
+import time
+
 import boto3
 
 REGION = "ap-southeast-1"
@@ -125,8 +127,28 @@ def _pct(current, ref) -> Optional[float]:
     return None
 
 
-def list_dashboard_dates() -> list[str]:
+# Short memo over the workbook listing.
+#
+# list_dashboard_dates paginates EVERY nightly workbook ever written, on
+# every /api/live request, in order to take element [0]. LIVE and TAPE both
+# call it, and TAPE awaits nothing else -- measured, /tape took 4.35s while
+# a cached endpoint on the same instance answered in 0.67s.
+#
+# A new workbook appears once a night (the dashboard generator runs 00:30
+# UTC), so minutes of staleness on this list cannot matter; the list is only
+# used to find the newest date, and the workbook behind it is separately
+# ETag-checked on every load.
+_DATES_TTL_SECONDS = 300.0
+_dates_cache: dict[str, object] = {"at": 0.0, "dates": None}
+
+
+def list_dashboard_dates(force: bool = False) -> list[str]:
     """Ported from app.py:213. Returns ISO date strings, descending."""
+    if not force:
+        cached = _dates_cache["dates"]
+        if cached is not None and (time.monotonic() - float(_dates_cache["at"])) < _DATES_TTL_SECONDS:
+            return cached  # type: ignore[return-value]
+
     s3 = boto3.client("s3", region_name=REGION)
     paginator = s3.get_paginator("list_objects_v2")
     dates = []
@@ -136,7 +158,9 @@ def list_dashboard_dates() -> list[str]:
             m = re.match(r"dashboard_(\d{4}-\d{2}-\d{2})\.xlsx$", fname)
             if m:
                 dates.append(m.group(1))
-    return sorted(dates, reverse=True)
+    out = sorted(dates, reverse=True)
+    _dates_cache["at"], _dates_cache["dates"] = time.monotonic(), out
+    return out
 
 
 # In-process memo of the parsed workbook, keyed by date and invalidated by
@@ -168,6 +192,36 @@ def load_workbook(date_str: str):
     wb = openpyxl.load_workbook(BytesIO(obj["Body"].read()), data_only=True)
     _wb_cache.update(key=key, etag=etag, wb=wb, last_modified=obj["LastModified"])
     return wb, obj["LastModified"]
+
+
+# The PARSED records, memoised by the same ETag as the workbook itself.
+#
+# _wb_cache already avoided re-downloading and re-opening the .xlsx, but
+# parse_hud / parse_compass / parse_grid still re-walked the worksheets on
+# every request -- roughly 200 HUD tickers of cell-by-cell iteration, on an
+# instance with 0.1 CPU. Caching the workbook but not the parse meant paying
+# the interpreted half of the cost every time.
+#
+# Keyed on the ETag, not a timer, so a new nightly workbook is picked up on
+# the very next request and never any later.
+_parsed_cache: dict[str, object] = {"key": None, "etag": None, "value": None}
+
+
+def _parsed_workbook(date_str: str):
+    """(wb, last_modified, hud_records, compass_tuple, grid_tuple)."""
+    wb, last_modified = load_workbook(date_str)
+    key, etag = _wb_cache["key"], _wb_cache["etag"]
+    if (_parsed_cache["key"] == key and _parsed_cache["etag"] == etag
+            and _parsed_cache["value"] is not None):
+        hud, compass, grid = _parsed_cache["value"]  # type: ignore[misc]
+        return wb, last_modified, hud, compass, grid
+
+    names = wb.sheetnames  # [HUD, COMPASS, GRID, CLOCK]
+    hud = parse_hud(wb[names[0]])
+    compass = parse_compass(wb[names[1]])
+    grid = parse_grid(wb[names[2]])
+    _parsed_cache.update(key=key, etag=etag, value=(hud, compass, grid))
+    return wb, last_modified, hud, compass, grid
 
 
 def parse_hud(ws) -> list[dict]:
@@ -420,12 +474,9 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
         raise RuntimeError("No dashboard reports found in S3")
     resolved_date = date_str if date_str in available else available[0]
 
-    wb, last_modified = load_workbook(resolved_date)
-    sheet_names = wb.sheetnames  # [HUD, COMPASS, GRID, CLOCK]
-
-    hud_records = parse_hud(wb[sheet_names[0]])
-    compass_metrics, compass_q, compass_since = parse_compass(wb[sheet_names[1]])
-    grid_metrics, grid_q, grid_since = parse_grid(wb[sheet_names[2]])
+    wb, last_modified, hud_records, compass, grid = _parsed_workbook(resolved_date)
+    compass_metrics, compass_q, compass_since = compass
+    grid_metrics, grid_q, grid_since = grid
 
     compass_stale_note = None
     if compass_q is None:
