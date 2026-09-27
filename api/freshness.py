@@ -53,7 +53,7 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # 2: cross-check looks the AWS side up by its own symbol name
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
@@ -98,16 +98,21 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
     import macro_data
 
     rows = []
-    for symbol in sorted(macro_data.FRED_IN_PRICE_HISTORY):
-        ours = _newest(symbol)
+    for fred_id, aws_symbol in sorted(macro_data.FRED_IN_PRICE_HISTORY.items()):
+        # The names differ -- FRED calls it DGS10, the nightly Lambda stores
+        # it as US10Y -- which is why FRED_IN_PRICE_HISTORY is a map. Looking
+        # the AWS side up by the FRED id reported all seven Treasury tenors
+        # as "missing" when they were present under their own names.
+        ours = _newest(aws_symbol)
         row: dict = {
-            "symbol": symbol,
+            "symbol": fred_id,
+            "aws_symbol": aws_symbol,
             "ours_date": ours["date"] if ours else None,
             "ours_value": ours["value"] if ours else None,
             "age_days": _age_days(ours["date"], today) if ours else None,
         }
         try:
-            df = macro_data._fred_live(symbol)
+            df = macro_data._fred_live(fred_id)
             if df.empty:
                 raise RuntimeError("no observations")
             last = df.iloc[-1]
@@ -121,7 +126,8 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
 
         if ours is None:
             row["status"] = "missing"
-            row["detail"] = "registered as copied, but nothing in price-history"
+            row["detail"] = (f"declared as copied to {aws_symbol}, but nothing is "
+                             f"in price-history under that name")
         elif row["ours_date"] < row["source_date"]:
             row["status"] = "behind"
             row["detail"] = (f"FRED has {row['source_date']}, we hold "
