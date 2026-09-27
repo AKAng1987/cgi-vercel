@@ -98,25 +98,20 @@ function InRegime({ regime, cell, excess }: { regime: string; cell: RegimeCell |
 
 /** The FX leg states the direction in words, taken from the server. Deriving
  *  it here from the sign would be one more place for the inversion to happen. */
-/** Direction in words, taken from the server. Every pair is quoted USDXXX, so
- *  a positive return is DOLLAR strength — deriving that here from a bare sign
- *  is how an FX read gets silently inverted. */
-function FxDirection({ cell, live }: { cell: RegimeFxCell | null; live?: TenorReturns | null }) {
-  if (!cell) return null;
-  const strong = cell.local === "stronger";
-  const local = cell.symbol.replace(/^USD/, "");
-  // The window is printed, not implied. "PHP stronger" alone does not say
-  // whether that is today, this quarter or this year — which is the question
-  // it prompted the first time it shipped.
-  const win = live?.direction_tenor;
-  return (
-    <span className={strong ? "text-emerald-400" : cell.local === "weaker" ? "text-rose-400" : "text-slate-400"}
-          title={live?.direction_note ?? cell.note}>
-      {local} {strong ? "stronger" : cell.local === "weaker" ? "weaker" : "flat"}
-      {win && <span className="text-slate-500"> over {win}</span>}
-    </span>
-  );
-}
+/* FxDirection removed 2026-09-27.
+ *
+ * It printed "PHP stronger", and the word was derived from the
+ * REGIME-CONDITIONED average (-0.17% across 8 past C3G3 occurrences) while the
+ * "over 3m" suffix added the day before pointed at the LIVE 3-month return
+ * (+1.9%). Those have opposite signs, so the label contradicted itself: USDPHP
+ * up means more pesos per dollar, which is the peso WEAKER, and the page said
+ * stronger.
+ *
+ * Rather than repair it, it is gone. The signed, coloured, per-tenor returns
+ * already carry the direction, and the quoting convention is stated once in
+ * the footer. A words-layer over a number that is already unambiguous only
+ * adds a place for the sign to invert.
+ */
 
 /** Exporter vs importer decides whether a strong local currency helps or
  *  hurts — so the two legs above can only be combined once this is known.
@@ -167,10 +162,7 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
       <td className="py-2 pr-3 space-y-0.5">
         {c.currency ? (
           <>
-            <span className="flex items-baseline gap-x-2">
-              <Instrument symbol={c.currency.symbol} live={c.market?.fx ?? null} />
-              <FxDirection cell={c.currency} live={c.market?.fx ?? null} />
-            </span>
+            <Instrument symbol={c.currency.symbol} live={c.market?.fx ?? null} />
             <Rets r={c.market?.fx ?? null} />
             <InRegime regime={regime} cell={c.currency} />
           </>
@@ -485,7 +477,6 @@ export default async function ForeignPage({
             {m.extra_pairs.map((p) => (
               <li key={p.symbol} className="flex items-baseline gap-x-2">
                 <span className="font-medium text-slate-200">{p.symbol}</span>
-                <FxDirection cell={p} />  {/* no live leg here; the regime avg follows */}
                 <span className="text-[0.68rem]">
                   <span className="text-slate-500">in {m.regime}: </span>
                   {n(p.avg_return_pct, 2)}
@@ -499,7 +490,12 @@ export default async function ForeignPage({
       )}
 
       <footer className="space-y-1 border-t border-slate-800 pt-3 text-[0.72rem] text-slate-500">
-        <p>{m.fx_convention}</p>
+        <p>
+          {m.fx_convention} So a <span className="text-rose-400">positive</span> USDXXX return
+          is the local currency <strong>weaker</strong>, and a{" "}
+          <span className="text-emerald-400">negative</span> one is the local currency{" "}
+          <strong>stronger</strong>. USDPHP 62.40 &rarr; 63.00 is more pesos per dollar: a weaker peso.
+        </p>
         <p>{m.caveat}</p>
         {m.edge_caveat && <p className="text-amber-300/80">{m.edge_caveat}</p>}
         <p>

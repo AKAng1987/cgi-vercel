@@ -45,7 +45,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 7  # 7: M2 added, with the money-vs-credit gap
+SCHEMA_VERSION = 8  # 8: FX word-label removed (it contradicted the tenor returns)
 
 BENCH = "SPY"
 
