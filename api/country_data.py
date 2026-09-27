@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 9  # 9: per-country blocks split out of the regime-keyed path
+SCHEMA_VERSION = 10  # 10: cb_assets added; YoY withheld across known series breaks
 
 BENCH = "SPY"
 
@@ -77,6 +77,10 @@ MACRO = [
     ("loan_growth_yoy", "{c}_LOAN_GROWTH_YOY", "%", "loan growth YoY", "rate"),
     ("loans_level", "{c}_LOANS_PRIVATE", "local", "loans to private sector", "level"),
     ("m2", "{c}_M2", "local", "M2 money supply", "level"),
+    # The other half of Howell's pair. Still a PROXY: no collateral
+    # multiplier, no repo or dealer data, no cross-border weighting -- just
+    # the central bank's own balance sheet in its own currency.
+    ("cb_assets", "{c}_CB_ASSETS", "local", "central bank balance sheet", "level"),
 ]
 
 # Curve tenors, in the existing US03MY / US01Y / US02Y / US10Y naming so they
@@ -157,6 +161,33 @@ def _cadence_name(dates: list[str]) -> Optional[str]:
     return {252: "daily", 12: "monthly", 4: "quarterly", 1: "annual"}.get(n) if n else None
 
 
+# Known LEVEL DISCONTINUITIES: dates where a source redefined a series, so the
+# step between the two sides is a change of definition rather than of the
+# economy. A year-on-year figure computed ACROSS one of these is not a
+# measurement of anything.
+#
+# KR_M2 falls 10.3% between 2026-01 (4,568.7tn KRW) and 2026-02 (4,099.5tn).
+# Korean M2 does not contract a tenth in a month; every other month in the
+# series back to 2019 is smooth. Left alone this would have printed a large
+# false monetary contraction for Korea for twelve months, and dragged the
+# money-vs-credit gap with it -- which is the number the gap exists to make
+# readable.
+SERIES_BREAKS: dict[str, list[tuple[str, str]]] = {
+    "KR_M2": [("2026-02-01",
+               "the source redefined Korean M2 here: the level drops 10.3% in "
+               "one month against a series that is otherwise smooth back to "
+               "2019, so this is a definitional step, not a contraction")],
+}
+
+
+def _break_between(sym: str, start: str, end: str) -> Optional[str]:
+    """The reason, if a known redefinition falls inside (start, end]."""
+    for at, why in SERIES_BREAKS.get(sym, []):
+        if start < at <= end:
+            return why
+    return None
+
+
 def _macro_point(sym: str, kind: str = "rate") -> Optional[dict]:
     """Latest level, the change since the PRIOR PRINT, and YoY where the series
     is a level rather than an already-YoY rate."""
@@ -180,7 +211,12 @@ def _macro_point(sym: str, kind: str = "rate") -> Optional[dict]:
         prev = vals[-1 - bpy]
         out["yoy_lag_bars"] = bpy       # shown so the lag can be checked, not trusted
         out["a_year_ago"] = prev
-        if kind == "level":
+        broke = _break_between(sym, dates[-1 - bpy], dates[-1])
+        if broke:
+            # Withheld rather than printed with a caveat: a number on the page
+            # gets read, and a footnote saying to ignore it does not undo that.
+            out["yoy_unavailable"] = broke
+        elif kind == "level":
             if prev:
                 out["yoy_pct"] = round((vals[-1] / prev - 1) * 100, 2)
         else:

@@ -860,6 +860,11 @@ export interface MacroPoint {
   // They are different fields on purpose so the UI cannot print one as the other.
   yoy_pp?: number;
   yoy_pct?: number;
+  /** Set instead of yoy_pp/yoy_pct when a known series redefinition falls
+   *  inside the year-ago window, with the reason. Withheld rather than
+   *  printed with a caveat: a number on the page gets read, and a footnote
+   *  telling you to ignore it does not undo that. */
+  yoy_unavailable?: string;
 }
 export interface TenorReturns {
   symbol: string;
@@ -901,6 +906,7 @@ export interface CountryMacro {
   loan_growth_yoy?: MacroPoint;
   loans_level?: MacroPoint;
   m2?: MacroPoint;
+  cb_assets?: MacroPoint;
   /** Howell's two halves against each other. Money growing faster than credit
    *  is liquidity that is not transmitting into lending; the reverse is
    *  lending outrunning the money base. Neither leg shows this alone. */

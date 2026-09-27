@@ -184,6 +184,9 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
             {c.macro.m2 && (
               <div><span className="text-slate-500">M2 </span><Macro p={c.macro.m2} /></div>
             )}
+            {c.macro.cb_assets && (
+              <div><span className="text-slate-500">CB b/s </span><Macro p={c.macro.cb_assets} /></div>
+            )}
             {/* The gap, not just the two legs. Money outrunning credit is
                 liquidity that is not reaching lending, and that is the fact
                 neither M2 nor loan growth states on its own. */}
@@ -307,6 +310,13 @@ function Macro({ p }: { p?: MacroPoint }) {
       {yoy && (
         <span className={`tabular-nums text-[0.7rem] ${yv! > 0 ? "text-emerald-400" : yv! < 0 ? "text-rose-400" : "text-slate-500"}`}>
           {yoy}
+        </span>
+      )}
+      {/* A withheld YoY says so. Rendering nothing would look like the series
+          simply has no year of history, which is a different fact. */}
+      {p.yoy_unavailable && (
+        <span className="text-[0.62rem] text-amber-400" title={p.yoy_unavailable}>
+          YoY n/a — series break
         </span>
       )}
     </span>
