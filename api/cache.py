@@ -40,6 +40,7 @@ TTL_HOURS: dict[str, float] = {
     "gdp": 48.0,
     "gdp_nowcast": 24.0,
     "gdp_nowcast_freshness": 6.0,
+    "freshness": 6.0,
     "inflation": 24.0,
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d
@@ -89,6 +90,7 @@ SCHEMA_FROM_MODULE: dict[str, str] = {
     # engage and the page still showed the levered October contract.
     "fomc_probabilities": "macro_data:SCHEMA_VERSION",
     "fomc_meeting_calendar": "macro_data:SCHEMA_VERSION",
+    "freshness": "freshness:SCHEMA_VERSION",
 }
 
 
@@ -130,6 +132,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "gdp": 1,
     "gdp_nowcast": 1,
     "gdp_nowcast_freshness": 1,
+    "freshness": 1,
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,

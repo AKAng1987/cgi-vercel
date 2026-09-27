@@ -17,6 +17,7 @@ import series_write
 import cot_data
 import policy_watch
 import notes_data
+import freshness
 import fundamentals_data
 import brief_data
 import customer_links
@@ -203,6 +204,25 @@ def notes():
     except Exception:
         active = []
     return notes_data.build_notes_response(active_themes=active)
+
+
+@app.get("/api/freshness")
+def freshness_endpoint():
+    """Is our data BEHIND ITS SOURCE -- not whether it is old.
+
+    Unauthenticated for the same reason as /api/watchlists and
+    /api/universe: the refresh routine that consumes this cannot hold a
+    secret, and it exposes nothing beyond dates already visible on the
+    pages.
+
+    Two halves. The FRED half is a real comparison the API can make itself,
+    because it can call FRED. The manual half is a worklist, because the
+    source there is a TradingView MCP the API cannot reach -- so it reports
+    what it holds and the routine does the comparing. Age is reported as
+    context and never as a verdict: PHCBBS has been 238 days old and
+    entirely correct since BSP stopped publishing in February.
+    """
+    return cache.get_or_fetch("freshness", freshness.build_freshness)
 
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])

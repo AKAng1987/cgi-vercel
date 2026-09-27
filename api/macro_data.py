@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import calendar
 import datetime
+import logging
 import math
 import os
 import re
@@ -33,6 +34,8 @@ from typing import Optional
 
 import pandas as pd
 import requests
+
+_logger = logging.getLogger(__name__)
 
 FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
 
@@ -82,7 +85,122 @@ def _secret(key: str) -> str:
         return os.environ.get(key, "")
 
 
+# FRED series we ALSO hold in price-history, because a nightly Lambda
+# (fred-data-updater, 00:05 UTC) maintains them there. FRED remains the
+# source of truth and is always tried first -- it is the origin, the values
+# are identical (checked 2026-09-27: CPIAUCSL 334.131, GDP 32,486.066,
+# T10Y2Y 0.36, GDPNOW 5.0163 on both sides, same dates), and from Render's
+# Oregon instance St. Louis is a domestic hop while our own DynamoDB is in
+# Singapore.
+#
+# The copy exists for one thing FRED cannot provide: being up when FRED is
+# not. FRED's endpoints throttle hard, and a throttled request is
+# indistinguishable from a dead series -- earlier in this build that
+# ambiguity nearly had scripts/backfill_foreign_curves.py record healthy
+# Japanese and Korean yields as discontinued. Without a fallback, a throttle
+# that outlasts the cache TTL leaves the tab with nothing while the same
+# numbers sit in DynamoDB.
+# {FRED series id -> the symbol the AWS copy is stored under}.
+#
+# A MAP, not a set, because the names differ: macro_data asks FRED for
+# DGS10 while the nightly Lambda stores the same series as US10Y. A set
+# would have made the fallback look wired up and quietly find nothing.
+#
+# Membership was verified against price-history on 2026-09-27, not assumed
+# from the metrics-source registry -- DFEDTARL is the reason. It is what
+# fetch_fed_funds_range needs for the lower bound of the target range, and
+# it has ZERO rows: never registered, never copied. See _fed_lower_fallback.
+#
+# The copy exists for one thing FRED cannot provide: being up when FRED is
+# not. FRED's endpoints throttle hard, and a throttled request is
+# indistinguishable from a dead series -- earlier in this build that
+# ambiguity nearly had scripts/backfill_foreign_curves.py record healthy
+# Japanese and Korean yields as discontinued. FRED stays primary regardless:
+# it is the origin, and the values agree exactly (checked 2026-09-27:
+# CPIAUCSL 334.131, GDP 32,486.066, T10Y2Y 0.36, GDPNOW 5.0163 on both
+# sides), so the copy buys availability and nothing else.
+FRED_IN_PRICE_HISTORY: dict[str, str] = {
+    "DFEDTARU": "DFEDTARU",
+    "DFF": "DFF",
+    "GDPNOW": "GDPNOW",
+    "GDP": "GDP",
+    "DRTSCILM": "DRTSCILM",
+    "CPIAUCSL": "CPIAUCSL",
+    "PCEPILFE": "PCEPILFE",
+    "T10Y2Y": "T10Y2Y",
+    "T10Y3M": "T10Y3M",
+    "BAA10Y": "BAA10Y",
+    # Treasury curve: stored under the us_treasury naming, not FRED's.
+    "DGS3MO": "US03MY",
+    "DGS1": "US01Y",
+    "DGS2": "US02Y",
+    "DGS5": "US05Y",
+    "DGS10": "US10Y",
+    "DGS20": "US20Y",
+    "DGS30": "US30Y",
+    # No copy, so no fallback: DGS1MO, DGS3, DGS7, DFEDTARL.
+}
+
+# Which path served the last read of each series, so the page can say. Not a
+# cache -- purely a record of provenance for the most recent fetch.
+FRED_SOURCE_USED: dict[str, str] = {}
+
+
+def _from_price_history(series_id: str, observation_start: Optional[str] = None) -> pd.DataFrame:
+    """The AWS copy of a FRED series, same shape as _fred_get returns."""
+    import boto3
+
+    ddb = boto3.client("dynamodb", region_name="ap-southeast-1")
+    kwargs: dict = dict(
+        TableName="cmon-stage-backend-price-history",
+        ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
+        ProjectionExpression="#d, #c",
+    )
+    if observation_start:
+        kwargs["KeyConditionExpression"] = "#s = :s AND #d >= :d"
+        kwargs["ExpressionAttributeValues"] = {":s": {"S": series_id},
+                                               ":d": {"S": observation_start}}
+    else:
+        kwargs["KeyConditionExpression"] = "#s = :s"
+        kwargs["ExpressionAttributeValues"] = {":s": {"S": series_id}}
+
+    rows = []
+    while True:
+        page = ddb.query(**kwargs)
+        for it in page["Items"]:
+            if "close" in it and "N" in it["close"]:
+                rows.append({"date": pd.Timestamp(it["date"]["S"]),
+                             "value": float(it["close"]["N"])})
+        if "LastEvaluatedKey" not in page:
+            break
+        kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    return pd.DataFrame(sorted(rows, key=lambda r: r["date"]))
+
+
 def _fred_get(series_id: str, observation_start: Optional[str] = None) -> pd.DataFrame:
+    """FRED first, always. Falls back to the AWS copy only if FRED fails AND
+    a copy exists -- never silently, and never in preference."""
+    try:
+        df = _fred_live(series_id, observation_start)
+        if not df.empty:
+            FRED_SOURCE_USED[series_id] = "fred"
+            return df
+        raise RuntimeError(f"FRED returned no observations for {series_id}")
+    except Exception as exc:  # noqa: BLE001 -- the fallback is the whole point
+        if series_id not in FRED_IN_PRICE_HISTORY:
+            FRED_SOURCE_USED[series_id] = f"fred_failed:{exc}"
+            raise
+        _logger.warning("[fred] %s failed (%s); falling back to price-history",
+                        series_id, exc)
+        df = _from_price_history(FRED_IN_PRICE_HISTORY[series_id], observation_start)
+        if df.empty:
+            FRED_SOURCE_USED[series_id] = f"both_failed:{exc}"
+            raise
+        FRED_SOURCE_USED[series_id] = "price_history_fallback"
+        return df
+
+
+def _fred_live(series_id: str, observation_start: Optional[str] = None) -> pd.DataFrame:
     params: dict = {
         "series_id": series_id,
         "api_key": _secret("FRED_API_KEY"),
@@ -115,13 +233,42 @@ def _df_to_records(df: pd.DataFrame) -> list[dict]:
 
 # ── fed_funds_range (12h TTL) ─────────────────────────────────────────
 
+# Width of the FOMC's target range, used only to reconstruct the lower bound
+# when FRED is unreachable. The range has been exactly 25bp wide for every
+# day DFEDTARU has existed (2008-12 onwards), so this is a reconstruction of
+# a known constant rather than an estimate -- but it IS an assumption, so the
+# payload says when it was used.
+TARGET_RANGE_WIDTH_PP = 0.25
+
+
 def fetch_fed_funds_range() -> list[dict]:
-    """DFEDTARU (upper) + DFEDTARL (lower), FRED-only, 5-year lookback."""
+    """DFEDTARU (upper) + DFEDTARL (lower), 5-year lookback.
+
+    DFEDTARL has no AWS copy -- it was never registered in metrics-source and
+    has zero rows in price-history (verified 2026-09-27). So when FRED is
+    down, the upper bound falls back and the lower bound cannot. Rather than
+    let that take the whole target range -- and with it the midpoint that
+    every FOMC probability is measured against -- the lower bound is
+    reconstructed from the upper, and each row records that it was.
+    """
     start_5y = (datetime.datetime.now() - datetime.timedelta(days=365 * 5)).strftime("%Y-%m-%d")
     upper_df = _fred_get("DFEDTARU", observation_start=start_5y).rename(columns={"value": "upper"})
-    lower_df = _fred_get("DFEDTARL", observation_start=start_5y).rename(columns={"value": "lower"})
+    try:
+        lower_df = _fred_get("DFEDTARL", observation_start=start_5y).rename(columns={"value": "lower"})
+        derived = False
+    except Exception as exc:  # noqa: BLE001 -- see docstring
+        _logger.warning("[fred] DFEDTARL unavailable (%s) and has no AWS copy; "
+                        "reconstructing the lower bound as upper - %.2f",
+                        exc, TARGET_RANGE_WIDTH_PP)
+        lower_df = upper_df.rename(columns={"upper": "lower"}).copy()
+        lower_df["lower"] = lower_df["lower"] - TARGET_RANGE_WIDTH_PP
+        derived = True
     df = pd.merge(upper_df, lower_df, on="date", how="outer").sort_values("date").reset_index(drop=True)
-    return _df_to_records(df)
+    records = _df_to_records(df)
+    if derived:
+        for r in records:
+            r["lower_is_derived"] = True
+    return records
 
 
 # ── treasury_curve (6h TTL) ───────────────────────────────────────────
