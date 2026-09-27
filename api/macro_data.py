@@ -761,6 +761,71 @@ def fetch_gdp_nowcast() -> list[dict]:
     return _df_to_records(df)
 
 
+def _fred_series_meta(series_id: str) -> dict:
+    """FRED's own metadata for a series -- crucially `last_updated`.
+
+    Needed because an observation's DATE and its freshness are different
+    facts, and conflating them is how a healthy series gets declared dead.
+    GDPNOW is dated by quarter: the row for 2026-07-01 is the CURRENT Q3
+    nowcast, not a stale one. A flat "older than 14 days" rule against the
+    observation date would blank it for roughly 85% of every quarter.
+
+    What actually goes stale is the UPDATE. Verified against FRED directly
+    on 2026-09-27: GDPNOW's last-modified was 2026-09-25, two days old,
+    while its newest observation was dated 2026-07-01 -- 88 days old. Those
+    two numbers are why this reads last_updated and not the date column.
+    """
+    params = {"series_id": series_id, "api_key": _secret("FRED_API_KEY"),
+              "file_type": "json"}
+    resp = requests.get("https://api.stlouisfed.org/fred/series",
+                        params=params, timeout=30)
+    resp.raise_for_status()
+    rows = resp.json().get("seriess") or []
+    return rows[0] if rows else {}
+
+
+def fetch_gdp_nowcast_freshness() -> dict:
+    """Is the GDPNow nowcast actually being updated?
+
+    Judged against the cadence of its RELEASES (Atlanta Fed revises it
+    roughly weekly through a quarter), never against the quarter its
+    observations are dated to. cache.is_stale reports the verdict together
+    with its inputs, so the call can be checked rather than believed.
+    """
+    import cache
+
+    try:
+        meta = _fred_series_meta("GDPNOW")
+    except Exception as exc:  # noqa: BLE001 -- unavailable is not stale
+        return {"available": False,
+                "why": f"could not read FRED series metadata: {exc}"}
+
+    raw = meta.get("last_updated")          # "2026-09-25 09:31:02-05"
+    if not raw:
+        return {"available": False, "why": "FRED returned no last_updated"}
+    last_updated_date = raw.split(" ")[0]
+
+    verdict = cache.is_stale(last_updated_date, "weekly")
+    newest_obs = None
+    try:
+        recs = cache.get_or_fetch("gdp_nowcast", fetch_gdp_nowcast)
+        if recs:
+            newest_obs = recs[-1]["date"]
+    except Exception:  # noqa: BLE001 -- the freshness read must not fail the page
+        pass
+
+    return {
+        "available": True,
+        "last_updated": raw,
+        "newest_observation": newest_obs,
+        **verdict,
+        "note": ("Measured against how often GDPNow is REVISED, not against the "
+                 "quarter its rows are dated to. The newest row is dated to the "
+                 "start of the quarter being nowcast, so it is always months "
+                 "'old' by date while being days old in fact."),
+    }
+
+
 # ── inflation (24h TTL) ──────────────────────────────────────────────────
 
 BLS_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
@@ -938,6 +1003,8 @@ def build_growth_response() -> dict:
         "challenger": cache.get_or_fetch("challenger", fetch_challenger),
         "gdp": cache.get_or_fetch("gdp", fetch_gdp),
         "gdp_nowcast": cache.get_or_fetch("gdp_nowcast", fetch_gdp_nowcast),
+        "gdp_nowcast_freshness": cache.get_or_fetch(
+            "gdp_nowcast_freshness", fetch_gdp_nowcast_freshness),
         "inflation": cache.get_or_fetch("inflation", fetch_inflation),
         "pce": cache.get_or_fetch("pce", fetch_pce),
     }

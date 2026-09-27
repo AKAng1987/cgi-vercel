@@ -161,6 +161,7 @@ export interface GrowthResponse {
   challenger: LendingStandardPoint[]; // {date, value} in thousands
   gdp: GdpBlock;
   gdp_nowcast: GdpNowcastPoint[];
+  gdp_nowcast_freshness?: GdpNowcastFreshness;
   inflation: InflationPoint[];
   pce: PcePoint[];
 }
@@ -173,4 +174,23 @@ export interface DotPlotRow {
 
 export interface DotPlotResponse {
   dot_plot: DotPlotRow[];
+}
+
+/** Whether GDPNow is still being REVISED -- which is a different question
+ *  from how its rows are dated. Its newest row is dated to the start of the
+ *  quarter being nowcast, so it is always months "old" by date while being
+ *  days old in fact. Judging it by the date column would blank a healthy
+ *  series for most of every quarter. */
+export interface GdpNowcastFreshness {
+  available: boolean;
+  why?: string;
+  last_updated?: string;
+  newest_observation?: string | null;
+  stale?: boolean;
+  age_days?: number;
+  cadence?: string;
+  expected_every_days?: number;
+  stale_after_days?: number;
+  reason?: string;
+  note?: string;
 }

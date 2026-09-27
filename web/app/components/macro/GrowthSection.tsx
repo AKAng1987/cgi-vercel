@@ -51,6 +51,7 @@ export async function GrowthSection() {
   const latestGdp = gdpQ[gdpQ.length - 1];
   const priorGdp = gdpQ.length > 1 ? gdpQ[gdpQ.length - 2] : null;
   const gdpNowSorted = [...data.gdp_nowcast].sort((a, b) => a.date.localeCompare(b.date));
+  const fresh = data.gdp_nowcast_freshness;
 
   const cutoff5y = latestGdp ? yearsAgo(latestGdp.date, 5) : "2018-01-01";
   const gdp3a = gdpQ.filter((p) => p.date >= cutoff5y);
@@ -238,6 +239,28 @@ export async function GrowthSection() {
               },
             ]}
           />
+        )}
+        {/* Freshness is about the last REVISION, not the row's date. GDPNow's
+            newest row is dated to the start of the quarter it is nowcasting,
+            so it reads as months old while being days old in fact -- stating
+            both stops the date being mistaken for staleness. */}
+        {fresh && (
+          fresh.available ? (
+            <p className={`mt-1 text-[0.66rem] leading-relaxed ${fresh.stale ? "text-amber-400" : "text-slate-500"}`}>
+              {fresh.stale ? "⚠ " : ""}
+              Atlanta Fed last revised this {fresh.age_days}d ago
+              {fresh.last_updated && ` (${fresh.last_updated.split(" ")[0]})`}
+              {fresh.stale
+                ? ` — overdue against its ${fresh.cadence} revision cadence, which expects one every ~${fresh.expected_every_days}d.`
+                : ` — within tolerance for a ${fresh.cadence} revision cadence.`}
+              {fresh.newest_observation &&
+                ` The newest row is dated ${fresh.newest_observation} because GDPNow is dated to the quarter it is nowcasting, not to the day it was computed.`}
+            </p>
+          ) : (
+            <p className="mt-1 text-[0.66rem] text-slate-600">
+              Revision age unknown — {fresh.why}
+            </p>
+          )
         )}
       </section>
 

@@ -39,6 +39,7 @@ TTL_HOURS: dict[str, float] = {
     "challenger": 24.0,  # macro: Challenger job cuts from price-history (manual monthly load)
     "gdp": 48.0,
     "gdp_nowcast": 24.0,
+    "gdp_nowcast_freshness": 6.0,
     "inflation": 24.0,
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d
@@ -128,6 +129,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "challenger": 1,
     "gdp": 1,
     "gdp_nowcast": 1,
+    "gdp_nowcast_freshness": 1,
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
