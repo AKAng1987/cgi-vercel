@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { PricedIn } from "../components/fundamentals/PricedIn";
 import { FundamentalsResponse, FundRollup } from "@/lib/types";
 import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
 
@@ -254,6 +255,20 @@ export default async function FundamentalsPage() {
         <p className="mt-2">
           {d.source} · {d.method}
         </p>
+      </section>
+      <section className="mt-8">
+        <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
+          What is priced in
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-slate-400">
+          Two readings of the same multiple, side by side. The{" "}
+          <span className="text-slate-200">grid</span> is your own table of justified multiples by
+          revenue growth and domicile 10Y &mdash; a rough anchor of unknown provenance, kept because
+          it is the number you already reason with. The{" "}
+          <span className="text-slate-200">reverse DCF</span> solves for the growth the price
+          actually requires. Where the two disagree, that is information about the grid.
+        </p>
+        <PricedIn />
       </section>
     </main>
   );

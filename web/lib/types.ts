@@ -901,3 +901,38 @@ export interface CountryMacro {
   loan_growth_yoy?: MacroPoint;
   loans_level?: MacroPoint;
 }
+
+/** /api/priced-in -- the two readings of what a multiple implies. */
+export interface PricedInGrid {
+  justified_multiple: number;
+  growth_pct: number;
+  rate_pct: number;
+  extrapolated: boolean;
+  extrapolation_note?: string | null;
+  provenance: string;
+}
+
+export interface PricedInDcf {
+  implied_growth_pct?: number;
+  multiple?: number;
+  assumptions?: {
+    risk_free_pct: number;
+    equity_risk_premium_pct: number;
+    discount_rate_pct: number;
+    fade_years: number;
+    terminal_growth_pct: number;
+  };
+  note?: string;
+  error?: string;
+}
+
+export interface PricedInResponse {
+  grid: PricedInGrid;
+  reverse_dcf: PricedInDcf | null;
+  priced_in_gap: { implied_minus_actual_pp: number; reads_as: string } | null;
+  actual_multiple: number | null;
+  actual_multiple_note?: string;
+  grid_vs_dcf?: { grid_multiple: number; actual_multiple: number; note: string };
+  schema_version: number;
+  error?: string;
+}
