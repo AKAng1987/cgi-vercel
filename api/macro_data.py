@@ -60,7 +60,7 @@ FOMC_2026 = [
 # Bumped whenever the shape or the METHOD of the fomc_probabilities payload
 # changes, and read by cache.SCHEMA_FROM_MODULE so the bump lands in the same
 # edit as the change rather than in a table in another file.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # The most a monthly contract quote may be magnified to back out a
 # post-meeting rate before we stop trusting the result and reach for the

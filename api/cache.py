@@ -81,7 +81,13 @@ TTL_HOURS: dict[str, float] = {
 SCHEMA_FROM_MODULE: dict[str, str] = {
     "countries": "country_data:SCHEMA_VERSION",
     "context_tables": "context_tables:SCHEMA_VERSION",
+    # BOTH fomc keys point at the same constant. The scrape fix changed the
+    # CALENDAR, and the probability method depends on how far that calendar
+    # reaches -- bumping only fomc_probabilities left a 168h-TTL calendar
+    # holding the old 7-date list, so the new method silently could not
+    # engage and the page still showed the levered October contract.
     "fomc_probabilities": "macro_data:SCHEMA_VERSION",
+    "fomc_meeting_calendar": "macro_data:SCHEMA_VERSION",
 }
 
 
