@@ -53,7 +53,7 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 2  # 2: cross-check looks the AWS side up by its own symbol name
+SCHEMA_VERSION = 3  # 3: compare on the latest COMMON date; leads_source is healthy
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
@@ -81,6 +81,20 @@ def _newest(symbol: str) -> Optional[dict]:
     if "close" not in it:
         return None
     return {"date": it["date"]["S"], "value": float(it["close"]["N"])}
+
+
+def _value_on(symbol: str, date_iso: str) -> Optional[float]:
+    """Our value for one exact date, or None if we hold no row for it."""
+    resp = _ddb.get_item(
+        TableName=PRICE_TABLE,
+        Key={"symbol": {"S": symbol}, "date": {"S": date_iso}},
+        ProjectionExpression="#c",
+        ExpressionAttributeNames={"#c": "close"},
+    )
+    item = resp.get("Item")
+    if not item or "close" not in item:
+        return None
+    return float(item["close"]["N"])
 
 
 def _age_days(date_iso: str, today: Optional[dt.date] = None) -> int:
@@ -128,23 +142,50 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
             row["status"] = "missing"
             row["detail"] = (f"declared as copied to {aws_symbol}, but nothing is "
                              f"in price-history under that name")
-        elif row["ours_date"] < row["source_date"]:
+            rows.append(row)
+            continue
+
+        if row["ours_date"] < row["source_date"]:
             row["status"] = "behind"
             row["detail"] = (f"FRED has {row['source_date']}, we hold "
-                             f"{row['ours_date']} -- the nightly copy is behind")
-        elif row["ours_date"] > row["source_date"]:
-            row["status"] = "ahead"
-            row["detail"] = "we hold a date FRED does not -- investigate before trusting"
-        elif abs(row["ours_value"] - row["source_value"]) > VALUE_TOLERANCE:
+                             f"{row['ours_date']} -- the copy is behind")
+            rows.append(row)
+            continue
+
+        # Compare on the latest date BOTH sides have, not on each side's own
+        # newest. Several of these are not copies of FRED at all: the seven
+        # Treasury tenors come from the US Treasury's own feed, which
+        # publishes a day earlier than FRED's DGS series. Comparing newest
+        # against newest reported all seven as a defect when the values agree
+        # exactly wherever both have a row -- 2026-09-24 both 5.18, 2026-09-23
+        # both 5.11 -- and we simply have tomorrow's row first.
+        common = _value_on(aws_symbol, row["source_date"])
+        row["compared_on"] = row["source_date"]
+        if common is None:
+            row["status"] = "no_common_date"
+            row["detail"] = (f"we hold {row['ours_date']} but no row for FRED's "
+                             f"{row['source_date']}, so there is nothing to compare")
+        elif abs(common - row["source_value"]) > VALUE_TOLERANCE:
             row["status"] = "value_disagrees"
-            row["detail"] = (f"same date {row['ours_date']}, different value: "
-                             f"ours {row['ours_value']} vs FRED {row['source_value']} "
-                             f"-- likely a revision the copy never went back for")
+            row["ours_value_on_common"] = common
+            row["detail"] = (f"on {row['source_date']} we hold {common} and FRED has "
+                             f"{row['source_value']} -- one of them is wrong, or it is "
+                             f"a revision the copy never went back for")
+        elif row["ours_date"] > row["source_date"]:
+            row["status"] = "leads_source"
+            row["detail"] = (f"agrees with FRED on {row['source_date']}, and we also "
+                             f"hold {row['ours_date']} which FRED has not published. "
+                             f"Expected where the AWS side is fed by a faster provider "
+                             f"than FRED -- the Treasury tenors come from us_treasury "
+                             f"direct. Not a defect.")
         else:
             row["status"] = "current"
         rows.append(row)
 
-    bad = [r for r in rows if r["status"] not in ("current", "source_unavailable")]
+    # leads_source is healthy: values agree where both have a row and we
+    # simply have one the source has not published yet.
+    OK = ("current", "leads_source", "source_unavailable")
+    bad = [r for r in rows if r["status"] not in OK]
     return {
         "series": rows,
         "n_checked": len(rows),
