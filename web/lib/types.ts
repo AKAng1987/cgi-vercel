@@ -264,6 +264,22 @@ export interface MarkovResponse {
   current: { compass: number; grid: number };
   upcoming: UpcomingRelease[];
   flip_rates: Record<MarkovAxis, Record<"0" | "1", FlipBasis>>;
+  /** The growth-axis flip rate split by WHICH of BEA's three estimates it
+   *  was. The pooled P(flip) treats all twelve GDP releases a year as
+   *  equally likely to move the axis; this measures whether they are. */
+  gdp_flip_by_estimate?: {
+    by_estimate: Record<string, {
+      n_releases: number;
+      n_flips: number;
+      flip_rate: number | null;
+      thin: boolean;
+      use: "pooled" | "own";
+      effective_rate: number | null;
+    }>;
+    pooled: { n_releases: number; n_flips: number; flip_rate: number | null };
+    min_n_for_own_rate: number;
+    note: string;
+  };
   event_log: MarkovEvent[];
   pending: { date: string; type: ReleaseType; axis: MarkovAxis; model: "compass" | "grid"; quadrant_before: number; state_before: 0 | 1; settle_by: string }[];
   summary: {

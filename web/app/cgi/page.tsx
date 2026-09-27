@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { GdpFlipByEstimate } from "../components/markov/GdpFlipByEstimate";
 import { ContextResponse, MarkovResponse } from "@/lib/types";
 import { UpcomingReleases } from "../components/markov/UpcomingReleases";
 import { EventLog } from "../components/markov/EventLog";
@@ -53,11 +54,14 @@ export default async function CgiPage() {
 
       <DailyRuns runs={data.runs} latest={data.latest_daily} nDaily={data.n_daily_rows} />
 
+      <GdpFlipByEstimate d={data.gdp_flip_by_estimate} />
+
       <div className="mt-6 text-[0.68rem] leading-relaxed text-slate-600">
         <p>
           <span className="text-slate-500">P(flip):</span> flips ÷ expected releases while in that
           state, where expected = dwell-days ÷ 365 × releases-per-year (FOMC 8, SLOOS 4, CPI 12,
-          GDP 12 — advance, second and third estimates all count). Clamped to [0.02, 0.98].
+          GDP 12 — advance, second and third estimates all count, which the table above tests
+          rather than assumes). Clamped to [0.02, 0.98].
           {" "}<span className="text-slate-500">Brier:</span> (p − outcome)², 0 is perfect, 0.25 is
           coin-flip. <span className="text-slate-500">Hit</span> is the coarse companion at the 0.5 line.
         </p>
