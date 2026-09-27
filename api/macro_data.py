@@ -296,6 +296,39 @@ def _months_ago(d: datetime.date, months: int) -> datetime.date:
     return datetime.date(year, month0 + 1, 1) + datetime.timedelta(days=d.day - 1)
 
 
+# Chart history is thinned at the ENDPOINT, the same place and for the same
+# reason _trim_treasury_curve thins tenors: the cache keeps everything, only
+# what crosses the wire shrinks.
+#
+# /macro was shipping ~12,000 raw datapoints -- 20 years of DAILY T10Y2Y and
+# HY spread, plus 20 years of daily 10Y -- embedded in the Next flight
+# payload and duplicated again in the SSR HTML, ~470KB for three line charts.
+# At the width these render, 5,000 points is roughly seven per pixel.
+#
+# Recent history stays at full daily resolution because that is the part
+# anyone reads a level off; older history is sampled weekly, which is
+# visually identical at screen resolution for a slow-moving yield series.
+# The newest point is always kept, so the last value on the chart is the
+# real last value and not whatever the stride happened to land on.
+DOWNSAMPLE_RECENT_DAYS = 730
+DOWNSAMPLE_STRIDE = 5          # trading days -> roughly weekly
+
+
+def _downsample(records: list[dict],
+                recent_days: int = DOWNSAMPLE_RECENT_DAYS,
+                stride: int = DOWNSAMPLE_STRIDE) -> list[dict]:
+    """Full resolution inside `recent_days`, every `stride`th row before it."""
+    if not records:
+        return records
+    rows = sorted(records, key=lambda r: r["date"])
+    cutoff = (datetime.date.fromisoformat(rows[-1]["date"])
+              - datetime.timedelta(days=recent_days)).isoformat()
+    out = [r for i, r in enumerate(rows) if r["date"] >= cutoff or i % stride == 0]
+    if out[-1]["date"] != rows[-1]["date"]:
+        out.append(rows[-1])
+    return out
+
+
 def _trim_treasury_curve(records: list[dict]) -> dict:
     """Endpoint-layer trim (2026-09-07, Task 1b): the frontend
     (YieldCurvePanel.tsx) only ever reads 3 snapshot rows (latest/6M
@@ -328,11 +361,11 @@ def _trim_treasury_curve(records: list[dict]) -> dict:
         for label, row in [("Latest", latest), ("6M Ago", ago_6m), ("1Y Ago", ago_1y)]
         if row is not None
     ]
-    history_10y = [
+    history_10y = _downsample([
         {"date": r["date"], "value": r["10Y"]}
         for r in sorted_records
         if r.get("10Y") is not None
-    ]
+    ])
     return {"snapshot": snapshot, "history_10y": history_10y}
 
 
@@ -1145,7 +1178,7 @@ def build_rates_response() -> dict:
         "fomc_meeting_calendar": meetings_iso,
         "fomc_probabilities": got["fomc_probabilities"],
         "treasury_curve": _trim_treasury_curve(got["treasury_curve"]),
-        "spreads": got["spreads"],
+        "spreads": _downsample(got["spreads"]),
     }
 
 
