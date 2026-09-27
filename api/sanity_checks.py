@@ -157,6 +157,10 @@ _GENERIC_24H_KEYS = frozenset({"inflation", "gdp_nowcast"})
 
 
 def check(cache_key: str, value: Any) -> bool:
+    # A variant key ("countries@3-3") gets the same check as its family, so
+    # adding a variant cannot silently opt out of validation by falling
+    # through to the permissive default at the bottom.
+    cache_key = cache_key.split("@", 1)[0]
     if cache_key in _NO_CHECK_KEYS:
         return True
     if cache_key in _GENERIC_24H_KEYS:

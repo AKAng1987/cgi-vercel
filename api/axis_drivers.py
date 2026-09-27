@@ -34,6 +34,8 @@ import bisect
 import datetime as dt
 from typing import Optional
 
+import time
+
 import boto3
 
 import markov_data as md
@@ -152,7 +154,45 @@ _ddb = boto3.client("dynamodb", region_name=REGION)
 
 # ── data ─────────────────────────────────────────────────────────────────────
 
+# In-process memo of a symbol's close history.
+#
+# _load_close fully paginates a symbol's ENTIRE price history on every call,
+# and by now almost every tab calls it, several times. COUNTRIES was the
+# clearest case: _rs() loads SPY once per country, so SPY's whole history was
+# re-downloaded 20 times in one request, and each country ETF was loaded
+# twice (once by _returns, once by _rs). Measured, a COUNTRIES page for a
+# non-default regime took 100 seconds.
+#
+# context_tables.py had already worked around this with its own local
+# _series_cache, which is the tell: the fix belongs here, at the single place
+# every caller goes through, not once per module.
+#
+# A TTL rather than an ETag (which is what backtest_data uses for its blob):
+# there is no single object to HEAD here -- a symbol's history is a DynamoDB
+# key range, and a HEAD-equivalent would be another query. Prices are written
+# once a day by the updater Lambda, so a few minutes of staleness within one
+# page load is not observable, while re-reading the same history 20 times in
+# one request very much is.
+_CLOSE_TTL_SECONDS = 300.0
+_CLOSE_CACHE_MAX = 400
+_close_cache: dict[str, tuple[float, tuple[list[str], list[float]]]] = {}
+
+
 def _load_close(symbol: str) -> tuple[list[str], list[float]]:
+    hit = _close_cache.get(symbol)
+    if hit is not None and (time.monotonic() - hit[0]) < _CLOSE_TTL_SECONDS:
+        return hit[1]
+    result = _load_close_uncached(symbol)
+    if len(_close_cache) >= _CLOSE_CACHE_MAX:
+        # Drop the oldest rather than growing without bound; the working set
+        # is the HUD universe plus a few country series, well under the cap.
+        oldest = min(_close_cache, key=lambda k: _close_cache[k][0])
+        _close_cache.pop(oldest, None)
+    _close_cache[symbol] = (time.monotonic(), result)
+    return result
+
+
+def _load_close_uncached(symbol: str) -> tuple[list[str], list[float]]:
     dates, closes = [], []
     kwargs = dict(
         TableName=PRICE_TABLE,

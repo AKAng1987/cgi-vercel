@@ -35,6 +35,7 @@ statements and blurring them is the easiest mistake this page could make.
 from __future__ import annotations
 
 import datetime as dt
+import time
 import statistics as st
 from typing import Optional
 
@@ -45,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 8  # 8: FX word-label removed (it contradicted the tenor returns)
+SCHEMA_VERSION = 9  # 9: per-country blocks split out of the regime-keyed path
 
 BENCH = "SPY"
 
@@ -289,59 +290,109 @@ def _rs(sym: str) -> Optional[dict]:
         return None
 
 
+# In-process memo of the per-country blocks.
+#
+# Everything in _country_block depends only on the COUNTRY, never on the
+# regime: policy rate, CPI, GDP, loan growth, M2, the curve, and the ETF/FX
+# returns are the same numbers whichever Compass x Grid cell is being viewed.
+# Only the regime matrix itself, the tide, and excess_vs_tide move.
+#
+# They used to be rebuilt inside build_countries on every request, so clicking
+# a regime -- which bypasses the S3 cache, since only the default cell was
+# cached -- rebuilt all twenty countries from scratch. Measured before this
+# change: 100 seconds for /countries?compass=2&grid=1 against 1.1 seconds for
+# the cached default.
+_BLOCKS_TTL_SECONDS = 900.0
+_blocks_cache: dict[str, object] = {"at": 0.0, "data": None}
+
+
+def _country_block(code: str, equity_symbol: Optional[str], currency: Optional[dict]) -> dict:
+    """The regime-independent half: this country's own conditions and its
+    instruments' live returns."""
+    macro = {}
+    for key, tmpl, unit, label, kind in MACRO:
+        pt = _macro_point(tmpl.format(c=code), kind=kind)
+        if pt:
+            pt["label"] = label
+            pt["unit"] = CURRENCY.get(code, "local") if unit == "local" else unit
+            pt["kind"] = kind
+            macro[key] = pt
+    # Howell's two halves side by side. Money growing faster than credit is
+    # liquidity that is not transmitting into lending; the reverse is credit
+    # expansion outrunning the money base. Neither is visible from one leg.
+    m2 = macro.get("m2", {}).get("yoy_pct") if macro else None
+    credit = None
+    if macro:
+        lg = macro.get("loan_growth_yoy")
+        credit = lg.get("latest") if lg else (macro.get("loans_level") or {}).get("yoy_pct")
+    if m2 is not None and credit is not None:
+        macro["money_vs_credit"] = {
+            "m2_yoy_pct": m2,
+            "credit_yoy_pct": credit,
+            "gap_pp": round(m2 - credit, 2),
+            "reads_as": ("money outrunning credit -- liquidity not transmitting into lending"
+                         if m2 - credit > 1.0 else
+                         "credit outrunning money -- lending expanding faster than the money base"
+                         if m2 - credit < -1.0 else
+                         "money and credit growing together"),
+        }
+    pr = (macro.get("policy_rate") or {}).get("latest") if macro else None
+    return {
+        "macro": macro or None,
+        "macro_note": (
+            "This country's own conditions. It is NOT the regime the trade is "
+            "conditioned on -- that is the US Compass/Grid above." if macro else None
+        ),
+        "curve": _curve(code, pr),
+        "market": {
+            "etf": _returns(equity_symbol) if equity_symbol else None,
+            "fx": _fx(currency["symbol"]) if currency and currency.get("symbol") else None,
+            "rs_vs_spy": _rs(equity_symbol) if equity_symbol else None,
+        },
+    }
+
+
+def build_country_blocks(countries: list[dict]) -> dict[str, dict]:
+    """{code: block} for every country, memoised across regimes."""
+    hit = _blocks_cache["data"]
+    if hit is not None and (time.monotonic() - float(_blocks_cache["at"])) < _BLOCKS_TTL_SECONDS:
+        return hit  # type: ignore[return-value]
+    blocks = {
+        c["code"]: _country_block(
+            c["code"], (c.get("equity") or {}).get("symbol"), c.get("currency")
+        )
+        for c in countries
+    }
+    _blocks_cache["at"], _blocks_cache["data"] = time.monotonic(), blocks
+    return blocks
+
+
+def resolve_regime(compass_q: Optional[int], grid_q: Optional[int]) -> tuple[int, int]:
+    """Fill either axis from the current model. Split out of build_countries so
+    the CALLER can resolve before choosing a cache key -- keying on a literal
+    None would make one key mean different cells as the regime moves."""
+    if compass_q is not None and grid_q is not None:
+        return compass_q, grid_q
+    import markov_data
+    cur = {m: markov_data._load_model(f"{m}_US")[-1][1] for m in ("compass", "grid")}
+    return (compass_q if compass_q is not None else cur["compass"],
+            grid_q if grid_q is not None else cur["grid"])
+
+
 def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = None,
                     min_n: int = 5) -> dict:
     """The regime matrix, with a macro and market block attached per country."""
-    if compass_q is None or grid_q is None:
-        import markov_data
-        cur = {m: markov_data._load_model(f"{m}_US")[-1][1] for m in ("compass", "grid")}
-        compass_q = compass_q if compass_q is not None else cur["compass"]
-        grid_q = grid_q if grid_q is not None else cur["grid"]
+    compass_q, grid_q = resolve_regime(compass_q, grid_q)
 
     matrix = regime_matrix.build_matrix(compass_q, grid_q, min_n=min_n)
+    blocks = build_country_blocks(matrix["countries"])
 
     for c in matrix["countries"]:
-        code = c["code"]
-        macro = {}
-        for key, tmpl, unit, label, kind in MACRO:
-            pt = _macro_point(tmpl.format(c=code), kind=kind)
-            if pt:
-                pt["label"] = label
-                pt["unit"] = CURRENCY.get(code, "local") if unit == "local" else unit
-                pt["kind"] = kind
-                macro[key] = pt
-        # Howell's two halves side by side. Money growing faster than credit is
-        # liquidity that is not transmitting into lending; the reverse is credit
-        # expansion outrunning the money base. Neither is visible from one leg.
-        m2 = macro.get("m2", {}).get("yoy_pct") if macro else None
-        credit = None
-        if macro:
-            lg = macro.get("loan_growth_yoy")
-            credit = lg.get("latest") if lg else (macro.get("loans_level") or {}).get("yoy_pct")
-        if m2 is not None and credit is not None:
-            macro["money_vs_credit"] = {
-                "m2_yoy_pct": m2,
-                "credit_yoy_pct": credit,
-                "gap_pp": round(m2 - credit, 2),
-                "reads_as": ("money outrunning credit -- liquidity not transmitting into lending"
-                             if m2 - credit > 1.0 else
-                             "credit outrunning money -- lending expanding faster than the money base"
-                             if m2 - credit < -1.0 else
-                             "money and credit growing together"),
-            }
-        c["macro"] = macro or None
-        c["macro_note"] = (
-            "This country's own conditions. It is NOT the regime the trade is "
-            "conditioned on -- that is the US Compass/Grid above." if macro else None
-        )
-        pr = (macro.get("policy_rate") or {}).get("latest") if macro else None
-        c["curve"] = _curve(code, pr)
-        etf = (c.get("equity") or {}).get("symbol")
-        c["market"] = {
-            "etf": _returns(etf) if etf else None,
-            "fx": _fx_symbol_returns(c),
-            "rs_vs_spy": _rs(etf) if etf else None,
-        }
+        block = blocks.get(c["code"]) or {}
+        c["macro"] = block.get("macro")
+        c["macro_note"] = block.get("macro_note")
+        c["curve"] = block.get("curve")
+        c["market"] = block.get("market")
 
     # The tide: the average across all countries in this regime, so a country's
     # number is read against it rather than in isolation. 64% of the variance in
@@ -373,6 +424,3 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
     return matrix
 
 
-def _fx_symbol_returns(c: dict) -> Optional[dict]:
-    cur = c.get("currency")
-    return _fx(cur["symbol"]) if cur and cur.get("symbol") else None

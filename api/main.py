@@ -399,12 +399,31 @@ def countries(compass_q: Optional[int] = None, grid_q: Optional[int] = None, min
         raise HTTPException(status_code=400, detail="compass_q must be 1-4")
     if grid_q is not None and grid_q not in (1, 2, 3, 4):
         raise HTTPException(status_code=400, detail="grid_q must be 1-4")
-    key = f"countries" if (compass_q is None and grid_q is None) else None
+    # Every cell is cached, not just the default one. Previously an explicit
+    # compass/grid bypassed the cache entirely on the reasoning that the page
+    # is only clicked through occasionally -- but a bypass meant a full
+    # rebuild of all twenty countries, measured at 100 SECONDS against 1.1s
+    # for the cached default. "Occasionally" is exactly when a 100s page is
+    # worst, because nothing is warm.
+    #
+    # The "@" suffix makes these variants of the registered "countries" key,
+    # so the TTL and the schema version stay declared in one place rather
+    # than sixteen (see cache._family).
+    explicit = compass_q is not None or grid_q is not None
+    if explicit:
+        # Resolve BEFORE keying: "countries@None-2" would mean a different
+        # cell once the current regime moves, while reusing the same key.
+        c_res, g_res = country_data.resolve_regime(compass_q, grid_q)
+        key = f"countries@{c_res}-{g_res}"
+    else:
+        key = "countries"
+    if min_n != 5:
+        # Part of the key, not ignored: min_n changes which cells are shown at
+        # all, so serving the default-min_n payload for a different one would
+        # be quietly wrong rather than merely stale.
+        key = f"{key}-n{min_n}" if "@" in key else f"countries@default-n{min_n}"
     build = lambda: country_data.build_countries(compass_q, grid_q, min_n=min_n)
-    # Only the DEFAULT (current-regime) view is cached; an explicitly requested
-    # cell is computed fresh rather than adding 16 cache keys for a page the
-    # user clicks through occasionally.
-    return cache.get_or_fetch(key, build) if key else build()
+    return cache.get_or_fetch(key, build)
 
 
 @app.get("/api/cot/public")

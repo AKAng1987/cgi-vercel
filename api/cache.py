@@ -85,8 +85,22 @@ SCHEMA_FROM_MODULE: dict[str, str] = {
 }
 
 
+def _family(cache_key: str) -> str:
+    """The registered key a variant belongs to.
+
+    Some payloads are the same shape computed for different inputs -- the 16
+    Compass x Grid cells of COUNTRIES, for instance. Writing those as
+    "countries@3-3" lets each be cached separately while the TTL and the
+    schema version stay registered once, against "countries". Without this
+    every variant would need its own row in two tables, which is exactly the
+    kind of bookkeeping that has gone stale here before.
+    """
+    return cache_key.split("@", 1)[0]
+
+
 def _expected_version(cache_key: str) -> str:
     """The version a cached object must carry to be considered a hit."""
+    cache_key = _family(cache_key)
     ref = SCHEMA_FROM_MODULE.get(cache_key)
     if ref:
         mod_name, const = ref.split(":")
@@ -146,7 +160,7 @@ def get(cache_key: str) -> Optional[dict]:
     envelope wrapping). An object written before this field existed,
     or under a since-bumped version, has no matching metadata and is
     correctly treated as a miss."""
-    ttl_hours = TTL_HOURS[cache_key]
+    ttl_hours = TTL_HOURS[_family(cache_key)]
     s3_key = _key(cache_key)
 
     try:
