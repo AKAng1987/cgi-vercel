@@ -37,6 +37,7 @@ import cache
 import cgi_changes
 import cot_data
 import fundamentals_data
+import freshness
 import fundamentals_history
 import markov_data
 import policy_watch
@@ -204,6 +205,31 @@ def build_brief(cadence: str = "daily") -> dict:
         due, _ = _try("calendar", lambda: rc.releases_between(
             today.isoformat(), (today + dt.timedelta(days=10)).isoformat()))
         sections.append(_section("due", "releases in the next 10 days", due or []))
+
+    # 8 data freshness -- appended ONLY when something is actually behind.
+    #
+    # The alert rides the brief rather than adding a channel, and it is
+    # silent when there is nothing wrong: a quiet brief means current. An
+    # alarm that speaks every day is one that gets muted, which is exactly
+    # how the age-based design would have ended -- PHCBBS has been 238 days
+    # old and entirely correct since BSP stopped publishing in February.
+    fresh, e_fr = _try("freshness", lambda: cache.get_or_fetch(
+        "freshness", freshness.build_freshness))
+    if fresh and fresh.get("n_problems"):
+        auto = fresh.get("automated", {})
+        behind = [r for r in auto.get("series", [])
+                  if r.get("status") in ("behind", "value_disagrees", "missing")]
+        sections.append(_section(
+            "freshness",
+            f"{fresh['n_problems']} series behind their source",
+            {"behind": [{"symbol": r["symbol"], "status": r["status"],
+                         "detail": r.get("detail")} for r in behind],
+             "never_loaded": fresh.get("manual", {}).get("n_never_loaded", 0),
+             "what_to_do": ("Run the TradingView refresh for anything manual; "
+                            "for a FRED series, check whether the nightly copy "
+                            "Lambda is still running.")}))
+    elif e_fr:
+        sections.append(_section("freshness", "unavailable", None, e_fr))
 
     unavailable = [s["name"] for s in sections if s["status"] == "unavailable"]
     return {

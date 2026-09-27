@@ -144,10 +144,10 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "watchlists": 2,  # 2026-09-26: CGI earning-it list + NATGAS symbol fix
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
-    "brief_daily": 1,
+    "brief_daily": 2,
     "liquidity": 1,
     "customer_links": 1,
-    "brief_weekly": 1,
+    "brief_weekly": 2,
     "countries": 1,
     "context_tables": 4,  # 2026-09-26: NameError fix; v3 never actually served.  # 2026-09-26: Warsh added + chair carries a confirmation date.  # fed_episodes -> derived rate_cycles + balance_sheet
     "fundamentals": 10,  # 2026-09-26: traded data removed from the public response.  # 2026-09-26: proper median + n.  # 2026-09-26: traded universe unioned.  # 2026-09-26: cadence-aware reads.  # 2026-09-26: sector per company.  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
