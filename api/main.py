@@ -423,7 +423,17 @@ def countries(compass_q: Optional[int] = None, grid_q: Optional[int] = None, min
         # be quietly wrong rather than merely stale.
         key = f"{key}-n{min_n}" if "@" in key else f"countries@default-n{min_n}"
     build = lambda: country_data.build_countries(compass_q, grid_q, min_n=min_n)
-    return cache.get_or_fetch(key, build)
+    # Background refresh, for the same reason /api/fundamentals uses it: a
+    # COLD cell build is ~80 seconds (about 280 DynamoDB queries across twenty
+    # countries), which is longer than the Vercel server component is allowed
+    # to wait. Measured: the first request for an uncached cell returned in
+    # 19.9s having failed, and the SECOND one -- 83s -- was what actually
+    # wrote the cache. Serving the previous value while the refresh runs
+    # behind it means a click is never the thing that pays for the rebuild.
+    #
+    # Only the very first call for a cell ever blocks, so all sixteen are
+    # seeded once after deploy.
+    return cache.get_or_fetch_bg(key, build)
 
 
 @app.get("/api/cot/public")

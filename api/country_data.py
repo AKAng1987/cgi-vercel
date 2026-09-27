@@ -302,7 +302,11 @@ def _rs(sym: str) -> Optional[dict]:
 # cached -- rebuilt all twenty countries from scratch. Measured before this
 # change: 100 seconds for /countries?compass=2&grid=1 against 1.1 seconds for
 # the cached default.
-_BLOCKS_TTL_SECONDS = 900.0
+# Matched to the cache TTL rather than kept short: the blocks are the
+# expensive half, and re-deriving them inside the window the cached
+# payload is still considered fresh would be work with nothing to show
+# for it.
+_BLOCKS_TTL_SECONDS = 6 * 3600.0
 _blocks_cache: dict[str, object] = {"at": 0.0, "data": None}
 
 
