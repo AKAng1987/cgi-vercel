@@ -221,6 +221,18 @@ def set(cache_key: str, value: dict) -> None:
     )
 
 
+def _cached_version(cache_key: str) -> Optional[str]:
+    """The cache_version metadata on whatever is stored, without fetching the
+    body. None if nothing is stored."""
+    try:
+        head = _s3.head_object(Bucket=BUCKET, Key=_key(cache_key))
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] in ("404", "NoSuchKey", "403"):
+            return None
+        raise
+    return head.get("Metadata", {}).get("cache_version")
+
+
 def _get_raw(cache_key: str) -> Optional[dict]:
     """Read whatever is in S3 for cache_key regardless of TTL -- used as
     the stale-but-known-good fallback when a fresh fetch fails its
@@ -266,6 +278,17 @@ def get_or_fetch_bg(cache_key: str, fetch_fn) -> dict:
     fresh = get(cache_key)
     if fresh is not None:
         return fresh
+
+    # Serving stale is only safe when the stale thing is the SHAPE the caller
+    # expects. _get_raw deliberately ignores cache_version, which is right for
+    # its original purpose -- a last-resort fallback after a fresh fetch failed
+    # its sanity check -- but wrong here, where this is the routine path. A
+    # schema bump exists precisely to stop a payload of the old shape being
+    # served, and without this check the background refresh would quietly
+    # defeat it: /api/countries returned a version-9 payload, missing the
+    # fields version 10 had just added, and looked simply not-deployed.
+    if _cached_version(cache_key) != _expected_version(cache_key):
+        return get_or_fetch(cache_key, fetch_fn)   # wrong shape; must block
 
     stale = _get_raw(cache_key)
     if stale is None:
