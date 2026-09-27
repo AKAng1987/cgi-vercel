@@ -1131,30 +1131,38 @@ def build_rates_response() -> dict:
     all_meetings_iso = cache.get_or_fetch("fomc_meeting_calendar", _fetch_fomc_meeting_calendar)
     meetings_iso = _filter_meetings_by_horizon(all_meetings_iso)
 
+    # Concurrent, not a dict literal: these four keys are independent and
+    # each costs a cross-Pacific round trip. See cache.get_many.
+    got = cache.get_many({
+        "fed_funds_range": ("fed_funds_range", fetch_fed_funds_range),
+        "fomc_probabilities": ("fomc_probabilities",
+                               lambda: build_fomc_probabilities(meetings_iso)),
+        "treasury_curve": ("treasury_curve", fetch_treasury_curve),
+        "spreads": ("spreads", fetch_spreads),
+    })
     return {
-        "fed_funds_range": cache.get_or_fetch("fed_funds_range", fetch_fed_funds_range),
+        "fed_funds_range": got["fed_funds_range"],
         "fomc_meeting_calendar": meetings_iso,
-        "fomc_probabilities": cache.get_or_fetch(
-            "fomc_probabilities", lambda: build_fomc_probabilities(meetings_iso)
-        ),
-        "treasury_curve": _trim_treasury_curve(cache.get_or_fetch("treasury_curve", fetch_treasury_curve)),
-        "spreads": cache.get_or_fetch("spreads", fetch_spreads),
+        "fomc_probabilities": got["fomc_probabilities"],
+        "treasury_curve": _trim_treasury_curve(got["treasury_curve"]),
+        "spreads": got["spreads"],
     }
 
 
 def build_growth_response() -> dict:
     import cache
 
-    return {
-        "lending_standards": cache.get_or_fetch("lending_standards", fetch_lending_standards),
-        "challenger": cache.get_or_fetch("challenger", fetch_challenger),
-        "gdp": cache.get_or_fetch("gdp", fetch_gdp),
-        "gdp_nowcast": cache.get_or_fetch("gdp_nowcast", fetch_gdp_nowcast),
-        "gdp_nowcast_freshness": cache.get_or_fetch(
-            "gdp_nowcast_freshness", fetch_gdp_nowcast_freshness),
-        "inflation": cache.get_or_fetch("inflation", fetch_inflation),
-        "pce": cache.get_or_fetch("pce", fetch_pce),
-    }
+    # Seven independent keys; serially that was 7 cross-Pacific round trips
+    # on this endpoint's critical path. See cache.get_many.
+    return cache.get_many({
+        "lending_standards": ("lending_standards", fetch_lending_standards),
+        "challenger": ("challenger", fetch_challenger),
+        "gdp": ("gdp", fetch_gdp),
+        "gdp_nowcast": ("gdp_nowcast", fetch_gdp_nowcast),
+        "gdp_nowcast_freshness": ("gdp_nowcast_freshness", fetch_gdp_nowcast_freshness),
+        "inflation": ("inflation", fetch_inflation),
+        "pce": ("pce", fetch_pce),
+    })
 
 
 def build_dot_plot_response() -> dict:

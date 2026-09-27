@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import boto3
 from botocore.exceptions import ClientError
@@ -165,28 +166,40 @@ def get(cache_key: str) -> Optional[dict]:
     should fetch fresh and call set()).
 
     cache_version travels as S3 object metadata, not inside the JSON
-    body -- a version check piggybacks on the existing head_object()
-    staleness check at no extra GetObject cost, and the cached
-    payload's own shape stays exactly what callers already expect (no
-    envelope wrapping). An object written before this field existed,
+    body -- so the version check rides along with the object itself and
+    the cached payload's shape stays exactly what callers already expect
+    (no envelope wrapping). An object written before this field existed,
     or under a since-bumped version, has no matching metadata and is
-    correctly treated as a miss."""
+    correctly treated as a miss.
+
+    ONE round trip, not two. This used to head_object for the metadata and
+    then get_object for the body. get_object already returns LastModified
+    and Metadata alongside the body, so the head was pure latency -- and
+    the API runs on Render's free tier in Oregon while this bucket is in
+    ap-southeast-1, making every one of those a ~250ms cross-Pacific hop.
+    /macro alone reads 13 keys, so the second trip was costing seconds per
+    page for information the first trip already carried.
+
+    The cost of merging them: on a stale or version-mismatched object we
+    download a body we then discard. That is the rarer path by construction
+    -- a hit is the common case, and a miss is about to spend far more than
+    one download rebuilding the payload anyway."""
     ttl_hours = TTL_HOURS[_family(cache_key)]
     s3_key = _key(cache_key)
 
     try:
-        head = _s3.head_object(Bucket=BUCKET, Key=s3_key)
+        obj = _s3.get_object(Bucket=BUCKET, Key=s3_key)
     except ClientError as exc:
         if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
             return None
         raise
 
-    last_modified: datetime = head["LastModified"]
+    last_modified: datetime = obj["LastModified"]
     age_hours = (datetime.now(timezone.utc) - last_modified).total_seconds() / 3600.0
     if age_hours > ttl_hours:
         return None
 
-    cached_version = head.get("Metadata", {}).get("cache_version")
+    cached_version = obj.get("Metadata", {}).get("cache_version")
     expected_version = _expected_version(cache_key)
     if cached_version != expected_version:
         _logger.info(
@@ -196,9 +209,7 @@ def get(cache_key: str) -> Optional[dict]:
         )
         return None
 
-    obj = _s3.get_object(Bucket=BUCKET, Key=s3_key)
-    body = obj["Body"].read().decode("utf-8")
-    return json.loads(body)
+    return json.loads(obj["Body"].read().decode("utf-8"))
 
 
 def set(cache_key: str, value: dict) -> None:
@@ -262,6 +273,37 @@ def _get_raw(cache_key: str) -> Optional[dict]:
 # shadows the builtin at module scope.
 _refreshing: dict[str, bool] = {}
 _refresh_lock = threading.Lock()
+
+
+def get_many(jobs: dict) -> dict:
+    """Resolve several cache keys CONCURRENTLY.
+
+    {result_name: (cache_key, fetch_fn)} -> {result_name: payload}.
+
+    Every cache read is a round trip to S3 in ap-southeast-1, and the API
+    runs on Render's free tier in Oregon, so each one costs ~250ms of pure
+    latency. Built as a dict literal, /api/macro/growth resolved its seven
+    keys one after another -- nearly all of that endpoint's wall-clock time
+    was spent waiting on a socket, serially, for payloads that have nothing
+    to do with each other.
+
+    Threads rather than asyncio because the work is boto3, which is
+    blocking, and because get_or_fetch may fall through to a real rebuild
+    that is also blocking. The GIL is not the constraint here; the Pacific
+    is.
+
+    A failure is re-raised rather than swallowed, so this changes the timing
+    of these calls and nothing about their behaviour.
+    """
+    if not jobs:
+        return {}
+    out: dict = {}
+    with ThreadPoolExecutor(max_workers=min(8, len(jobs))) as pool:
+        futures = {pool.submit(get_or_fetch, key, fn): name
+                   for name, (key, fn) in jobs.items()}
+        for fut in as_completed(futures):
+            out[futures[fut]] = fut.result()
+    return out
 
 
 def get_or_fetch_bg(cache_key: str, fetch_fn) -> dict:

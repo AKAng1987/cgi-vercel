@@ -66,11 +66,23 @@ DRIVERS: dict[str, list[tuple]] = {
     # earnings, Michigan expectations did not separate -- dropped. ISM prices
     # paid (mfg level, services m/m) and USCI added 2026-09-19 from the TradingView
     # pull; Baltic Dry tested 5pp -- parked for the logistics tab.
-    # 2026-09-23: TradingView's MCP started refusing the ECONOMICS: group
-    # (charts still work -- their bug, reported), so the ISM rows freeze at
-    # their loaded history. Empire State prices paid (FRED, free, prints the
-    # 15th -- two weeks BEFORE ISM services) tested at the same 26pp spread
-    # and is the live read; ISM stays for context and resumes if they fix it.
+    # 2026-09-23: TradingView's MCP began refusing the ECONOMICS: group, so
+    # Empire State prices paid (FRED, free) was added as the live read at the
+    # same 26pp spread, with the ISM rows expected to freeze.
+    #
+    # 2026-09-27: the refusal is OVER and the ISM rows never froze. Checked
+    # against the source -- ISM_MFG_PRICES 71.1 / 71.1 / 73 / 82.1 and
+    # ISM_SVC_PRICES 72.6 / 70.3 / 67.7 / 71.3 for 2026-08 back to 2026-05 --
+    # identical to ECONOMICS:USMPR and USNMPR, current through the latest
+    # print. Nothing was lost; nothing had to be reloaded.
+    #
+    # Empire STAYS the live read, but on timing rather than availability: it
+    # prints the 15th, two weeks BEFORE ISM services, which is the reason
+    # that actually matters for a nowcast. ISM keeps its rows on their own
+    # merit. The lesson is the comment itself -- an outage was recorded as
+    # permanent, the workaround became the default, and for four days nobody
+    # checked whether the thing had come back. That is what /api/freshness
+    # exists to notice.
     "inflation": [
         ("Empire prices paid m/m", "PPCDISA066MSFRBNY", "mom_diff"),
         ("Empire prices paid 3m chg", "PPCDISA066MSFRBNY", "diff@3"),
@@ -91,8 +103,10 @@ DRIVERS: dict[str, list[tuple]] = {
     # manufacturing (ISM mfg PMI 3m change is the top driver; services
     # activity is mean-reverting -- kept as context, reads INVERTED: high
     # services activity has gone with FEWER turn-ups, 40/44/32) and GDPNow.
-    # Philly Fed future activity (FRED, free, 1968->) added 2026-09-23: 22pp,
-    # and unlike ISM it keeps updating. From the sweep,
+    # Philly Fed future activity (FRED, free, 1968->) added 2026-09-23: 22pp.
+    # It was added because ISM was believed to have stopped updating; ISM had
+    # not (see the inflation note above), so Philly stands on its own 22pp
+    # and its 1968 history, not as a substitute. From the sweep,
     # the free series that separate: durables and core capex orders, initial
     # claims (falling -> turn up), CFNAI, retail sales. Copper, XLY/XLP,
     # SPY, KRE/SPY and 2s10s did not -- dropped.
