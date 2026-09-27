@@ -181,6 +181,29 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
               <span className="text-slate-500">loans </span>
               <Macro p={c.macro.loan_growth_yoy ?? c.macro.loans_level} />
             </div>
+            {c.macro.m2 && (
+              <div><span className="text-slate-500">M2 </span><Macro p={c.macro.m2} /></div>
+            )}
+            {/* The gap, not just the two legs. Money outrunning credit is
+                liquidity that is not reaching lending, and that is the fact
+                neither M2 nor loan growth states on its own. */}
+            {c.macro.money_vs_credit && (
+              <div className="text-[0.66rem]" title={c.macro.money_vs_credit.reads_as}>
+                <span className="text-slate-500">M2−credit </span>
+                <span
+                  className={`tabular-nums ${
+                    c.macro.money_vs_credit.gap_pp > 1
+                      ? "text-emerald-400"
+                      : c.macro.money_vs_credit.gap_pp < -1
+                        ? "text-amber-300"
+                        : "text-slate-400"
+                  }`}
+                >
+                  {c.macro.money_vs_credit.gap_pp > 0 ? "+" : ""}
+                  {c.macro.money_vs_credit.gap_pp.toFixed(1)}pp
+                </span>
+              </div>
+            )}
             <Curve cv={c.curve} />
           </div>
         ) : (
@@ -398,6 +421,21 @@ export default async function ForeignPage({
 
   const m = await apiFetch<RegimeMatrixResponse>(`/api/countries${qs ? `?${qs}` : ""}`);
 
+  // Every substituted tenor in play, collected once for the footnote. The
+  // asterisk beside the number says "this is a stand-in"; only naming it says
+  // WHICH stand-in, and the tooltip that used to be the only place it was
+  // named does not exist on a phone.
+  const substitutes = m.countries.flatMap((c) =>
+    Object.entries(c.curve?.tenors ?? {})
+      .filter(([, t]) => t.substitute_for)
+      .map(([tenor, t]) => ({
+        code: c.code,
+        tenor,
+        symbol: t.symbol,
+        substitute_for: t.substitute_for as string,
+      })),
+  );
+
   if (m.error) {
     return (
       <main className="p-6">
@@ -506,6 +544,26 @@ export default async function ForeignPage({
         <p>
           Exporter / importer is a hand-set economic judgement, not a measurement — it decides the sign of the currency
           read, so correct it where it is wrong.
+        </p>
+        {substitutes.length > 0 && (
+          <p>
+            <span className="text-amber-300">*</span> A starred yield is{" "}
+            <strong>not that country&rsquo;s own series</strong> for that tenor. Naming each one
+            here rather than only in a tooltip, because a tooltip is invisible on a phone and an
+            unmarked stand-in is how a German yield quietly becomes &ldquo;the euro-area 10y&rdquo;:
+            {substitutes.map((s) => (
+              <span key={`${s.code}-${s.tenor}`} className="block pl-3">
+                {s.code} {s.tenor} &rarr; <span className="text-slate-300">{s.symbol}</span> &mdash;{" "}
+                {s.substitute_for}
+              </span>
+            ))}
+          </p>
+        )}
+        <p>
+            <strong>M2−credit</strong> is money growth minus credit growth in percentage points.
+            Positive is money outrunning credit — liquidity that is not transmitting into lending;
+            negative is lending expanding faster than the money base. Shown because neither leg
+            says this on its own.
         </p>
       </footer>
     </main>

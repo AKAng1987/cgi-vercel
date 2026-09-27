@@ -900,6 +900,16 @@ export interface CountryMacro {
   gdp_yoy?: MacroPoint;
   loan_growth_yoy?: MacroPoint;
   loans_level?: MacroPoint;
+  m2?: MacroPoint;
+  /** Howell's two halves against each other. Money growing faster than credit
+   *  is liquidity that is not transmitting into lending; the reverse is
+   *  lending outrunning the money base. Neither leg shows this alone. */
+  money_vs_credit?: {
+    m2_yoy_pct: number;
+    credit_yoy_pct: number;
+    gap_pp: number;
+    reads_as: string;
+  };
 }
 
 /** /api/priced-in -- the two readings of what a multiple implies. */
