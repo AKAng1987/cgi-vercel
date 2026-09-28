@@ -306,6 +306,41 @@ def get_many(jobs: dict) -> dict:
     return out
 
 
+def invalidate(cache_key: str) -> list[str]:
+    """Delete a cached payload so the next request rebuilds it.
+
+    Used after a WRITE to price-history: the bar is in DynamoDB but the
+    payload that reads it is not, and until the TTL expires the dashboard
+    shows the old number. From the outside that is indistinguishable from
+    the write having failed.
+
+    Deletes every VARIANT of a family too -- "countries" is stored as
+    countries@3-3 and fifteen siblings, and invalidating only the bare key
+    would leave the fifteen the page actually serves.
+
+    Returns the keys removed. Safe to call for a key that was never
+    written.
+    """
+    prefix = f"{PREFIX}{_family(cache_key)}"
+    removed = []
+    try:
+        page = _s3.list_objects_v2(Bucket=BUCKET, Prefix=prefix)
+        for obj in page.get("Contents", []):
+            k = obj["Key"]
+            base = k[len(PREFIX):-len(".json")] if k.endswith(".json") else None
+            # Only this family: "countries" and "countries@2-1", never
+            # "context_tables" from a prefix collision.
+            if base and (base == cache_key or base.startswith(cache_key + "@")):
+                _s3.delete_object(Bucket=BUCKET, Key=k)
+                removed.append(base)
+    except ClientError:
+        _logger.exception("[cache] invalidate failed for %r", cache_key)
+        raise
+    if removed:
+        _logger.info("[cache] invalidated %s", ", ".join(removed))
+    return removed
+
+
 def get_or_fetch_bg(cache_key: str, fetch_fn) -> dict:
     """Like get_or_fetch, but a STALE value is served immediately while the
     refresh runs in a background thread.

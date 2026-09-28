@@ -12,7 +12,7 @@ routine's environment cannot hold secrets):
   - dates must be ISO, not in the future, and strictly after the last
     stored row -- existing rows are never overwritten
   - at most 24 rows per call
-Worst case for abuse is a few bogus recent rows on one of six symbols,
+Worst case for abuse is a few bogus recent rows on one whitelisted symbol,
 which the audit CSVs in market-dashboard/data_manual can restore.
 """
 from __future__ import annotations
@@ -208,6 +208,51 @@ def describe() -> dict:
     return {"as_of": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d"), "series": out, "max_rows_per_call": MAX_ROWS}
 
 
+# Cached payloads that read these symbols out of price-history.
+#
+# Writing a bar is not the same event as the page showing it. On 2026-09-28
+# the breadth symbols were topped up to 09-25, the numbers were correct in
+# DynamoDB, and LIVE still showed 09-23 -- `technicals` had been cached at
+# 07:02 under a 12h TTL and would not rebuild until the evening. The data
+# was fixed and the dashboard was still wrong, which from the outside is
+# indistinguishable from the data not being fixed.
+#
+# So a write invalidates what depends on it. Doing it HERE rather than in
+# the refresh routine means every writer gets it -- the routine, a manual
+# backfill, anyone -- instead of it being a step someone has to remember.
+_BREADTH = {"HIGQ", "LOWQ", "HIGN", "LOWN", "NCFD", "NCTH",
+            "MMFD", "MMTW", "MMFI", "MMTH"}
+_COUNTRY_PREFIXES = ("PH_", "CN_", "JP_", "KR_", "GB_", "EU_")
+
+
+def _dependent_cache_keys(symbol: str) -> list[str]:
+    keys: list[str] = []
+    if symbol in _BREADTH:
+        keys += ["technicals", "brief_daily", "brief_weekly"]
+    if symbol.startswith(_COUNTRY_PREFIXES) or symbol.startswith("PH0") or symbol.startswith("PH1"):
+        keys += ["countries", "liquidity"]
+    if symbol.startswith("ISM_") or symbol == "CHALLENGER":
+        keys += ["axis_drivers", "brief_daily"]
+    return sorted(set(keys))
+
+
+def _invalidate(symbol: str) -> list[str]:
+    """Drop the cached payloads that read this symbol.
+
+    Best-effort: a failure here must not fail the write. The bar is already
+    in price-history and the cache expires on its own regardless, so the
+    worst case is the old behaviour rather than a lost write."""
+    import cache as _cache
+
+    dropped: list[str] = []
+    for key in _dependent_cache_keys(symbol):
+        try:
+            dropped += _cache.invalidate(key)
+        except Exception:  # noqa: BLE001 -- see docstring
+            _logger.exception("[series] could not invalidate %r", key)
+    return dropped
+
+
 def append(symbol: str, rows: list[dict]) -> dict:
     if symbol not in ALLOWED:
         raise HTTPException(status_code=404, detail=f"unknown series {symbol}")
@@ -242,5 +287,9 @@ def append(symbol: str, rows: list[dict]) -> dict:
             "symbol": {"S": symbol}, "date": {"S": d}, "source": {"S": src}, "source_symbol": {"S": symbol},
             "close": {"N": format(Decimal(str(v)).normalize(), "f")},
         })
+    # Only when something was actually written -- a no-op re-send must not
+    # throw away warm caches.
+    invalidated = _invalidate(symbol) if todo else []
     return {"symbol": symbol, "written": len(todo), "skipped_existing": len(skipped),
-            "last_date_before": last, "last_date_after": (todo[-1][0] if todo else last)}
+            "last_date_before": last, "last_date_after": (todo[-1][0] if todo else last),
+            "caches_invalidated": invalidated}
