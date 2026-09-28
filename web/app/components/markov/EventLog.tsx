@@ -1,7 +1,7 @@
 import { MarkovEvent, MarkovResponse } from "@/lib/types";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
 
-const TH = "bg-[#1F2937] px-2 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400";
+const TH = "bg-[var(--cgi-surface)] px-2 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400";
 const TD = "px-2 py-1.5";
 
 function q(model: "compass" | "grid", n: number | null): string {
@@ -31,7 +31,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 
 function HitCell({ hit }: { hit: boolean | null }) {
   if (hit === null) return <span className="text-slate-700">—</span>;
-  return <span className={`font-bold ${hit ? "text-[#00C851]" : "text-[#FF4444]"}`}>{hit ? "HIT" : "MISS"}</span>;
+  return <span className={`font-bold ${hit ? "text-[var(--cgi-up)]" : "text-[var(--cgi-down)]"}`}>{hit ? "HIT" : "MISS"}</span>;
 }
 
 export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; pending: MarkovResponse["pending"]; summary: MarkovResponse["summary"] }) {
@@ -52,8 +52,8 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
       </div>
 
       {pending.length > 0 && (
-        <div className="mb-3 rounded border border-[#FCD34D]/40 bg-[#2a2410] px-3 py-2 text-xs text-slate-300">
-          <span className="font-bold text-[#FCD34D]">Settling:</span>{" "}
+        <div className="mb-3 rounded border border-[var(--cgi-gold)]/40 bg-[var(--cgi-gold-panel)] px-3 py-2 text-xs text-slate-300">
+          <span className="font-bold text-[var(--cgi-gold)]">Settling:</span>{" "}
           {pending.map((p) => (
             <span key={`${p.date}-${p.axis}`} className="mr-3">
               {p.date} {p.type} · {p.axis} {p.state_before ? "↑" : "↓"} from {q(p.model, p.quadrant_before)} — the model records the
@@ -90,7 +90,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} whitespace-nowrap`}>
                     <span className="font-medium text-slate-200">{e.date}</span>
                     <span className="ml-2 text-slate-400">{e.type}</span>
-                    {!e.scheduled && <span className="ml-2 rounded bg-[#FCD34D]/20 px-1 text-[0.65rem] text-[#FCD34D]">unscheduled</span>}
+                    {!e.scheduled && <span className="ml-2 rounded bg-[var(--cgi-gold)]/20 px-1 text-[0.65rem] text-[var(--cgi-gold)]">unscheduled</span>}
                   </td>
                   <td className={`${TD} capitalize text-slate-300`}>
                     {e.axis} <span className="text-slate-500">{e.state_before ? "↑" : "↓"}</span>
@@ -98,13 +98,13 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} text-slate-300`} title={qTitle(e.model, e.quadrant_before)}>{q(e.model, e.quadrant_before)}</td>
                   <td className={`${TD} text-right text-slate-200`}>{pct(e.p_flip)}</td>
                   <td className={`${TD} text-right text-slate-200`} title={e.market_source ?? ""}>{pct(e.p_market)}</td>
-                  <td className={`${TD} font-bold ${e.flipped ? "text-[#FCD34D]" : "text-slate-400"}`} title={e.flip_recorded_on ? `recorded in model-history on ${e.flip_recorded_on}` : ""}>{e.flipped ? "FLIP" : "hold"}</td>
+                  <td className={`${TD} font-bold ${e.flipped ? "text-[var(--cgi-gold)]" : "text-slate-400"}`} title={e.flip_recorded_on ? `recorded in model-history on ${e.flip_recorded_on}` : ""}>{e.flipped ? "FLIP" : "hold"}</td>
                   <td className={`${TD} text-slate-200`} title={qTitle(e.model, e.quadrant_after)}>{q(e.model, e.quadrant_after)}</td>
                   <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)}</td>
                   <td className={TD}><HitCell hit={e.hit} /> <span className="text-slate-600">/</span> <HitCell hit={e.hit_market} /></td>
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.pre_registered_on
-                      ? <span className={e.pre_registration_note ? "text-[#FCD34D]" : "text-[#00C851]"} title={e.pre_registration_note ?? "both probabilities were in DynamoDB before the release"}>{e.pre_registered_on.replace("T", " ").replace("Z", "Z")}</span>
+                      ? <span className={e.pre_registration_note ? "text-[var(--cgi-gold)]" : "text-[var(--cgi-up)]"} title={e.pre_registration_note ?? "both probabilities were in DynamoDB before the release"}>{e.pre_registered_on.replace("T", " ").replace("Z", "Z")}</span>
                       : e.scheduled ? <span className="text-slate-600" title="history recomputed from model-history after the fact; no market number was stored">recomputed</span> : <span className="text-slate-700">—</span>}
                   </td>
                 </tr>

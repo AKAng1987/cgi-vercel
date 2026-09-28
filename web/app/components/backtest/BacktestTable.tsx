@@ -85,7 +85,7 @@ export function BacktestTable({
                 onClick={() => toggleGroup(g)}
                 className={`rounded border px-2 py-0.5 text-[0.68rem] uppercase tracking-wide transition ${
                   active
-                    ? "border-[#3b4f8a] bg-[#1a1f35] text-[color:var(--cgi-accent)]"
+                    ? "border-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-head)] text-[color:var(--cgi-accent)]"
                     : "border-slate-800 bg-slate-950 text-slate-600 line-through"
                 }`}
               >
@@ -97,8 +97,8 @@ export function BacktestTable({
       )}
 
       {topByEdge.length > 0 && (
-        <div className="mb-4 rounded border border-[#3b4f8a] bg-[#0f1425]">
-          <div className="border-b border-[#1a2340] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
+        <div className="mb-4 rounded border border-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-deep)]">
+          <div className="border-b border-[var(--cgi-rule)] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             Top {topByEdge.length} by Edge — across all shown groups
           </div>
           <div className="overflow-x-auto">
@@ -109,7 +109,7 @@ export function BacktestTable({
                     (h, i) => (
                       <th
                         key={h}
-                        className={`bg-[#131a2e] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
+                        className={`bg-[var(--cgi-surface-alt)] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
                           i <= 2 ? "text-left" : "text-right"
                         }`}
                       >
@@ -162,7 +162,7 @@ export function BacktestTable({
 
       {Array.from(grouped.entries()).map(([group, rowsInGroup]) => (
         <div key={group} className="mt-4">
-          <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
+          <div className="mb-1 border-l-[3px] border-l-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-head)] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             {group}
           </div>
           <div className="overflow-x-auto">
@@ -173,7 +173,7 @@ export function BacktestTable({
                     (h, i) => (
                       <th
                         key={h}
-                        className={`bg-[#1F2937] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
+                        className={`bg-[var(--cgi-surface)] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
                           i === 0 ? "text-left" : "text-right"
                         }`}
                       >

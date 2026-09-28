@@ -73,7 +73,7 @@ export function OccurrenceDetail({
                 {["Start Date", "End Date", "Days", "High%", "Low%", "Close%"].map((h, i) => (
                   <th
                     key={h}
-                    className={`bg-[#1F2937] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
+                    className={`bg-[var(--cgi-surface)] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${
                       i < 2 ? "text-left" : "text-right"
                     }`}
                   >

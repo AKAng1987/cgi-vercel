@@ -26,7 +26,7 @@ export function StandingTheme({ themes }: { themes: ST[] }) {
               <h2 className="text-lg font-bold text-slate-100">{t.name}</h2>
               <div className="text-[0.7rem] uppercase tracking-wide text-slate-500">
                 since {t.since} · {t.horizon} horizon ·{" "}
-                <span className={due ? "text-[#FCD34D]" : ""}>
+                <span className={due ? "text-[var(--cgi-gold)]" : ""}>
                   review {t.review_on}
                   {t.days_to_review !== null && ` (${t.days_to_review}d)`}
                 </span>

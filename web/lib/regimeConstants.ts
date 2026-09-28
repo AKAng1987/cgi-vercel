@@ -15,9 +15,11 @@ export const GRID_Q_MAP: Record<number, [string, string]> = COMPASS_Q_MAP;
 type Axis = "liquidity" | "credit" | "growth" | "inflation";
 
 export function dirColor(arrow: string, axis: Axis): string {
-  if (axis === "inflation") return arrow === "↑" ? "#FF8C00" : "#00C851";
-  if (axis === "credit") return arrow === "↑" ? "#00C851" : "#FF8C00";
-  return arrow === "↑" ? "#00C851" : "#FF4444";
+  // CSS variables, not literals: a literal cannot be themed, and these are
+  // the largest text on the regime card. #00C851 measures ~2.2:1 on white.
+  if (axis === "inflation") return arrow === "↑" ? "var(--cgi-warn)" : "var(--cgi-up)";
+  if (axis === "credit") return arrow === "↑" ? "var(--cgi-up)" : "var(--cgi-warn)";
+  return arrow === "↑" ? "var(--cgi-up)" : "var(--cgi-down)";
 }
 
 /**
@@ -61,10 +63,10 @@ export const HUD_DISPLAY_COLUMNS = [
 ] as const;
 
 export function pctColor(v: number | null | undefined): string {
-  if (v === null || v === undefined || Number.isNaN(v)) return "#6B7280";
-  if (v > 0) return "#00C851";
-  if (v < 0) return "#FF4444";
-  return "#9CA3AF";
+  if (v === null || v === undefined || Number.isNaN(v)) return "var(--cgi-null)";
+  if (v > 0) return "var(--cgi-up)";
+  if (v < 0) return "var(--cgi-down)";
+  return "var(--cgi-neutral)";
 }
 
 /**

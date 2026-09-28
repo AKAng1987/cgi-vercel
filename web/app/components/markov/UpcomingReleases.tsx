@@ -39,7 +39,7 @@ export function UpcomingReleases({
           const arrow = u.current_state ? "↑" : "↓";
           const bigGap = u.gap !== null && Math.abs(u.gap) >= BIG_GAP;
           return (
-            <div key={u.type} className={`rounded border p-3 ${bigGap ? "border-[#FCD34D]/70 bg-[#2a2410]" : "border-slate-800 bg-slate-900/60"}`}>
+            <div key={u.type} className={`rounded border p-3 ${bigGap ? "border-[var(--cgi-gold)]/70 bg-[var(--cgi-gold-panel)]" : "border-slate-800 bg-slate-900/60"}`}>
               <div className="flex items-baseline justify-between">
                 <div className="text-sm font-bold text-slate-100">{u.type}</div>
                 <div className="text-xs text-slate-400">
@@ -59,9 +59,9 @@ export function UpcomingReleases({
                 </div>
                 <div title={u.market ? `${u.market.source} — ${u.market.detail}` : "no market read for this axis yet"}>
                   <div className="text-[0.65rem] uppercase tracking-wide text-slate-500">
-                    Market{u.market?.experimental && <span className="ml-1 text-[#FCD34D]/70">exp.</span>}
+                    Market{u.market?.experimental && <span className="ml-1 text-[var(--cgi-gold)]/70">exp.</span>}
                   </div>
-                  <div className={`text-2xl font-bold ${u.market ? (bigGap ? "text-[#FCD34D]" : "text-slate-100") : "text-slate-700"}`}>
+                  <div className={`text-2xl font-bold ${u.market ? (bigGap ? "text-[var(--cgi-gold)]" : "text-slate-100") : "text-slate-700"}`}>
                     {u.market ? pct(u.market.p_flip) : "—"}
                   </div>
                   <div className="truncate text-[0.65rem] text-slate-600">
@@ -71,7 +71,7 @@ export function UpcomingReleases({
               </div>
 
               {u.gap !== null && (
-                <div className={`mt-2 text-[0.68rem] ${bigGap ? "font-bold text-[#FCD34D]" : "text-slate-500"}`}>
+                <div className={`mt-2 text-[0.68rem] ${bigGap ? "font-bold text-[var(--cgi-gold)]" : "text-slate-500"}`}>
                   gap {u.gap > 0 ? "+" : ""}{Math.round(u.gap * 100)} pts ·{" "}
                   {u.gap > 0 ? "market prices a flip history calls rare" : "market leans hold vs. history"}
                 </div>

@@ -31,9 +31,9 @@ export function HudTable({
 
   return (
     <div className="mt-3.5">
-      <div className="mb-1 border-l-[3px] border-l-[#3b4f8a] bg-[#1a1f35] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
+      <div className="mb-1 border-l-[3px] border-l-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-head)] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
         {group.name}
-        <span className="ml-2 text-[0.6rem] font-normal tracking-wide text-[#5b7fa6]">
+        <span className="ml-2 text-[0.6rem] font-normal tracking-wide text-[var(--cgi-muted-blue)]">
           {denomLabel}
         </span>
       </div>
@@ -41,16 +41,16 @@ export function HudTable({
         <table className="w-full border-collapse text-[0.76rem]">
           <thead>
             <tr>
-              <th className="bg-[#1F2937] px-1.5 py-1 text-left text-[0.68rem] uppercase tracking-wide text-slate-400">
+              <th className="bg-[var(--cgi-surface)] px-1.5 py-1 text-left text-[0.68rem] uppercase tracking-wide text-slate-400">
                 Symbol
               </th>
-              <th className="bg-[#1F2937] px-1.5 py-1 text-right text-[0.68rem] uppercase tracking-wide text-slate-400">
+              <th className="bg-[var(--cgi-surface)] px-1.5 py-1 text-right text-[0.68rem] uppercase tracking-wide text-slate-400">
                 Price
               </th>
               {HUD_DISPLAY_COLUMNS.map((c) => (
                 <th
                   key={c.key}
-                  className="bg-[#1F2937] px-1.5 py-1 text-right text-[0.68rem] uppercase tracking-wide text-slate-400"
+                  className="bg-[var(--cgi-surface)] px-1.5 py-1 text-right text-[0.68rem] uppercase tracking-wide text-slate-400"
                 >
                   {c.label}
                 </th>

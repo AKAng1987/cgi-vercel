@@ -7,7 +7,7 @@ import {
   dirColor,
 } from "@/lib/regimeConstants";
 
-const REGIME_GOLD = "#FCD34D";
+const REGIME_GOLD = "var(--cgi-gold)";
 
 function StatLine({
   label,

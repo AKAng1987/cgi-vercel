@@ -39,10 +39,35 @@ export function PlotlyChart({ data, layout, height = 300, config }: PlotlyChartP
   const grid = gridFor(theme);
   const axis = (a: unknown) =>
     a && typeof a === "object" ? { gridcolor: grid, ...(a as object) } : a;
+
+  // An x-axis TITLE needs room that tick labels alone do not. The default
+  // bottom margin is 20px, which fits the ticks and then lets the title sit
+  // on top of them -- on the FOMC panel "Probability (%)" landed across the
+  // "60" tick. Rather than pad every chart, including the many with no x
+  // title at all, give the room only where a title was actually passed, and
+  // stand the title off the ticks as well as below them.
+  const base = layoutFor(theme);
+  const xAxisIn = (layout.xaxis ?? {}) as { title?: unknown };
+  const hasXTitle = Boolean(xAxisIn.title);
+  const xTitle =
+    hasXTitle && typeof xAxisIn.title === "object"
+      ? { standoff: 14, ...(xAxisIn.title as object) }
+      : hasXTitle
+        ? { text: String(xAxisIn.title), standoff: 14 }
+        : undefined;
+
   const themed: Partial<Layout> = {
-    ...layoutFor(theme),
+    ...base,
     ...layout,
-    xaxis: axis(layout.xaxis) as Layout["xaxis"],
+    margin: {
+      ...base.margin,
+      ...(layout.margin ?? {}),
+      ...(hasXTitle && !layout.margin?.b ? { b: 52 } : {}),
+    },
+    xaxis: {
+      ...(axis(layout.xaxis) as object),
+      ...(xTitle ? { title: xTitle } : {}),
+    } as Layout["xaxis"],
     yaxis: axis(layout.yaxis) as Layout["yaxis"],
     ...(layout.yaxis2 ? { yaxis2: axis(layout.yaxis2) as Layout["yaxis2"] } : {}),
   };

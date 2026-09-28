@@ -31,7 +31,7 @@ export function CotCard({ c }: { c: CotContract }) {
   return (
     <div
       className={`rounded border p-3 ${
-        extreme ? "border-[#8b9dc3] bg-slate-900/80" : "border-slate-800 bg-slate-900/50"
+        extreme ? "border-[var(--cgi-accent)] bg-slate-900/80" : "border-slate-800 bg-slate-900/50"
       }`}
     >
       <div className="flex items-baseline justify-between gap-2">

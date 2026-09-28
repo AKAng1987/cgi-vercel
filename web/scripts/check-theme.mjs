@@ -11,6 +11,13 @@
  * That is the same failure mode as the 38 backtest tickers and the stale
  * FOMC calendar: a list in one place, the work in another, and nothing
  * checking that they agree. This is the check.
+ *
+ * It also rejects arbitrary hex in class names -- bg-[#1F2937]. Those
+ * compile to a fixed colour and CANNOT be remapped by any theme, so they
+ * stayed dark navy on a white page. The first version of this script only
+ * looked at family-shade utilities and missed all 36 of them, which is why
+ * TAPE and BACKTEST were still broken after light mode was "fixed". Use a
+ * CSS variable instead: bg-[var(--cgi-surface)].
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -53,6 +60,29 @@ for (const root of ROOTS) {
   }
 }
 
+// Arbitrary hex in a class name can never be themed.
+const HEX = /\b(?:text|bg|border|ring|fill|stroke|from|to|via|decoration|shadow|accent|outline)-\[#[0-9a-fA-F]{3,8}\]/g;
+const literals = new Map();
+for (const root of ROOTS) {
+  for (const file of walk(root)) {
+    for (const m of readFileSync(file, "utf8").matchAll(HEX)) {
+      if (!literals.has(m[0])) literals.set(m[0], new Set());
+      literals.get(m[0]).add(file);
+    }
+  }
+}
+if (literals.size) {
+  console.error(
+    `\n${literals.size} hard-coded colour(s) in class names. These compile to a\n` +
+      `fixed hex and cannot be remapped, so they keep their dark value on white.\n`,
+  );
+  for (const [k, files] of literals) {
+    console.error(`  ${k.padEnd(26)} ${[...files].slice(0, 2).join(", ")}`);
+  }
+  console.error(`\nUse a themed variable instead, e.g. bg-[var(--cgi-surface)].\n`);
+  process.exit(1);
+}
+
 const missing = [...used.keys()].filter((k) => !defined.has(k)).sort();
 
 if (missing.length) {
@@ -72,4 +102,7 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`theme ok: ${used.size} accent colours in use, all have a light value`);
+console.log(
+  `theme ok: ${used.size} accent colours in use, all have a light value; ` +
+    `no hard-coded hex in class names`,
+);

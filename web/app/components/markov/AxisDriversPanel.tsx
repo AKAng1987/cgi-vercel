@@ -57,7 +57,7 @@ function Row({ d, axis, flipUp }: { d: AxisDriver; axis: MarkovAxis; flipUp: boo
     return (
       <tr className="border-t border-slate-800/60" title={tip}>
         <td className={TD}><span className="font-medium text-slate-200">{name}</span> <span className="text-[0.62rem] text-slate-600">{kind}</span></td>
-        <td className={`${TD} text-right font-semibold text-[#FCD34D]`} colSpan={2}>{CURVE_WORD[cur] ?? cur ?? "—"}</td>
+        <td className={`${TD} text-right font-semibold text-[var(--cgi-gold)]`} colSpan={2}>{CURVE_WORD[cur] ?? cur ?? "—"}</td>
         <td className={`${TD} text-right ${thin ? "text-slate-600" : "font-bold text-slate-100"}`}>{pct(curB?.p_flip)}{thin && <span className="ml-1 text-[0.6rem] font-normal">n={curB?.n ?? 0}</span>}</td>
         <td className={`${TD} text-right text-slate-500`}>{pct(base)}</td>
       </tr>
@@ -71,7 +71,7 @@ function Row({ d, axis, flipUp }: { d: AxisDriver; axis: MarkovAxis; flipUp: boo
   const where = cur === 0 ? `low · below ${fmt(t0, d.name)}` : cur === 2 ? `high · above ${fmt(t1, d.name)}` : cur === 1 ? `mid · ${fmt(t0, d.name)} to ${fmt(t1, d.name)}` : "—";
   const pc = cur === null ? null : p[cur];
   const lift = pc !== null && base !== null && base > 0 ? pc / base : null;
-  const tone = lift === null ? "text-slate-300" : lift >= 1.3 ? "font-bold text-[#FCD34D]" : lift <= 0.7 ? "text-slate-500" : "font-bold text-slate-100";
+  const tone = lift === null ? "text-slate-300" : lift >= 1.3 ? "font-bold text-[var(--cgi-gold)]" : lift <= 0.7 ? "text-slate-500" : "font-bold text-slate-100";
   const tip = `low ${pct(p[0])} (n=${n[0]}) · mid ${pct(p[1])} (n=${n[1]}) · high ${pct(p[2])} (n=${n[2]})`;
   return (
     <tr className="border-t border-slate-800/60" title={tip}>
@@ -112,7 +112,7 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
                 <div className="text-xs text-slate-400">
                   {word} <span className="text-slate-200">{pct(c.base_rate)}</span> of the time
                   <span className="mx-1 text-slate-600">→</span>
-                  today <span className={`font-bold ${dir !== null && Math.abs(dir) >= 0.08 ? "text-[#FCD34D]" : "text-slate-100"}`}>{pct(c.conditioned_p_flip)}</span>
+                  today <span className={`font-bold ${dir !== null && Math.abs(dir) >= 0.08 ? "text-[var(--cgi-gold)]" : "text-slate-100"}`}>{pct(c.conditioned_p_flip)}</span>
                 </div>
               </div>
               <table className="w-full border-collapse">

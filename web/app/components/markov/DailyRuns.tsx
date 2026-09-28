@@ -14,7 +14,7 @@ export function DailyRuns({ runs, latest, nDaily }: { runs: MarkovRun[]; latest:
           <thead>
             <tr>
               {["Regime", "From", "To", "Days"].map((h, i) => (
-                <th key={h} className={`bg-[#1F2937] px-2 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${i === 3 ? "text-right" : "text-left"}`}>{h}</th>
+                <th key={h} className={`bg-[var(--cgi-surface)] px-2 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${i === 3 ? "text-right" : "text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -45,7 +45,7 @@ export function DailyRuns({ runs, latest, nDaily }: { runs: MarkovRun[]; latest:
             return (
               <span key={k} className="ml-3">
                 <span className="capitalize text-slate-400">{k}</span>{" "}
-                <span className={dir ? "font-bold text-[#FCD34D]" : "text-slate-300"}>
+                <span className={dir ? "font-bold text-[var(--cgi-gold)]" : "text-slate-300"}>
                   {dir ? (dir === "market_up" ? "market leans ↑" : "market leans ↓") : "agrees with print"}
                 </span>
                 <span className="ml-1 text-slate-600">(P↑ {a.p_up === null ? "—" : a.p_up.toFixed(2)})</span>

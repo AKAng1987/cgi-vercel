@@ -27,7 +27,7 @@ export function EdgeStrip({
       onClick={() => setSymbol(r.ticker)}
       className={`rounded border px-2.5 py-1.5 text-left transition ${
         symbol === r.ticker
-          ? "border-[#8b9dc3] bg-slate-800"
+          ? "border-[var(--cgi-accent)] bg-slate-800"
           : dim
           ? "border-slate-800/60 bg-slate-950/60 hover:border-slate-700"
           : "border-slate-800 bg-slate-900/60 hover:border-slate-600"

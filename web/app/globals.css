@@ -53,6 +53,29 @@
 
 :root {
   --cgi-accent: #8b9dc3;
+
+  /* Literal colours that predate the theme system.
+     They were written as arbitrary Tailwind values (bg-[#1F2937]), which
+     compile to a fixed hex and therefore CANNOT be remapped -- they stayed
+     dark navy on a white page, which is what made TAPE and BACKTEST look
+     broken in light mode while /countries looked fine. Named here so both
+     themes can set them. */
+  --cgi-surface: #1F2937;        /* table headers, inset panels */
+  --cgi-surface-head: #1a1f35;   /* group header bars */
+  --cgi-surface-alt: #131a2e;
+  --cgi-surface-deep: #0f1425;
+  --cgi-rule: #1a2340;
+  --cgi-accent-dim: #3b4f8a;
+  --cgi-gold: #FCD34D;           /* regime headings, pre-registered marks */
+  --cgi-gold-bg: #FCD34D;
+  --cgi-gold-panel: #2a2410;
+  --cgi-up: #00C851;
+  --cgi-down: #FF4444;
+  --cgi-warn: #FF8C00;           /* inflation up / credit down */
+  --cgi-neutral: #9CA3AF;
+  --cgi-null: #6B7280;
+  --cgi-muted-blue: #5b7fa6;
+
   color-scheme: dark;
 }
 
@@ -127,6 +150,25 @@
   --color-yellow-950: oklch(0.965 0.040 95);
 
   --cgi-accent: #41527a;
+
+  /* Light equivalents of the literal colours above. Surfaces become tints
+     rather than inverting to dark blocks; gold and the up/down pair darken
+     so they stay legible on white without swapping brightness. */
+  --cgi-surface: #e6eaf2;
+  --cgi-surface-head: #dde3ef;
+  --cgi-surface-alt: #eaeef6;
+  --cgi-surface-deep: #f0f3f9;
+  --cgi-rule: #ccd4e6;
+  --cgi-accent-dim: #b4c0dc;
+  --cgi-gold: #8a6510;
+  --cgi-gold-bg: #e8b923;
+  --cgi-gold-panel: #fdf5da;
+  --cgi-up: #0a8f3c;
+  --cgi-down: #c62828;
+  --cgi-warn: #a85400;
+  --cgi-neutral: #5b6472;
+  --cgi-null: #6b7280;
+  --cgi-muted-blue: #3d5a78;
 }
 
 body {
