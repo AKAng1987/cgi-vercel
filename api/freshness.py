@@ -53,7 +53,7 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 3  # 3: compare on the latest COMMON date; leads_source is healthy
+SCHEMA_VERSION = 4  # 4: breadth symbols in scope; daily staleness counts sessions
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
@@ -100,6 +100,26 @@ def _value_on(symbol: str, date_iso: str) -> Optional[float]:
 def _age_days(date_iso: str, today: Optional[dt.date] = None) -> int:
     t = today or dt.date.today()
     return (t - dt.date.fromisoformat(date_iso)).days
+
+
+def _sessions_since(date_iso: str, today: Optional[dt.date] = None) -> int:
+    """Weekdays elapsed, for judging a DAILY series.
+
+    Calendar days lie about daily market data over a weekend: a series
+    current to Friday close is three calendar days old on Monday and one
+    session behind. Without this every daily symbol would look two days
+    stale every Monday, which is the fastest way to make a freshness read
+    worth ignoring. Holidays are not modelled -- this is a hint, and being
+    wrong by one session on Thanksgiving costs nothing.
+    """
+    t = today or dt.date.today()
+    d = dt.date.fromisoformat(date_iso)
+    n = 0
+    while d < t:
+        d += dt.timedelta(days=1)
+        if d.weekday() < 5:
+            n += 1
+    return n
 
 
 def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
@@ -230,10 +250,17 @@ def manual_worklist(today: Optional[dt.date] = None) -> dict:
             "ours_date": ours["date"] if ours else None,
             "ours_value": ours["value"] if ours else None,
             "age_days": age,
+            # Sessions, not calendar days, for anything daily -- see
+            # _sessions_since. Reported alongside so the difference is
+            # visible rather than hidden in the arithmetic.
+            "sessions_behind": (_sessions_since(ours["date"], t)
+                                if ours and cadence == "daily" else None),
             # A HINT, not a verdict: worth looking at first, not proof of
             # anything. The routine decides by asking the source.
-            "periods_behind": (round(age / period, 1)
-                               if age is not None and period else None),
+            "periods_behind": (
+                round(_sessions_since(ours["date"], t) / 1.0, 1)
+                if ours and cadence == "daily"
+                else round(age / period, 1) if age is not None and period else None),
         }
         if ours is None:
             row["action"] = "load"

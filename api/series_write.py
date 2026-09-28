@@ -37,6 +37,30 @@ ALLOWED = {
     "CHALLENGER":       ("challenger_gray", "1M", 0.0, 2_000_000.0, "ECONOMICS:USJC"),
     "BDI":              ("tradingview", "1W", 0.0, 20_000.0, "INDEX:BDI"),
 
+    # ── breadth (daily) ──────────────────────────────────────────────────
+    # These were registered in metrics-source under source=tradingview but
+    # were NOT here, and no Lambda serves tradingview. So they fell between
+    # two lists: registered enough to look automated, absent from the manual
+    # worklist that /api/freshness builds from ALLOWED. Nothing refreshed
+    # them and nothing reported that.
+    #
+    # Found 2026-09-28 because the LIVE breadth panel stopped moving: it read
+    # net -54 from 2026-09-23 while the source had -47 for 09-25. The panel
+    # was computing correctly from data two trading days old.
+    #
+    # Daily, and they feed the primary risk read, so they go stale faster and
+    # more visibly than anything else on this list.
+    "HIGQ":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:HIGQ"),
+    "LOWQ":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:LOWQ"),
+    "HIGN":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:HIGN"),
+    "LOWN":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:LOWN"),
+    "NCFD":             ("tradingview", "1D", 0.0, 100.0, "INDEX:NCFD"),
+    "NCTH":             ("tradingview", "1D", 0.0, 100.0, "INDEX:NCTH"),
+    "MMFD":             ("tradingview", "1D", 0.0, 100.0, "INDEX:MMFD"),
+    "MMTW":             ("tradingview", "1D", 0.0, 100.0, "INDEX:MMTW"),
+    "MMFI":             ("tradingview", "1D", 0.0, 100.0, "INDEX:MMFI"),
+    "MMTH":             ("tradingview", "1D", 0.0, 100.0, "INDEX:MMTH"),
+
     # ── Country macro, added 2026-09-26 for the COUNTRIES tab ──────────────
     # Policy rates. SIX countries, not seven: the US is deliberately absent.
     # It is already served by DFEDTARU (policy rate), CPIAUCSL (inflation) and
