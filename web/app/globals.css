@@ -2,7 +2,7 @@
 @config "../tailwind.config.ts";
 
 /*
- * THEMING BY INVERTING THE RAMP
+ * THEMING BY REMAPPING THE RAMP
  *
  * Every page in this app hardcodes slate-* (bg-slate-950, text-slate-300,
  * border-slate-800 ...) and was written dark-first. Converting nine pages to
@@ -11,15 +11,44 @@
  *
  * Tailwind v4 exposes each colour as a CSS variable, so light mode is done by
  * REMAPPING THE SLATE RAMP ITSELF: 950 becomes the lightest, 50 the darkest.
- * Every existing utility then flips with no page edits at all. The rule is
- * mechanical and therefore uniform -- there is no page that "forgot" to be
- * converted.
+ * Every existing utility then flips with no page edits at all.
  *
- * Accents are remapped separately. emerald-400 and rose-400 are tuned for a
- * near-black background and are badly under-contrast on white, so in light
- * mode they shift to their 600/700 equivalents. Inverting those the way slate
- * is inverted would make "up" and "down" swap brightness, which is worse than
- * wrong -- it is misleading.
+ * WHY THIS IS NOT A PURE INVERSION (2026-09-28)
+ *
+ * The original version mirrored the ramp exactly, and light mode looked
+ * washed out. Measured on /countries, the cause was borders, not text:
+ *
+ *     dark    border rgb(15,23,43) on page rgb(2,6,24)     -- a ~15/255 step
+ *     light   border rgb(241,245,249) on page rgb(248,250,252) -- a ~6/255 step
+ *
+ * A mirrored ramp preserves the CONTRAST RATIO but not the absolute step,
+ * and it lands that smaller step on a background where the eye needs a
+ * bigger one: sensitivity falls as luminance rises (Weber), so the same
+ * delta that reads as a clean rule near black disappears near white. Light
+ * mode got half the separation where it needed more than double.
+ *
+ * So the top of the light ramp -- 950/900/800/700, the page, the cards and
+ * the table rules -- is spread WIDER than its dark mirror rather than
+ * matching it. 600 is darkened for the same reason: it is the dimmest text
+ * tier and mirrored it fell to 2.5:1.
+ *
+ * Text below 600 is left mirrored; measured, it was never the problem.
+ * Dark mode is untouched, and deliberately so.
+ *
+ * ACCENTS ARE A SEPARATE, EXPLICIT LIST
+ *
+ * emerald-400 and rose-400 are tuned for a near-black background and are
+ * badly under-contrast on white, so they shift to darker equivalents.
+ * Inverting those the way slate is inverted would make "up" and "down" swap
+ * brightness, which is worse than wrong -- it is misleading.
+ *
+ * The rule per accent is by ROLE, not by number: a light shade used as TEXT
+ * darkens, a deep shade used as a BORDER or BACKGROUND lightens.
+ *
+ * This list is hand-maintained and it HAS drifted -- on 2026-09-28, 24
+ * colours were in use with no light value at all, including text-amber-400
+ * at 1.65:1. `npm run check:theme` now fails on any colour used in the app
+ * without an entry here, so the list cannot silently fall behind again.
  */
 
 :root {
@@ -30,12 +59,13 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  /* slate, inverted */
-  --color-slate-950: oklch(0.984 0.003 247.858);
-  --color-slate-900: oklch(0.968 0.007 247.896);
-  --color-slate-800: oklch(0.929 0.013 255.508);
-  --color-slate-700: oklch(0.869 0.022 252.894);
-  --color-slate-600: oklch(0.704 0.04 256.788);
+  /* slate. The top four are SPREAD WIDER than a mirror of the dark ramp --
+     see the note above; a mirrored step is invisible on white. */
+  --color-slate-950: oklch(0.995 0.001 247.858);   /* page */
+  --color-slate-900: oklch(0.925 0.008 247.896);   /* cards, row rules */
+  --color-slate-800: oklch(0.874 0.014 255.508);   /* the main border token */
+  --color-slate-700: oklch(0.800 0.024 252.894);
+  --color-slate-600: oklch(0.630 0.042 256.788);   /* dimmest text tier */
   --color-slate-500: oklch(0.554 0.046 257.417);
   --color-slate-400: oklch(0.446 0.043 257.281);
   --color-slate-300: oklch(0.372 0.044 257.287);
@@ -62,6 +92,39 @@
      accents rather than inverted, for the same reason. */
   --color-sky-300: oklch(0.5 0.13 245);
   --color-violet-300: oklch(0.5 0.16 295);
+
+  /* --- accents that were in use with NO light value until 2026-09-28 ---
+     Light shades used as TEXT, darkened so they clear AA on white. */
+  --color-amber-400: oklch(0.520 0.155 52);
+  --color-blue-400: oklch(0.500 0.180 258);
+  /* accent-color on a range input: needs to read as a filled control on
+     white, so it darkens like the text shades rather than lightening. */
+  --color-blue-500: oklch(0.520 0.190 258);
+  --color-orange-400: oklch(0.530 0.170 45);
+  --color-red-300: oklch(0.520 0.200 20);
+  --color-red-500: oklch(0.500 0.210 20);
+  --color-violet-400: oklch(0.500 0.190 295);
+  --color-yellow-200: oklch(0.560 0.130 85);
+  --color-yellow-300: oklch(0.540 0.140 85);
+  --color-yellow-400: oklch(0.520 0.150 85);
+  --color-emerald-900: oklch(0.450 0.100 165);
+
+  /* Deep shades used as BORDERS or BACKGROUNDS, lightened to stay tints
+     rather than becoming dark blocks on a white page. */
+  --color-amber-500: oklch(0.850 0.090 75);
+  --color-amber-700: oklch(0.820 0.100 70);
+  --color-amber-800: oklch(0.860 0.075 72);
+  --color-emerald-700: oklch(0.850 0.080 165);
+  --color-emerald-800: oklch(0.880 0.065 165);
+  --color-red-900: oklch(0.890 0.055 20);
+  --color-rose-700: oklch(0.850 0.080 15);
+  --color-rose-800: oklch(0.880 0.065 15);
+  --color-sky-800: oklch(0.870 0.060 245);
+  --color-sky-950: oklch(0.960 0.025 245);
+  --color-violet-800: oklch(0.870 0.070 295);
+  --color-violet-950: oklch(0.960 0.030 295);
+  --color-yellow-800: oklch(0.870 0.080 85);
+  --color-yellow-950: oklch(0.965 0.040 95);
 
   --cgi-accent: #41527a;
 }
