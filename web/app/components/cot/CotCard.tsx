@@ -66,7 +66,7 @@ export function CotCard({ c }: { c: CotContract }) {
           {c.signal}
         </div>
       )}
-      <div className="mt-0.5 text-[0.6rem] text-slate-700">
+      <div className="mt-0.5 text-[0.6rem] text-slate-600">
         {c.n_weeks} weeks from {c.history_from}
       </div>
     </div>

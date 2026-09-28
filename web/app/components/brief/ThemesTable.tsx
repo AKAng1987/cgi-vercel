@@ -79,7 +79,7 @@ export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats
                 <td className={`px-2 py-1 text-right ${isMega ? "text-slate-600" : (t.survival_pct ?? 0) >= 0.5 ? "text-slate-200" : (t.survival_pct ?? 0) >= 0.2 ? "text-slate-400" : "text-slate-600"}`}
                     title={isMega ? "measured over rotational runs; a secular trend is not drawn from that distribution" : undefined}>
                   {t.survival_pct === null ? "—" : `${Math.round(t.survival_pct * 100)}%`}
-                  {isMega && <span className="ml-0.5 text-[0.6rem] text-slate-700">n/a</span>}
+                  {isMega && <span className="ml-0.5 text-[0.6rem] text-slate-600">n/a</span>}
                 </td>
                 <td className="px-2 py-1 text-right font-semibold text-slate-100">{pct(lead?.rs_gain_pct)}</td>
                 <td className="px-2 py-1 text-right text-slate-300">{pct(lead?.price_gain_pct)}</td>

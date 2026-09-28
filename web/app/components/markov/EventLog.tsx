@@ -30,7 +30,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 }
 
 function HitCell({ hit }: { hit: boolean | null }) {
-  if (hit === null) return <span className="text-slate-700">—</span>;
+  if (hit === null) return <span className="text-slate-600">—</span>;
   return <span className={`font-bold ${hit ? "text-[var(--cgi-up)]" : "text-[var(--cgi-down)]"}`}>{hit ? "HIT" : "MISS"}</span>;
 }
 
@@ -105,7 +105,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.pre_registered_on
                       ? <span className={e.pre_registration_note ? "text-[var(--cgi-gold)]" : "text-[var(--cgi-up)]"} title={e.pre_registration_note ?? "both probabilities were in DynamoDB before the release"}>{e.pre_registered_on.replace("T", " ").replace("Z", "Z")}</span>
-                      : e.scheduled ? <span className="text-slate-600" title="history recomputed from model-history after the fact; no market number was stored">recomputed</span> : <span className="text-slate-700">—</span>}
+                      : e.scheduled ? <span className="text-slate-600" title="history recomputed from model-history after the fact; no market number was stored">recomputed</span> : <span className="text-slate-600">—</span>}
                   </td>
                 </tr>
               ))}
