@@ -91,13 +91,42 @@ def compute_stats(occurrences: list[dict]) -> Optional[dict]:
     hit_rate = hit_count / count * 100.0
     edge = (avg_high / abs(avg_low)) if avg_low < 0 else None
     avg_return = sum(o["return_pct"] for o in occurrences) / count
+
+    # How the excursion was measured. For 44 of 167 tickers the stored
+    # open/high/low are on a different scale from the close -- adjusted
+    # close against raw OHLC -- which produced impossible output: RICE
+    # showed an avg LOW of +9556.91% and MLPX an avg HIGH of -65.98%. The
+    # refresher now falls back to close-to-close for any occurrence whose
+    # bars fail low <= close <= high, and records which basis it used.
+    #
+    # Surfaced rather than hidden: a close-only excursion understates
+    # intraday reach, so it is a different measurement from the rest of the
+    # column and the page has to be able to say so.
+    bases = {o.get("excursion_basis", "ohlc") for o in occurrences}
+    n_close = sum(1 for o in occurrences if o.get("excursion_basis") == "close")
+
+    # Belt and braces. If a value that cannot exist reaches here anyway, the
+    # blob predates the fix -- suppress rather than print it as fact.
+    impossible = avg_high < 0 or avg_low > 0
+
     return {
         "count": count,
-        "avg_high_pct": round(avg_high, 2),
-        "avg_low_pct": round(avg_low, 2),
+        "avg_high_pct": None if impossible else round(avg_high, 2),
+        "avg_low_pct": None if impossible else round(avg_low, 2),
         "hit_rate": round(hit_rate, 1),
-        "edge": round(edge, 2) if edge is not None else None,
+        "edge": None if impossible else (round(edge, 2) if edge is not None else None),
         "avg_return": round(avg_return, 2),
+        "excursion_basis": "mixed" if len(bases) > 1 else next(iter(bases)),
+        "n_close_basis": n_close,
+        "excursion_note": (
+            "Avg high/low suppressed: the stored open/high/low for this ticker are "
+            "on a different scale from its close, so the excursion cannot be "
+            "computed. Hit rate and avg return use closes only and are unaffected."
+            if impossible else
+            "Excursion measured close-to-close, not intraday, because this ticker's "
+            "stored high/low are on a different scale from its close. It understates "
+            "the true reach."
+            if n_close else None),
     }
 
 
