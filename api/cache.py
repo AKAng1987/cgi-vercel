@@ -51,7 +51,7 @@ TTL_HOURS: dict[str, float] = {
     "cot": 12.0,  # COT publishes Friday 15:30 ET; 12h keeps it fresh without hammering CFTC
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
-    "watchlists": 24.0,  # TradingView list contents for the cloud routine
+    "watchlists": 34.0,  # TradingView list contents for the cloud routine
     "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
     "etf_constituents": 168.0,  # ETF books move slowly; 7d, and the pull is ~90s
     "brief_daily": 6.0,

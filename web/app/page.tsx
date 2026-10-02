@@ -40,9 +40,16 @@ export default async function Live() {
   const cq = sig?.compass.current ?? null;
   const gq = sig?.grid.current ?? null;
 
+  // The worst are drawn from what is LEFT after the best, mirroring
+  // watchlists.py. Taking them from the whole list lets a name appear in
+  // both columns whenever the regime has fewer than TOP+BOTTOM qualifying
+  // tickers -- at 20/20 a 25-ticker cell would have shown 15 of its 20
+  // "worst" as also "best". C3G4 runs that thin.
+  const TOP = 20;
+  const BOTTOM = 20;
   const ranked = (edgeNow?.rows ?? []).filter((r) => r.edge !== null);
-  const top = ranked.slice(0, 20);
-  const worst = ranked.length > 20 ? ranked.slice(-10).reverse() : [];
+  const top = ranked.slice(0, TOP);
+  const worst = ranked.slice(TOP).slice(-BOTTOM).reverse();
 
   return (
     <main className="mx-auto max-w-6xl p-6">

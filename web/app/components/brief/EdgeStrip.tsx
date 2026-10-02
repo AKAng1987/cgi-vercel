@@ -53,7 +53,13 @@ export function EdgeStrip({
           </div>
         </div>
 
-        <div className="mb-1 text-[0.62rem] uppercase tracking-wide text-slate-500">best 20</div>
+        {/* Counts are DERIVED. They were typed as "best 20" / "worst 10",
+            which was right only by coincidence and went wrong the moment the
+            constant moved -- a thin regime shows fewer, and the label has to
+            say so rather than claim a number that is not there. */}
+        <div className="mb-1 text-[0.62rem] uppercase tracking-wide text-slate-500">
+          best {best.length}
+        </div>
         <div className="mb-3 flex flex-wrap gap-2">
           {best.map((r) => (
             <Card key={r.ticker} r={r} />
@@ -62,7 +68,9 @@ export function EdgeStrip({
 
         {worst.length > 0 && (
           <>
-            <div className="mb-1 text-[0.62rem] uppercase tracking-wide text-slate-500">worst 10</div>
+            <div className="mb-1 text-[0.62rem] uppercase tracking-wide text-slate-500">
+              worst {worst.length}
+            </div>
             <div className="flex flex-wrap gap-2">
               {worst.map((r) => (
                 <Card key={r.ticker} r={r} dim />

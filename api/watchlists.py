@@ -17,7 +17,7 @@ import backtest_data as bd
 import markov_data as md
 import release_calendar as cal
 
-TOP, BOTTOM, MIN_OCC = 20, 10, 5
+TOP, BOTTOM, MIN_OCC = 20, 20, 5
 WATCHLIST_IDS = {"CGI · now": "347463015", "CGI · if next flips": "347463028",
                  "CGI · earning it": "348364949"}
 
