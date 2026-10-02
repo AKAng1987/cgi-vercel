@@ -69,30 +69,61 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
         ("Gold", ["GOLD - COMMODITY EXCHANGE INC."]),
         ("Silver", ["SILVER - COMMODITY EXCHANGE INC."]),
         ("Copper", ["COPPER- #1 - COMMODITY EXCHANGE INC."]),
+        ("Platinum", ["PLATINUM - NEW YORK MERCANTILE EXCHANGE"]),
+        ("Palladium", ["PALLADIUM - NEW YORK MERCANTILE EXCHANGE"]),
+        # Steel only exists from 2022-02. The 3y index is fine; the 5y and
+        # "all" lookbacks will quietly be the same window, and the response
+        # carries n so that is visible rather than implied.
+        ("Steel (HRC)", ["STEEL-HRC - COMMODITY EXCHANGE INC."]),
+        ("Aluminum", ["ALUMINUM MWP - COMMODITY EXCHANGE INC.",
+                      "ALUMINUM - COMMODITY EXCHANGE INC."]),
     ],
     "AGRICULTURE": [
         ("Corn", ["CORN - CHICAGO BOARD OF TRADE"]),
         ("Soybeans", ["SOYBEANS - CHICAGO BOARD OF TRADE"]),
+        ("Soybean Oil", ["SOYBEAN OIL - CHICAGO BOARD OF TRADE"]),
+        ("Soybean Meal", ["SOYBEAN MEAL - CHICAGO BOARD OF TRADE"]),
         ("Wheat", ["WHEAT-SRW - CHICAGO BOARD OF TRADE"]),
         ("Sugar", ["SUGAR NO. 11 - ICE FUTURES U.S."]),
         ("Coffee", ["COFFEE C - ICE FUTURES U.S."]),
+        ("Cocoa", ["COCOA - ICE FUTURES U.S."]),
         ("Cotton", ["COTTON NO. 2 - ICE FUTURES U.S."]),
         ("Live Cattle", ["LIVE CATTLE - CHICAGO MERCANTILE EXCHANGE"]),
         ("Lean Hogs", ["LEAN HOGS - CHICAGO MERCANTILE EXCHANGE"]),
     ],
     "RATES": [
         ("2-Year Note", ["UST 2Y NOTE - CHICAGO BOARD OF TRADE"]),
+        ("5-Year Note", ["UST 5Y NOTE - CHICAGO BOARD OF TRADE"]),
         ("10-Year Note", ["UST 10Y NOTE - CHICAGO BOARD OF TRADE"]),
+        ("30-Year Bond", ["UST BOND - CHICAGO BOARD OF TRADE",
+                          "U.S. TREASURY BONDS - CHICAGO BOARD OF TRADE"]),
     ],
     "FX": [
         ("US Dollar Index", ["USD INDEX - ICE FUTURES U.S."]),
         ("Euro FX", ["EURO FX - CHICAGO MERCANTILE EXCHANGE"]),
         ("Japanese Yen", ["JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE"]),
+        ("British Pound", ["BRITISH POUND - CHICAGO MERCANTILE EXCHANGE",
+                           "BRITISH POUND STERLING - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Canadian Dollar", ["CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Swiss Franc", ["SWISS FRANC - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Australian Dollar", ["AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Mexican Peso", ["MEXICAN PESO - CHICAGO MERCANTILE EXCHANGE"]),
     ],
     "EQUITY": [
-        ("S&P 500 (E-mini)", ["E-MINI S&P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE"]),
-        ("Nasdaq 100 (E-mini)", ["NASDAQ-100 STOCK INDEX (MINI) - CHICAGO MERCANTILE EXCHANGE"]),
+        # Both of these were DEAD. The CFTC renamed a large block of contracts
+        # on 2022-02-01, and the two configured here stopped there -- S&P 500
+        # and Nasdaq 100 E-mini had shown nothing for four and a half years
+        # while still appearing on the page. The old name is kept second so
+        # the pre-2022 history still comes through; _series merges on date.
+        ("S&P 500 (E-mini)", ["E-MINI S&P 500 - CHICAGO MERCANTILE EXCHANGE",
+                              "E-MINI S&P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Nasdaq 100 (E-mini)", ["NASDAQ MINI - CHICAGO MERCANTILE EXCHANGE",
+                                 "NASDAQ-100 STOCK INDEX (MINI) - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Russell 2000 (E-mini)", ["RUSSELL E-MINI - CHICAGO MERCANTILE EXCHANGE"]),
+        ("Dow (x $5)", ["DJIA x $5 - CHICAGO BOARD OF TRADE",
+                        "DOW JONES INDUSTRIAL AVG- x $5 - CHICAGO BOARD OF TRADE"]),
         ("VIX", ["VIX FUTURES - CBOE FUTURES EXCHANGE"]),
+        ("Bitcoin", ["BITCOIN - CHICAGO MERCANTILE EXCHANGE"]),
     ],
 }
 
