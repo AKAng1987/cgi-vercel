@@ -237,7 +237,10 @@ def freshness_heartbeat(body: dict = Body(default={})):
     """
     summary = body.get("summary") if isinstance(body, dict) else None
     try:
-        written = freshness.write_heartbeat(summary if isinstance(summary, str) else None)
+        checked = body.get("checked") if isinstance(body, dict) else None
+        written = freshness.write_heartbeat(
+            summary if isinstance(summary, str) else None,
+            checked if isinstance(checked, dict) else None)
         cache.invalidate("freshness")
         return {"ok": True, **written}
     except Exception as exc:  # noqa: BLE001

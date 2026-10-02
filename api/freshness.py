@@ -198,6 +198,10 @@ def read_heartbeat(today: Optional[dt.date] = None) -> dict:
         "stale_after_hours": HEARTBEAT_STALE_HOURS,
         "stale": stale,
         "ran": payload.get("summary"),
+        # Per-symbol record of when the routine last ASKED each source. The
+        # planner uses it to re-check on each series' own cadence instead of
+        # on the age of our copy -- see scripts/cgi_refresh.py.
+        "ran_detail": payload.get("checked") or {},
         "detail": (f"The refresh routine has not completed a run in "
                    f"{age_h:.0f}h. Manual series stop updating when it stops, "
                    f"and it is an LLM session -- the usual cause is the token "
@@ -207,13 +211,14 @@ def read_heartbeat(today: Optional[dt.date] = None) -> dict:
     }
 
 
-def write_heartbeat(summary: Optional[str] = None) -> dict:
+def write_heartbeat(summary: Optional[str] = None,
+                    checked: Optional[dict] = None) -> dict:
     """Called by the routine when it finishes. Records only that it ran."""
     import json as _json
 
     import cache
     body = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-            "summary": summary}
+            "summary": summary, "checked": checked or {}}
     cache._s3.put_object(Bucket=cache.BUCKET, Key=_heartbeat_path(),
                          Body=_json.dumps(body).encode("utf-8"),
                          ContentType="application/json")
