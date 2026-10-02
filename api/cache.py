@@ -142,7 +142,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "cot": 2,  # 2026-09-27: trader_category on every reading + always-shown watched list
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
-    "watchlists": 2,  # 2026-09-26: CGI earning-it list + NATGAS symbol fix
+    "watchlists": 3,  # 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 2,
     "liquidity": 1,
