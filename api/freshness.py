@@ -53,11 +53,16 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 4  # 4: breadth symbols in scope; daily staleness counts sessions
+SCHEMA_VERSION = 5  # 5: compare on the latest date BOTH feeds hold
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
 VALUE_TOLERANCE = 1e-6
+
+# How far back to look for a date both sides hold. A week of rows absorbs an
+# offset publication calendar and a short holiday without absorbing a feed
+# that has genuinely stopped.
+COMPARE_WINDOW = 12
 
 FREQ_CADENCE = {"1D": "daily", "1W": "weekly", "1M": "monthly",
                 "1Q": "quarterly", "1Y": "annual"}
@@ -81,6 +86,28 @@ def _newest(symbol: str) -> Optional[dict]:
     if "close" not in it:
         return None
     return {"date": it["date"]["S"], "value": float(it["close"]["N"])}
+
+
+def _recent(symbol: str, n: int = 12) -> dict:
+    """Our newest n rows as {date: value}.
+
+    Needed because two feeds of the same series do not publish on the same
+    days. Looking our value up at the SOURCE's newest date alone reports a
+    defect whenever the calendars are merely offset -- which is what the
+    us_treasury feed and FRED do routinely, and what made all seven Treasury
+    tenors read as broken.
+    """
+    resp = _ddb.query(
+        TableName=PRICE_TABLE,
+        KeyConditionExpression="#s = :s",
+        ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
+        ExpressionAttributeValues={":s": {"S": symbol}},
+        ProjectionExpression="#d, #c",
+        ScanIndexForward=False,
+        Limit=n,
+    )
+    return {it["date"]["S"]: float(it["close"]["N"])
+            for it in resp.get("Items", []) if "close" in it}
 
 
 def _value_on(symbol: str, date_iso: str) -> Optional[float]:
@@ -152,6 +179,8 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
             last = df.iloc[-1]
             row["source_date"] = last["date"].strftime("%Y-%m-%d")
             row["source_value"] = float(last["value"])
+            source_tail = {r["date"].strftime("%Y-%m-%d"): float(r["value"])
+                           for _, r in df.tail(COMPARE_WINDOW).iterrows()}
         except Exception as exc:  # noqa: BLE001 -- unreachable != disagreeing
             row["status"] = "source_unavailable"
             row["detail"] = str(exc)[:200]
@@ -179,21 +208,33 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
         # against newest reported all seven as a defect when the values agree
         # exactly wherever both have a row -- 2026-09-24 both 5.18, 2026-09-23
         # both 5.11 -- and we simply have tomorrow's row first.
-        common = _value_on(aws_symbol, row["source_date"])
-        row["compared_on"] = row["source_date"]
-        if common is None:
+        # The latest date BOTH sides hold, not the source's newest. Two feeds
+        # of one series publish on different days, so an offset calendar is
+        # not a defect -- it is the normal state for anything we take from a
+        # faster provider than FRED.
+        ours_tail = _recent(aws_symbol, COMPARE_WINDOW)
+        shared = sorted(set(ours_tail) & set(source_tail), reverse=True)
+        if not shared:
             row["status"] = "no_common_date"
-            row["detail"] = (f"we hold {row['ours_date']} but no row for FRED's "
-                             f"{row['source_date']}, so there is nothing to compare")
-        elif abs(common - row["source_value"]) > VALUE_TOLERANCE:
+            row["detail"] = (f"no date in the last {COMPARE_WINDOW} rows appears on "
+                             f"both sides (ours newest {row['ours_date']}, FRED's "
+                             f"{row['source_date']}) -- nothing to compare")
+            rows.append(row)
+            continue
+
+        on = shared[0]
+        common = ours_tail[on]
+        source_on = source_tail[on]
+        row["compared_on"] = on
+        if abs(common - source_on) > VALUE_TOLERANCE:
             row["status"] = "value_disagrees"
             row["ours_value_on_common"] = common
-            row["detail"] = (f"on {row['source_date']} we hold {common} and FRED has "
-                             f"{row['source_value']} -- one of them is wrong, or it is "
-                             f"a revision the copy never went back for")
+            row["detail"] = (f"on {on} we hold {common} and FRED has {source_on} -- "
+                             f"one of them is wrong, or it is a revision the copy "
+                             f"never went back for")
         elif row["ours_date"] > row["source_date"]:
             row["status"] = "leads_source"
-            row["detail"] = (f"agrees with FRED on {row['source_date']}, and we also "
+            row["detail"] = (f"agrees with FRED on {on}, and we also "
                              f"hold {row['ours_date']} which FRED has not published. "
                              f"Expected where the AWS side is fed by a faster provider "
                              f"than FRED -- the Treasury tenors come from us_treasury "
