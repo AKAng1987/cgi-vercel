@@ -119,6 +119,48 @@ Source **is** in `market-dashboard/lambda/` for five: `backtest_refresher`,
 `regime_signal_updater`, `regime_outcome_backfill`,
 `regime_divergence_updater`, `cgi-brief-sender`.
 
+### Can the manual symbols be automated? Mostly no — audited 2026-10-03
+
+The question worth answering, because the manual half is the half that
+stops when the token budget does. Every one of the 56 was checked against
+FRED directly rather than assumed.
+
+**FRED has retired its OECD international republication.** The series that
+would have replaced the country macro are all discontinued:
+
+| what it would have replaced | FRED series | last observation |
+|---|---|---|
+| JP CPI | `JPNCPIALLMINMEI`, `CPALTT01JPM657N` | **2021-06** |
+| GB broad money | `MABMM201GBM189S` | **2013-12** |
+| JP M2 | `MYAGM2JPM189S` | 2017-02 |
+| KR M2 | `MYAGM2KRM189S` | 2017-05 |
+| CN M2 | `MYAGM2CNM189N` | 2019-08 |
+| KR CPI | `CPALTT01KRM657N` | 2024-03 |
+| GB CPI | `CPALTT01GBM657N` | 2024-02 |
+| CN CPI | `CHNCPIALLMINMEI` | 2025-04 |
+
+**Only two can move**, and both are confirmed live and identical to what we
+already hold:
+
+| ours | FRED | note |
+|---|---|---|
+| `JP_CB_ASSETS` | `JPNASSETS` | matches to the digit on 2026-08-01; FRED is in units of 100M yen (×10^8) |
+| `EU_CB_ASSETS` | `ECBASSETSW` | matches; FRED is in millions of EUR (×10^6) and is **weekly**, an upgrade on our monthly |
+
+Both need a unit conversion, which is the exact class of error that once put
+a BOJ balance sheet out by 1000× and still looked plausible. Worth doing,
+but only with the converted value asserted equal to the stored one on a
+shared date first.
+
+**The rest cannot move**: ISM is licensed, Challenger has no free API, the
+breadth series are computed by TradingView itself, and the PH curve has no
+free source. Roughly 54 of 56 symbols are irreducibly dependent on a Claude
+session.
+
+That is why the answer to "can the refresh stop needing tokens" is **no**,
+and why the work went into making the routine's death *visible* (the
+heartbeat) and *cheap* (`scripts/cgi_refresh.py`) instead.
+
 ### What is manual
 
 46 symbols in `api/series_write.py` `ALLOWED` — every country macro series,
