@@ -53,7 +53,7 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 5  # 5: compare on the latest date BOTH feeds hold
+SCHEMA_VERSION = 6  # 6: refresh-routine heartbeat
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
@@ -147,6 +147,77 @@ def _sessions_since(date_iso: str, today: Optional[dt.date] = None) -> int:
         if d.weekday() < 5:
             n += 1
     return n
+
+
+# The refresh routine's heartbeat.
+#
+# The routine is an LLM session, so it dies when the token budget does --
+# which it did on 2026-10-01 ("you've hit your weekly limit"), and the
+# 2026-10-02 run then hung for fifteen hours. Nothing reported either. The
+# breadth series went five sessions stale and were found by eye.
+#
+# Every other check here asks "is the data behind its source". None of them
+# can answer "is the thing that updates the data still alive", because a
+# routine that never runs leaves data that is merely old, and old is not by
+# itself a defect -- PHCBBS has been correct and 240 days old all year.
+#
+# So the routine says so itself. One object, written on success. It catches
+# the token limit, a closed app, a hung run and a deleted routine alike,
+# and needs to know nothing about what any source holds.
+HEARTBEAT_KEY = "refresh_routine"
+HEARTBEAT_STALE_HOURS = 48.0
+
+
+def _heartbeat_path() -> str:
+    import cache
+    return f"{cache.PREFIX}heartbeat/{HEARTBEAT_KEY}.json"
+
+
+def read_heartbeat(today: Optional[dt.date] = None) -> dict:
+    """When the manual-refresh routine last finished a run."""
+    import json as _json
+
+    import cache
+    try:
+        obj = cache._s3.get_object(Bucket=cache.BUCKET, Key=_heartbeat_path())
+        payload = _json.loads(obj["Body"].read().decode("utf-8"))
+        last = obj["LastModified"]
+    except Exception as exc:  # noqa: BLE001 -- never written is a valid answer
+        return {"ever_run": False,
+                "why": f"no heartbeat recorded ({type(exc).__name__})",
+                "stale": True,
+                "detail": ("The refresh routine has never reported a successful "
+                           "run. Until it does, every manual series is only as "
+                           "fresh as the last hand-load.")}
+    age_h = (dt.datetime.now(dt.timezone.utc) - last).total_seconds() / 3600.0
+    stale = age_h > HEARTBEAT_STALE_HOURS
+    return {
+        "ever_run": True,
+        "last_success": last.isoformat(),
+        "age_hours": round(age_h, 1),
+        "stale_after_hours": HEARTBEAT_STALE_HOURS,
+        "stale": stale,
+        "ran": payload.get("summary"),
+        "detail": (f"The refresh routine has not completed a run in "
+                   f"{age_h:.0f}h. Manual series stop updating when it stops, "
+                   f"and it is an LLM session -- the usual cause is the token "
+                   f"budget, a closed app, or a hung run."
+                   if stale else
+                   f"Refresh routine last completed {age_h:.0f}h ago."),
+    }
+
+
+def write_heartbeat(summary: Optional[str] = None) -> dict:
+    """Called by the routine when it finishes. Records only that it ran."""
+    import json as _json
+
+    import cache
+    body = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+            "summary": summary}
+    cache._s3.put_object(Bucket=cache.BUCKET, Key=_heartbeat_path(),
+                         Body=_json.dumps(body).encode("utf-8"),
+                         ContentType="application/json")
+    return body
 
 
 def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
@@ -330,11 +401,14 @@ def manual_worklist(today: Optional[dt.date] = None) -> dict:
 def build_freshness(today: Optional[dt.date] = None) -> dict:
     fred = fred_crosscheck(today)
     manual = manual_worklist(today)
+    beat = read_heartbeat(today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
         "manual": manual,
-        "n_problems": fred["n_problems"] + manual["n_never_loaded"],
+        "refresh_routine": beat,
+        "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
+                       + (1 if beat.get("stale") else 0)),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

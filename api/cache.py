@@ -41,7 +41,7 @@ TTL_HOURS: dict[str, float] = {
     "gdp": 48.0,
     "gdp_nowcast": 24.0,
     "gdp_nowcast_freshness": 6.0,
-    "freshness": 6.0,
+    "freshness": 1.0,
     "inflation": 24.0,
     "pce": 24.0,
     "dot_plot": 168.0,  # 7d

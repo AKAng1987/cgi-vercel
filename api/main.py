@@ -225,6 +225,25 @@ def freshness_endpoint():
     return cache.get_or_fetch("freshness", freshness.build_freshness)
 
 
+@app.post("/api/freshness/heartbeat")
+def freshness_heartbeat(body: dict = Body(default={})):
+    """The refresh routine reports that it finished a run.
+
+    Unauthenticated for the same reason POST /api/series is: the routine's
+    environment cannot hold a secret. It stores a timestamp and a one-line
+    summary and nothing else, so the worst a stranger can do is make the
+    dashboard believe the routine is healthier than it is -- which is why
+    the staleness checks it sits beside are all independent of it.
+    """
+    summary = body.get("summary") if isinstance(body, dict) else None
+    try:
+        written = freshness.write_heartbeat(summary if isinstance(summary, str) else None)
+        cache.invalidate("freshness")
+        return {"ok": True, **written}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"could not record heartbeat: {exc}")
+
+
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
 def technicals():
     return cache.get_or_fetch("technicals", technicals_data.build_technicals_response)

@@ -215,6 +215,22 @@ def build_brief(cadence: str = "daily") -> dict:
     # old and entirely correct since BSP stopped publishing in February.
     fresh, e_fr = _try("freshness", lambda: cache.get_or_fetch(
         "freshness", freshness.build_freshness))
+    # The routine itself, before anything it was meant to update. A dead
+    # routine explains every stale series below it, and is the one failure
+    # the per-symbol checks cannot see.
+    if fresh and (fresh.get("refresh_routine") or {}).get("stale"):
+        rr = fresh["refresh_routine"]
+        sections.append(_section(
+            "refresh routine",
+            ("has never completed a run" if not rr.get("ever_run")
+             else f"has not completed a run in {rr.get('age_hours', 0):.0f}h"),
+            {"last_success": rr.get("last_success"),
+             "detail": rr.get("detail"),
+             "what_to_do": ("Check the scheduled task's recent runs. It is an LLM "
+                            "session, so the usual causes are the token budget, a "
+                            "closed app, or a run that hung. Every manual series "
+                            "stops updating while it is down.")}))
+
     if fresh and fresh.get("n_problems"):
         auto = fresh.get("automated", {})
         behind = [r for r in auto.get("series", [])
