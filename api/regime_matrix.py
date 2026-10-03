@@ -51,17 +51,17 @@ COUNTRIES: list[dict] = [
     # --- the rest of what the blob already covers, same treatment ---
     {"code": "IN", "name": "India",         "etfs": ["INDA", "PIN"],  "pair": "USDINR", "trade": "importer", "trade_why": "energy importer"},
     {"code": "ID", "name": "Indonesia",     "etfs": ["EIDO", "IDX"],  "pair": "USDIDR", "trade": "exporter", "trade_why": "commodity exporter"},
-    {"code": "TW", "name": "Taiwan",        "etfs": ["EWT"],          "pair": None,     "trade": "exporter", "trade_why": "semiconductors; TWD not in the FX set"},
+    {"code": "TW", "name": "Taiwan",        "etfs": ["EWT"],          "pair": "USDTWD", "trade": "exporter", "trade_why": "semiconductors; TWD is actively managed, so the FX leg is a weak read"},
     {"code": "HK", "name": "Hong Kong",     "etfs": ["EWH"],          "pair": "USDHKD", "trade": "mixed",    "trade_why": "entrepot; HKD is pegged, so the FX leg is near-meaningless"},
     {"code": "SG", "name": "Singapore",     "etfs": ["EWS"],          "pair": "USDSGD", "trade": "exporter", "trade_why": "trade entrepot and refining"},
-    {"code": "MY", "name": "Malaysia",      "etfs": ["EWM"],          "pair": None,     "trade": "exporter", "trade_why": "commodities and electronics; MYR not in the FX set"},
-    {"code": "VN", "name": "Vietnam",       "etfs": ["VNM"],          "pair": None,     "trade": "exporter", "trade_why": "manufacturing; VND not in the FX set"},
+    {"code": "MY", "name": "Malaysia",      "etfs": ["EWM"],          "pair": "USDMYR", "trade": "exporter", "trade_why": "commodities and electronics"},
+    {"code": "VN", "name": "Vietnam",       "etfs": ["VNM"],          "pair": None,     "trade": "exporter", "trade_why": "manufacturing; the dong is a crawling peg (1.7% range over 7 months), so an FX line would read as information it does not carry"},
     {"code": "AU", "name": "Australia",     "etfs": ["EWA"],          "pair": "USDAUD", "trade": "exporter", "trade_why": "iron ore, coal, LNG"},
-    {"code": "CA", "name": "Canada",        "etfs": ["EWC"],          "pair": None,     "trade": "exporter", "trade_why": "energy; CAD not in the FX set"},
+    {"code": "CA", "name": "Canada",        "etfs": ["EWC"],          "pair": "USDCAD", "trade": "exporter", "trade_why": "energy"},
     {"code": "CH", "name": "Switzerland",   "etfs": ["EWL"],          "pair": "USDCHF", "trade": "exporter", "trade_why": "pharma and precision goods"},
-    {"code": "BR", "name": "Brazil",        "etfs": ["EWZ"],          "pair": None,     "trade": "exporter", "trade_why": "agriculture and iron ore; BRL not in the FX set"},
-    {"code": "MX", "name": "Mexico",        "etfs": ["EWW"],          "pair": None,     "trade": "exporter", "trade_why": "manufacturing into the US; MXN not in the FX set"},
-    {"code": "ZA", "name": "South Africa",  "etfs": ["EZA"],          "pair": None,     "trade": "exporter", "trade_why": "metals; ZAR not in the FX set"},
+    {"code": "BR", "name": "Brazil",        "etfs": ["EWZ"],          "pair": "USDBRL", "trade": "exporter", "trade_why": "agriculture and iron ore"},
+    {"code": "MX", "name": "Mexico",        "etfs": ["EWW"],          "pair": "USDMXN", "trade": "exporter", "trade_why": "manufacturing into the US"},
+    {"code": "ZA", "name": "South Africa",  "etfs": ["EZA"],          "pair": "USDZAR", "trade": "exporter", "trade_why": "metals"},
 ]
 
 FOCUS = ("PH", "CN", "JP", "KR", "GB", "EU")
@@ -187,7 +187,17 @@ def build_matrix(compass_q: int, grid_q: int, min_n: int = 5) -> dict:
             "equity_absent": absent or None,
             "currency": _fx_read(pair_stats),
             "currency_absent": (c["pair"] is None) or (pair_stats is None),
-            "currency_note": None if c["pair"] else "no USD pair for this currency in the price history",
+            # Three different states, previously two. A pair that is SET but
+            # missing from the blob rendered a bare "no pair" with no reason
+            # -- indistinguishable from a country that never had one. Every
+            # newly onboarded pair passes through that state between being
+            # loaded and the next backtest rebuild.
+            "currency_note": (
+                c["trade_why"] if c["pair"] is None and "peg" in (c["trade_why"] or "")
+                else "no USD pair tracked for this currency" if c["pair"] is None
+                else (f"{c['pair']} is loaded but has no entry in the backtest blob yet, "
+                      f"so the regime stats are pending the next refresh")
+                if pair_stats is None else None),
             "regime_n": _regime_ns(blob, c["etfs"][0]),
             "regime_ranking": _best_and_worst(blob, c["etfs"][0], min_n=min_n),
         })

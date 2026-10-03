@@ -93,7 +93,15 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     ("FX", (
         ["USDPHP", "USDJPY", "USDCNY", "USDAUD", "USDEUR", "USDGBP",
          "USDCHF", "USDSGD", "USDKRW", "USDHKD", "USDIDR", "USDINR",
-         "USDRUB", "USDTHB", "USDTRY", "DXY", "UUP"],
+         "USDRUB", "USDTHB", "USDTRY",
+         # 2026-10-03: the six COUNTRIES rows that read "no pair". Loaded
+         # from FRED's DEX* daily spot rates -- free, back to 1971 for CAD
+         # and MYR, and maintained by the existing fred-data-updater, so
+         # none of these joins the token-dependent refresh routine.
+         # Vietnam is deliberately absent: FRED has no VND series (DEXVZUS
+         # is VENEZUELA), and the dong is a crawling peg.
+         "USDCAD", "USDMXN", "USDZAR", "USDBRL", "USDTWD", "USDMYR",
+         "DXY", "UUP"],
         "DXY",
     )),
     ("CRYPTO", (["BTC", "ETH", "BITO"], "DXY")),
