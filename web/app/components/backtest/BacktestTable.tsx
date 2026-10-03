@@ -56,12 +56,23 @@ export function BacktestTable({
   // tables so users can see the global winners without scrolling.
   // Uses the same filteredRows (respects group chip toggles), so
   // hiding a group also removes its tickers from the leaderboard.
-  const topByEdge = useMemo(() => {
-    return filteredRows
-      .filter((r) => r.edge !== null && !Number.isNaN(r.edge))
-      .sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0))
-      .slice(0, 10);
-  }, [filteredRows]);
+  const TOP = 20;
+  const BOTTOM = 20;
+  const ranked = useMemo(
+    () =>
+      filteredRows
+        .filter((r) => r.edge !== null && !Number.isNaN(r.edge))
+        .sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0)),
+    [filteredRows]
+  );
+  const topByEdge = useMemo(() => ranked.slice(0, TOP), [ranked]);
+  // Worst is drawn from what is left AFTER the top, so a ticker can never
+  // appear in both columns. Same rule as api/watchlists.py. A thin regime
+  // therefore shows fewer than 20 rather than padding or repeating names.
+  const worstByEdge = useMemo(
+    () => ranked.slice(TOP).slice(-BOTTOM).reverse(),
+    [ranked]
+  );
 
   function toggleGroup(g: string) {
     setHiddenGroups((prev) => {
@@ -72,34 +83,12 @@ export function BacktestTable({
     });
   }
 
-  return (
-    <div>
-      {availableGroups.length > 1 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500">Show groups:</span>
-          {availableGroups.map((g) => {
-            const active = !hiddenGroups.has(g);
-            return (
-              <button
-                key={g}
-                onClick={() => toggleGroup(g)}
-                className={`rounded border px-2 py-0.5 text-[0.68rem] uppercase tracking-wide transition ${
-                  active
-                    ? "border-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-head)] text-[color:var(--cgi-accent)]"
-                    : "border-slate-800 bg-slate-950 text-slate-600 line-through"
-                }`}
-              >
-                {g}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {topByEdge.length > 0 && (
+  const leaderboard = (rows_: BacktestRow[], label_: string) => (
+    <>
+      {rows_.length > 0 && (
         <div className="mb-4 rounded border border-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-deep)]">
           <div className="border-b border-[var(--cgi-rule)] px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
-            Top {topByEdge.length} by Edge — across all shown groups
+            {label_} {rows_.length} by Edge — across all shown groups
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[0.76rem]">
@@ -120,7 +109,7 @@ export function BacktestTable({
                 </tr>
               </thead>
               <tbody>
-                {topByEdge.map((r, i) => (
+                {rows_.map((r, i) => (
                   <tr
                     key={r.ticker}
                     onClick={() => setSelected(r.ticker)}
@@ -159,6 +148,35 @@ export function BacktestTable({
           </div>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <div>
+      {availableGroups.length > 1 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500">Show groups:</span>
+          {availableGroups.map((g) => {
+            const active = !hiddenGroups.has(g);
+            return (
+              <button
+                key={g}
+                onClick={() => toggleGroup(g)}
+                className={`rounded border px-2 py-0.5 text-[0.68rem] uppercase tracking-wide transition ${
+                  active
+                    ? "border-[var(--cgi-accent-dim)] bg-[var(--cgi-surface-head)] text-[color:var(--cgi-accent)]"
+                    : "border-slate-800 bg-slate-950 text-slate-600 line-through"
+                }`}
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {leaderboard(topByEdge, "Top")}
+      {leaderboard(worstByEdge, "Worst")}
 
       {Array.from(grouped.entries()).map(([group, rowsInGroup]) => (
         <div key={group} className="mt-4">

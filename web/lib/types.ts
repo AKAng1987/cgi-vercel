@@ -728,6 +728,7 @@ export type RegimeCountry = {
   equity_absent: string[] | null;
   currency: RegimeFxCell | null;
   currency_absent: boolean;
+  currency_state: "ok" | "managed" | "managed_untracked" | "untracked" | "pending";
   currency_note: string | null;
   regime_n: Record<string, number>;
   regime_ranking: { min_n: number; best: RegimeRankRow; worst: RegimeRankRow; ranked: RegimeRankRow[] } | null;

@@ -165,9 +165,23 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
             <Instrument symbol={c.currency.symbol} live={c.market?.fx ?? null} />
             <Rets r={c.market?.fx ?? null} />
             <InRegime regime={regime} cell={c.currency} />
+            {c.currency_state === "managed" && (
+              <div className="max-w-[16rem] text-[0.65rem] leading-snug text-[color:var(--cgi-warn)]">
+                managed rate — weak read. {c.currency_note}
+              </div>
+            )}
           </>
         ) : (
-          <span className="text-slate-600" title={c.currency_note ?? undefined}>no pair</span>
+          <div className="max-w-[16rem] text-[0.68rem] leading-snug text-slate-500">
+            <span className="font-medium text-slate-400">
+              {c.currency_state === "managed_untracked"
+                ? "managed — not shown"
+                : c.currency_state === "pending"
+                  ? "pending refresh"
+                  : "no pair tracked"}
+            </span>
+            {c.currency_note && <div>{c.currency_note}</div>}
+          </div>
         )}
       </td>
 

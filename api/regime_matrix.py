@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import backtest_data
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Countries in the user's stated order of interest, then the rest of what the
 # backtest already covers. `etfs` is ordered: the first one that exists in the
@@ -63,6 +63,12 @@ COUNTRIES: list[dict] = [
     {"code": "MX", "name": "Mexico",        "etfs": ["EWW"],          "pair": "USDMXN", "trade": "exporter", "trade_why": "manufacturing into the US"},
     {"code": "ZA", "name": "South Africa",  "etfs": ["EZA"],          "pair": "USDZAR", "trade": "exporter", "trade_why": "metals"},
 ]
+
+# Currencies the central bank manages rather than lets float. An FX leg on one
+# of these is a weak or empty read, and the page must say so in words -- a
+# managed rate that renders like a floating one invites a conclusion the data
+# cannot carry. Explicit set, not inferred from the prose in `trade_why`.
+MANAGED_FX = {"TW", "HK", "VN"}
 
 FOCUS = ("PH", "CN", "JP", "KR", "GB", "EU")
 
@@ -192,12 +198,22 @@ def build_matrix(compass_q: int, grid_q: int, min_n: int = 5) -> dict:
             # -- indistinguishable from a country that never had one. Every
             # newly onboarded pair passes through that state between being
             # loaded and the next backtest rebuild.
+            "currency_state": (
+                "managed_untracked" if c["pair"] is None and c["code"] in MANAGED_FX
+                else "untracked" if c["pair"] is None
+                else "pending" if pair_stats is None
+                else "managed" if c["code"] in MANAGED_FX
+                else "ok"),
+            # One sentence of why, for every non-"ok" state, so the page never
+            # has to show a bare "no pair".
             "currency_note": (
-                c["trade_why"] if c["pair"] is None and "peg" in (c["trade_why"] or "")
+                c["trade_why"] if c["pair"] is None and c["code"] in MANAGED_FX
                 else "no USD pair tracked for this currency" if c["pair"] is None
                 else (f"{c['pair']} is loaded but has no entry in the backtest blob yet, "
                       f"so the regime stats are pending the next refresh")
-                if pair_stats is None else None),
+                if pair_stats is None
+                else c["trade_why"] if c["code"] in MANAGED_FX
+                else None),
             "regime_n": _regime_ns(blob, c["etfs"][0]),
             "regime_ranking": _best_and_worst(blob, c["etfs"][0], min_n=min_n),
         })
