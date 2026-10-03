@@ -53,7 +53,13 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 6  # 6: refresh-routine heartbeat
+# Bump _SHAPE when the response SHAPE changes (6: refresh-routine heartbeat).
+# The symbol count is folded in because the manual worklist is DERIVED from
+# series_write.ALLOWED: moving a series off the routine changed what this
+# payload contains without changing its shape, and a hand-edited number did not
+# move, so the page served the old worklist for the cache's full hour.
+_SHAPE = 6
+SCHEMA_VERSION = _SHAPE * 1000 + len(series_write.ALLOWED)
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
