@@ -161,10 +161,13 @@ ALLOWED = {
 
     "PH_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:PHCBBS"),
     "CN_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:CNCBBS"),
-    "JP_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:JPCBBS"),
     "KR_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:KRCBBS"),
     "GB_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:GBCBBS"),
-    "EU_CB_ASSETS": ("tradingview", "1M", 0.0, 1e18, "ECONOMICS:EUCBBS"),
+    # JP_CB_ASSETS and EU_CB_ASSETS are NOT here any more: FRED carries the same
+    # series (JPNASSETS x1e8, ECBASSETSW x1e6, equal on every shared date) and
+    # the nightly fred-data-updater maintains them with no tokens. The stored
+    # rows under the old names are kept as a fallback; see
+    # country_data.FRED_SCALED.
 
     "PH02Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH02Y"),
     "PH10Y":  ("tradingview", "1W", 0.0, 40.0, "TVC:PH10Y"),

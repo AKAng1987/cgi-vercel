@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 12  # 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
+SCHEMA_VERSION = 13  # 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
 
 BENCH = "SPY"
 
@@ -126,11 +126,34 @@ POLICY_INCOMPARABLE_WHY = {
 CURRENCY = {"PH": "PHP", "CN": "CNY", "JP": "JPY", "KR": "KRW", "GB": "GBP", "EU": "EUR"}
 
 
-def _series(sym: str) -> tuple[list[str], list[float]]:
+# Series that FRED carries in different units than the series CGI used to hold.
+# Maintained nightly by fred-data-updater, so they cost no tokens, unlike the
+# TradingView-sourced copies. Each factor was asserted equal on shared dates
+# (JPNASSETS x1e8 == JP_CB_ASSETS, ECBASSETSW x1e6 == EU_CB_ASSETS) before the
+# switch; the old rows stay in price-history as the fallback.
+#   our symbol -> (FRED-fed symbol, multiply by)
+FRED_SCALED: dict[str, tuple[str, float]] = {
+    "JP_CB_ASSETS": ("JPNASSETS", 1e8),    # 100M yen -> yen
+    "EU_CB_ASSETS": ("ECBASSETSW", 1e6),   # millions of euro -> euro
+}
+
+
+def _load(sym: str) -> tuple[list[str], list[float]]:
     try:
         return ad._load_close(sym)
     except Exception:  # noqa: BLE001 -- a missing series must not break the page
         return [], []
+
+
+def _series(sym: str) -> tuple[list[str], list[float]]:
+    alt = FRED_SCALED.get(sym)
+    if alt:
+        dates, vals = _load(alt[0])
+        if dates:
+            return dates, [v * alt[1] for v in vals]
+        # FRED-fed series unavailable: fall back to the held copy rather than
+        # showing nothing. It is the same quantity, just fetched by a person.
+    return _load(sym)
 
 
 def _median_spacing_days(dates: list[str]) -> Optional[float]:
@@ -147,8 +170,11 @@ def _bars_per_year(dates: list[str]) -> Optional[int]:
     sp = _median_spacing_days(dates)
     if not sp:
         return None
+    if sp <= 4:
+        return 252      # daily (weekends make the median 1, never above 3)
     if sp <= 10:
-        return 252      # daily
+        return 52       # weekly -- previously lumped in with daily, so a weekly
+                        # series looked back 252 BARS (~5 years) for "a year ago"
     if sp <= 45:
         return 12       # monthly
     if sp <= 135:
@@ -158,7 +184,7 @@ def _bars_per_year(dates: list[str]) -> Optional[int]:
 
 def _cadence_name(dates: list[str]) -> Optional[str]:
     n = _bars_per_year(dates)
-    return {252: "daily", 12: "monthly", 4: "quarterly", 1: "annual"}.get(n) if n else None
+    return {252: "daily", 52: "weekly", 12: "monthly", 4: "quarterly", 1: "annual"}.get(n) if n else None
 
 
 # Known LEVEL DISCONTINUITIES: dates where a source redefined a series, so the
