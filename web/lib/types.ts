@@ -969,3 +969,33 @@ export interface PricedInResponse {
   schema_version: number;
   error?: string;
 }
+
+
+export interface MixtureRow {
+  ticker: string;
+  group: string;
+  n_now: number;
+  n_flip: number;
+  ret_now: number;
+  ret_flip: number;
+  mix_hist: number;
+  mix_market: number | null;
+  spread: number;
+  sign_flips: boolean;
+}
+
+export interface MixtureResponse {
+  schema_version: number;
+  error?: string;
+  release: { date: string; type: string; axis: string };
+  regime_now: string;
+  regime_if_flips: string;
+  p_flip_history: number;
+  p_flip_market: number | null;
+  p_flip_gap: number | null;
+  min_now: number;
+  min_flip: number;
+  n_tickers: number;
+  rows: MixtureRow[];
+  caveat: string;
+}

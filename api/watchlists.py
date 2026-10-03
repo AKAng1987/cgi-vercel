@@ -1,7 +1,7 @@
 """
 watchlists.py -- The two TradingView watchlists CGI maintains, as data:
 
-  CGI · now            best 20 / worst 10 of the BACKTEST leaderboard, current regime
+  CGI · now            best 20 / worst 20 of the BACKTEST leaderboard, current regime
   CGI · if next flips  same for the regime we land in if the next release flips its axis
 
 Served at /api/watchlists (24h cache) so a scheduled cloud routine with the
@@ -60,14 +60,26 @@ def leaderboard(c: int, g: int, min_occ: int) -> list[dict]:
 
 
 
-def build_watchlists_response() -> dict:
-    today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
+def next_regimes(today: str) -> tuple[dict, dict, dict]:
+    """(current regime, regime if the next release flips its axis, that release).
+
+    One definition, used by the watchlists AND the mixture layer, so the two
+    can never disagree about which regime is "next". Each release moves exactly
+    one axis, so the destination differs from now in a single quadrant.
+    """
     cur = {m: md._load_model(f"{m}_US")[-1][1] for m in ("compass", "grid")}
     nxt = sorted(cal.next_releases(today), key=lambda r: r["date"])[0]
     axis, model = nxt["axis"], nxt["model"]
     s = cal.Q_TO_AXES[cur[model]][cal.SLOT_OF[axis]]
     dest = dict(cur)
     dest[model] = md._quadrant_with(cur[model], axis, 1 - s)
+    return cur, dest, nxt
+
+
+def build_watchlists_response() -> dict:
+    today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
+    cur, dest, nxt = next_regimes(today)
+    axis = nxt["axis"]
 
     out = []
     for name, reg, note in (

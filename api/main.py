@@ -26,6 +26,7 @@ import technicals_data
 import themes_data
 import signals_data
 import watchlists as watchlists_data
+import mixture as mixture_data
 import regime_matrix
 import release_calendar
 import context_tables
@@ -326,6 +327,13 @@ def watchlists():
     routine. Nothing sensitive, so no bearer -- the routine runs in an
     environment that cannot hold secrets."""
     return cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)
+
+
+@app.get("/api/mixture", dependencies=[Depends(require_bearer_token)])
+def mixture():
+    """Per-ticker return in the current regime vs the one the next release
+    could land us in, weighted by p_flip (history and market-implied)."""
+    return cache.get_or_fetch("mixture", mixture_data.build_mixture_response)
 
 
 @app.get("/api/regime-matrix", dependencies=[Depends(require_bearer_token)])

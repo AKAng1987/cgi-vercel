@@ -52,6 +52,7 @@ TTL_HOURS: dict[str, float] = {
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
     "watchlists": 34.0,  # TradingView list contents for the cloud routine
+    "mixture": 6.0,  # probability-weighted returns across now / if-next-flips; moves with p_flip
     "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
     "etf_constituents": 168.0,  # ETF books move slowly; 7d, and the pull is ~90s
     "brief_daily": 6.0,
@@ -92,6 +93,7 @@ SCHEMA_FROM_MODULE: dict[str, str] = {
     "fomc_probabilities": "macro_data:SCHEMA_VERSION",
     "fomc_meeting_calendar": "macro_data:SCHEMA_VERSION",
     "freshness": "freshness:SCHEMA_VERSION",
+    "mixture": "mixture:SCHEMA_VERSION",
 }
 
 

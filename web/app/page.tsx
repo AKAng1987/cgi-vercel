@@ -1,7 +1,8 @@
 import { apiFetch } from "@/lib/api";
-import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse, CalendarResponse } from "@/lib/types";
+import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse, CalendarResponse, MixtureResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
+import { MixtureTable } from "./components/brief/MixtureTable";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
 import { ChangeStrip } from "./components/brief/ChangeStrip";
 import { PolicyNotes } from "./components/brief/PolicyNotes";
@@ -18,7 +19,7 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live, tech, notes, brief, edgeNow, calendar] = await Promise.all([
+  const [themes, signals, live, tech, notes, brief, edgeNow, calendar, mixture] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
@@ -34,6 +35,7 @@ export default async function Live() {
       "/api/backtest/current?min_occ=5"
     ).catch(() => null),
     apiFetch<CalendarResponse>("/api/calendar").catch(() => null),
+    apiFetch<MixtureResponse>("/api/mixture").catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
@@ -84,7 +86,10 @@ export default async function Live() {
       <ThemesTable themes={themes.themes} runStats={themes.run_stats} />
 
       {top.length > 0 && cq && gq && (
-        <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} />
+        <>
+          <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} />
+          {mixture && <MixtureTable data={mixture} />}
+        </>
       )}
 
       {notes && notes.policy.filter((p) => p.is_live).length > 0 && (
