@@ -33,6 +33,8 @@ HONESTY
 from __future__ import annotations
 
 import datetime as dt
+import math
+import statistics
 from typing import Optional
 
 import backtest_data as bd
@@ -41,7 +43,7 @@ import watchlists as wl
 
 # Bump on any change to the response shape: cache.SCHEMA_FROM_MODULE points at
 # this, so the new shape cannot be served stale from a cached old one.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # A thin "if flips" cell is expected -- by construction there are fewer
 # occurrences of the destination regime. These floors are deliberately lower
@@ -52,14 +54,33 @@ MIN_NOW = 5
 MIN_FLIP = 3
 
 
-def _mean_return(entry: Optional[dict], grid_q: int, compass_q: int) -> tuple[Optional[float], int]:
+def _mean_return(entry: Optional[dict], grid_q: int, compass_q: int) -> tuple[Optional[float], int, Optional[float]]:
+    """(mean return, n, standard error of that mean) for one regime cell."""
     if entry is None:
-        return None, 0
+        return None, 0, None
     occ = entry["combos"].get(bd._combo_key(grid_q, compass_q), [])
     s = bd.compute_stats(occ)
     if s is None:
-        return None, 0
-    return s["avg_return"], s["count"]
+        return None, 0, None
+    rets = [o["return_pct"] for o in occ]
+    se = statistics.stdev(rets) / math.sqrt(len(rets)) if len(rets) >= 2 else None
+    return s["avg_return"], s["count"], se
+
+
+def _reverses(r_now: float, r_flip: float, se_now: Optional[float], se_flip: Optional[float]) -> bool:
+    """The sign changes AND the gap is bigger than the noise in the two means.
+
+    A bare sign test badges USDCNY (-0.02% -> +0.04%) as a regime reversal,
+    which it is not: both means are indistinguishable from zero. Scaling the
+    test by each ticker's own standard error needs no hand-picked cutoff and
+    keeps a 12-point swing on a volatile name while discarding a 0.06-point
+    wobble on a quiet one.
+    """
+    if r_now == 0 or r_flip == 0 or (r_now > 0) == (r_flip > 0):
+        return False
+    if se_now is None or se_flip is None:
+        return False
+    return abs(r_now - r_flip) > math.sqrt(se_now ** 2 + se_flip ** 2)
 
 
 def _mix(p: Optional[float], now: float, flip: float) -> Optional[float]:
@@ -89,8 +110,8 @@ def build_mixture_response() -> dict:
 
     rows = []
     for sym, entry in blob["tickers"].items():
-        r_now, n_now = _mean_return(entry, cur["grid"], cur["compass"])
-        r_flip, n_flip = _mean_return(entry, dest["grid"], dest["compass"])
+        r_now, n_now, se_now = _mean_return(entry, cur["grid"], cur["compass"])
+        r_flip, n_flip, se_flip = _mean_return(entry, dest["grid"], dest["compass"])
         if r_now is None or r_flip is None or n_now < MIN_NOW or n_flip < MIN_FLIP:
             continue
         mix_h = _mix(p_hist, r_now, r_flip)
@@ -105,7 +126,7 @@ def build_mixture_response() -> dict:
             "mix_hist": round(mix_h, 2),
             "mix_market": round(mix_m, 2) if mix_m is not None else None,
             "spread": round(abs(r_now - r_flip), 2),
-            "sign_flips": (r_now > 0) != (r_flip > 0) and r_now != 0 and r_flip != 0,
+            "sign_flips": _reverses(r_now, r_flip, se_now, se_flip),
         })
     rows.sort(key=lambda r: -r["mix_hist"])
 
@@ -127,5 +148,6 @@ def build_mixture_response() -> dict:
                    "Every row carries both n. Mixtures are shown at the historical p_flip "
                    "and, where available, the market-implied one -- never averaged. "
                    "Spread is how much the answer depends on the release; sign_flips marks "
-                   "tickers whose average return reverses sign if the axis flips."),
+                   "tickers whose average return reverses sign if the axis flips by more "
+                   "than the combined standard error of the two samples."),
     }
