@@ -110,3 +110,15 @@ if (_fr.is_behind("2026-10-03", "2026-10-04") or not _fr.is_behind("2026-10-02",
     print("FAIL: freshness.is_behind grace window is wrong")
     raise SystemExit(1)
 print("OK: a copy one night behind FRED is not flagged; two nights behind is")
+
+# Fifth guard: the earning-it picker must skip OTC names and names it cannot place, and still
+# return n real ones by walking down the ranking (the user does not trade OTC: FGRS, 2026-10-04).
+import watchlists as _wl  # noqa: E402
+
+_ex = {"MU": "NASDAQ", "BE": "NYSE", "FGRS": "OTC", "AVGO": "NASDAQ"}
+_c = [{"symbol": s} for s in ("FGRS", "MU", "NOSUCH", "BE", "AVGO")]
+_picked, _unres, _otc = _wl.pick_earning(_c, _ex, 2)
+if [x["symbol"] for x in _picked] != ["MU", "BE"] or _otc != ["FGRS"] or _unres != ["NOSUCH"]:
+    print(f"FAIL: pick_earning wrong: {_picked} {_unres} {_otc}")
+    raise SystemExit(1)
+print("OK: earning-it picker skips OTC and unplaceable names and still fills from the ranking")

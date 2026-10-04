@@ -31,6 +31,9 @@ export function MixtureTable({ data }: { data: MixtureResponse }) {
   const reversing = data.rows.filter((r) => r.sign_flips).length;
   const pHist = (data.p_flip_history * 100).toFixed(0);
   const pMkt = data.p_flip_market === null ? null : (data.p_flip_market * 100).toFixed(0);
+  // "Market" only when it is a market price; for inflation/growth/credit it is the in-sample
+  // Drivers table and calling it "market" would put a descriptive table beside real pricing.
+  const second = (data.market_label ?? "Market").toLowerCase();
 
   return (
     <section className="mb-6">
@@ -41,7 +44,7 @@ export function MixtureTable({ data }: { data: MixtureResponse }) {
         <div className="text-xs text-slate-500">
           {data.release.type} {data.release.date} · {data.regime_now} → {data.regime_if_flips} if{" "}
           {data.release.axis} flips · P(flip) {pHist}% history
-          {pMkt !== null && <> · {pMkt}% market</>}
+          {pMkt !== null && <> · {pMkt}% {second}</>}
         </div>
       </div>
       <div className="mb-2 text-xs text-slate-500">
@@ -53,7 +56,7 @@ export function MixtureTable({ data }: { data: MixtureResponse }) {
         <table className="w-full border-collapse text-[0.76rem]">
           <thead>
             <tr>
-              {["Ticker", "Now", "n", "If flips", "n", "Mixture", "@ market", "Spread", ""].map((h, i) => (
+              {["Ticker", "Now", "n", "If flips", "n", "Mixture", `@ ${second}`, "Spread", ""].map((h, i) => (
                 <th
                   key={`${h}${i}`}
                   className={`bg-[var(--cgi-surface-alt)] px-1.5 py-1 text-[0.68rem] uppercase tracking-wide text-slate-400 ${

@@ -43,7 +43,7 @@ import watchlists as wl
 
 # Bump on any change to the response shape: cache.SCHEMA_FROM_MODULE points at
 # this, so the new shape cannot be served stale from a cached old one.
-SCHEMA_VERSION = 5   # 5: URA retired. 4: 4: retired tickers filtered out of the blob. 3: 3: the market p_flip it reads (driver table) is now publication-lagged
+SCHEMA_VERSION = 7   # 7: market_label. 6: 6: symbols no longer guessed. 5: 5: URA retired. 4: 4: retired tickers filtered out of the blob. 3: 3: the market p_flip it reads (driver table) is now publication-lagged
 
 # A thin "if flips" cell is expected -- by construction there are fewer
 # occurrences of the destination regime. These floors are deliberately lower
@@ -138,6 +138,9 @@ def build_mixture_response() -> dict:
         "regime_if_flips": f"C{dest['compass']}G{dest['grid']}",
         "p_flip_history": p_hist,
         "p_flip_market": p_mkt,
+        # What that second probability IS, from markov_data: "Market" (fed funds futures,
+        # liquidity only), "Drivers" (in-sample driver table, not a price), or "Model".
+        "market_label": (match.get("market") or {}).get("label") or "Market",
         "p_flip_gap": round(p_mkt - p_hist, 3) if p_mkt is not None else None,
         "min_now": MIN_NOW,
         "min_flip": MIN_FLIP,

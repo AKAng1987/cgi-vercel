@@ -80,8 +80,11 @@ def needs_resolution() -> list[tuple[str, str]]:
     import backtest_data as bd
     import watchlists as wl
     tickers, groups = bd.build_backtest_universe()
-    return [(t, groups[t]) for t in tickers
-            if t not in wl.TV and groups[t].upper() not in ("FX", "CRYPTO")]
+    # FX and CRYPTO are NOT excluded: they used to be, with a group-level fallback
+    # (FX -> FX_IDC:<t>, CRYPTO -> BITSTAMP:<t>USD) that was right for currency pairs and
+    # wrong for ETFs filed under those groups -- UUP became FX_IDC:UUP and BITO became
+    # BITSTAMP:BITOUSD, and neither exists.
+    return [(t, groups[t]) for t in tickers if t not in wl.TV]
 
 
 def search(ticker: str) -> list[dict]:
@@ -94,8 +97,23 @@ def search(ticker: str) -> list[dict]:
         return json.loads(r.read().decode("utf-8")).get("symbols", [])
 
 
+PAIR_VENUES = ("FX_IDC", "OANDA", "FX", "FOREXCOM")
+
+
+def is_pair(ticker: str) -> bool:
+    """A spot currency pair like USDKRW (USD plus a three-letter code), as opposed to
+    an ETF that merely sits in the FX group (UUP) or a crypto fund (BITO)."""
+    return len(ticker) == 6 and ticker.startswith("USD") and ticker.isalpha()
+
+
 def resolve(ticker: str) -> tuple[str | None, str]:
     hits = [s for s in search(ticker) if s.get("symbol") == ticker]
+    if is_pair(ticker):
+        by = {(s.get("prefix") or s.get("exchange")): s for s in hits if s.get("type") == "forex"}
+        for v in PAIR_VENUES:
+            if v in by:
+                return f"{v}:{ticker}", by[v].get("description", "")
+        return None, "pair not found on an FX venue"
     us = [s for s in hits if (s.get("prefix") or s.get("exchange")) in US_VENUES
           and s.get("type") in ("fund", "stock", "dr", "etf", None, "")]
     if us:

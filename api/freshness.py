@@ -175,7 +175,12 @@ def _sessions_since(date_iso: str, today: Optional[dt.date] = None) -> int:
 # the token limit, a closed app, a hung run and a deleted routine alike,
 # and needs to know nothing about what any source holds.
 HEARTBEAT_KEY = "refresh_routine"
-HEARTBEAT_STALE_HOURS = 48.0
+# The scheduled task runs Monday to Saturday, so the normal Saturday -> Monday gap is
+# already about 48h plus the run's own duration (Oct 3 -> Oct 5: success at 05:49 UTC,
+# next run starting 01:34 UTC and finishing hours later). 48h therefore sat exactly on the
+# weekly gap and would have near-false-alarmed every Monday. 60h clears it with margin
+# while a missed weekday run (>= 72h by the next morning) is still caught.
+HEARTBEAT_STALE_HOURS = 60.0
 
 
 def _heartbeat_path() -> str:

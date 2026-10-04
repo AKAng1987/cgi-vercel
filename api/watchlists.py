@@ -57,18 +57,17 @@ def tv_symbol(ticker: str, group: str) -> str | None:
     the 173 universe tickers reached that line, and a wrong exchange fails silently
     inside TradingView (IBB and SHY are NASDAQ, INDA is CBOE, XAUUSD is gold futures).
     Symbols now come from tv_symbols.json, built by scripts/build_tv_symbols.py from
-    TradingView's own search, and a ticker with no entry is left out, never guessed.
+    TradingView's own search -- FX and crypto included -- and a ticker with no entry is left
+    out, never guessed.
     """
     if ticker in TV:
         return TV[ticker]
     sym = _tv_data()["symbols"].get(ticker)
     if sym:
         return sym
-    g = group.upper()
-    if g == "FX":
-        return f"FX_IDC:{ticker}"          # all 18 FX_IDC pairs the universe uses were verified to exist
-    if g == "CRYPTO":
-        return f"BITSTAMP:{ticker}USD"
+    # No group-level fallback. FX -> FX_IDC:<t> and CRYPTO -> BITSTAMP:<t>USD were right for
+    # currency pairs and wrong for ETFs filed under those groups (UUP, BITO). Everything is
+    # resolved into tv_symbols.json, and a ticker without an entry is left out and reported.
     return None
 
 
@@ -116,6 +115,30 @@ def equity_tv_symbol(ticker: str, exchanges: dict[str, str]) -> str | None:
     """
     exch = exchanges.get(ticker.replace("-", "."))
     return f"{exch}:{ticker.replace('-', '.')}" if exch else None
+
+
+def pick_earning(candidates: list[dict], exchanges: dict[str, str], n: int) -> tuple[list[dict], list[str], list[str]]:
+    """First n ranked companies that can be placed on a major exchange.
+
+    Walks down the ranking, so a name that cannot be placed or is excluded costs the next
+    one a slot instead of leaving a gap. Returns (picked, unresolved, excluded_otc).
+    """
+    picked, unresolved, excluded_otc = [], [], []
+    for c in candidates:
+        sym = equity_tv_symbol(c["symbol"], exchanges)
+        if not sym:
+            unresolved.append(c["symbol"])
+        elif sym.startswith("OTC:"):
+            # The user does not trade over-the-counter names, so a revenue-acceleration
+            # screen should not surface them (FGRS, 2026-10-04). Reported, not hidden, and not
+            # a hard-coded ticker: the exchange is read at run time, so a name that later
+            # lists on Nasdaq/NYSE rejoins on its own.
+            excluded_otc.append(c["symbol"])
+        else:
+            picked.append(c)
+            if len(picked) == n:
+                break
+    return picked, unresolved, excluded_otc
 
 
 def leaderboard(c: int, g: int, min_occ: int) -> list[dict]:
@@ -193,14 +216,7 @@ def build_watchlists_response() -> dict:
         # Walk down the ranking until EARNING_IT names that can actually be placed
         # on an exchange, so one unresolvable ticker costs a slot to the next name,
         # not a broken row. What was skipped is returned, not hidden.
-        ranked, unresolved = [], []
-        for c in candidates:
-            if equity_tv_symbol(c["symbol"], exchanges):
-                ranked.append(c)
-                if len(ranked) == EARNING_IT:
-                    break
-            else:
-                unresolved.append(c["symbol"])
+        ranked, unresolved, excluded_otc = pick_earning(candidates, exchanges, EARNING_IT)
         if ranked:
             out.append({
                 "name": "CGI · earning it",
@@ -209,6 +225,7 @@ def build_watchlists_response() -> dict:
                 "note": f"top {len(ranked)} by revenue acceleration, quarterly filers only",
                 "min_occ": None,
                 "unresolved": unresolved,
+                "excluded_otc": excluded_otc,
                 "symbols": ([f"###EARNING IT · TOP {len(ranked)} BY REVENUE ACCELERATION"]
                             + [equity_tv_symbol(c["symbol"], exchanges) for c in ranked]),
                 "best": [{"ticker": c["symbol"],

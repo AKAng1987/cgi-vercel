@@ -993,6 +993,7 @@ export interface MixtureResponse {
   regime_if_flips: string;
   p_flip_history: number;
   p_flip_market: number | null;
+  market_label?: string;
   p_flip_gap: number | null;
   min_now: number;
   min_flip: number;
