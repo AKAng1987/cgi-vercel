@@ -12,7 +12,9 @@ section headers. Mirror of market-dashboard/scripts/cgi_watchlists.py.
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import json
+import pathlib
 import urllib.request
 
 import backtest_data as bd
@@ -40,17 +42,40 @@ TV = {
 }
 
 
-def tv_symbol(ticker: str, group: str) -> str:
+_TV_FILE = pathlib.Path(__file__).with_name("tv_symbols.json")
+
+
+@functools.lru_cache(maxsize=1)
+def _tv_data() -> dict:
+    return json.loads(_TV_FILE.read_text())
+
+
+def tv_symbol(ticker: str, group: str) -> str | None:
+    """EXCHANGE:TICKER for a universe ticker, or None when it cannot be placed.
+
+    This used to end in `return f"AMEX:{ticker}"` for anything unrecognised. 125 of
+    the 173 universe tickers reached that line, and a wrong exchange fails silently
+    inside TradingView (IBB and SHY are NASDAQ, INDA is CBOE, XAUUSD is gold futures).
+    Symbols now come from tv_symbols.json, built by scripts/build_tv_symbols.py from
+    TradingView's own search, and a ticker with no entry is left out, never guessed.
+    """
     if ticker in TV:
         return TV[ticker]
+    sym = _tv_data()["symbols"].get(ticker)
+    if sym:
+        return sym
     g = group.upper()
     if g == "FX":
-        return f"FX_IDC:{ticker}"
+        return f"FX_IDC:{ticker}"          # all 18 FX_IDC pairs the universe uses were verified to exist
     if g == "CRYPTO":
         return f"BITSTAMP:{ticker}USD"
-    if "ETF" in g or g in ("SECTOR ETF", "COUNTRY ETF", "US EQUITIES"):
-        return f"AMEX:{ticker}"
-    return f"AMEX:{ticker}"
+    return None
+
+
+def placeable(rows: list[dict]) -> tuple[list[dict], list[str]]:
+    """Rows that can be put on a TradingView list, and the tickers that cannot."""
+    ok = [r for r in rows if tv_symbol(r["ticker"], r["group"])]
+    return ok, sorted({r["ticker"] for r in rows} - {r["ticker"] for r in ok})
 
 
 SEC_EXCHANGES_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
@@ -129,10 +154,13 @@ def build_watchlists_response() -> dict:
         ("CGI · if next flips", dest, f"if {nxt['type']} on {nxt['date']} flips {axis}"),
     ):
         min_occ = MIN_OCC
-        rows = leaderboard(reg["compass"], reg["grid"], min_occ)
+        # Ranked names that cannot be put on a TradingView list (delisted, or no
+        # symbol) are dropped BEFORE the top/bottom cut, so the lists still hold 20
+        # tradeable names each rather than 20 minus whatever could not load.
+        rows, skipped = placeable(leaderboard(reg["compass"], reg["grid"], min_occ))
         if len(rows) < 5 and min_occ > 3:
             min_occ = 3
-            rows = leaderboard(reg["compass"], reg["grid"], min_occ)
+            rows, skipped = placeable(leaderboard(reg["compass"], reg["grid"], min_occ))
         best = rows[:TOP]
         worst = rows[TOP:][-BOTTOM:] if len(rows) > TOP else []
         label = f"C{reg['compass']}G{reg['grid']}"
@@ -140,6 +168,7 @@ def build_watchlists_response() -> dict:
         keep = lambda rs: [{k: r[k] for k in ("ticker", "group", "occurrences", "hit_rate", "edge", "avg_return_pct")} for r in rs]
         out.append({
             "name": name, "watchlist_id": WATCHLIST_IDS[name], "regime": label, "note": note, "min_occ": min_occ,
+            "unplaceable": skipped,
             "symbols": ([f"###{label} · BEST {len(best)} · {note.upper()}{thin}"]
                         + [tv_symbol(r["ticker"], r["group"]) for r in best]
                         + [f"###{label} · WORST {len(worst)}"]

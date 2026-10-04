@@ -61,3 +61,16 @@ except Exception as exc:                              # noqa: BLE001
 
 routes = [r.path for r in main.app.routes if hasattr(r, "path")]
 print(f"OK: main imports, {len(routes)} routes registered")
+
+# Second guard, same spirit: every universe ticker that has no explicit TradingView
+# symbol must have one in api/tv_symbols.json (or be recorded as unplaceable). A
+# ticker added to the universe without one used to fall through to a guessed
+# "AMEX:" and fail silently inside TradingView.
+import subprocess  # noqa: E402
+
+_r = subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("build_tv_symbols.py")), "--check"],
+                    capture_output=True, text=True)
+_out = [l for l in _r.stdout.splitlines() if l.startswith(("OK", "FAIL"))]
+print(_out[-1] if _out else (_r.stdout + _r.stderr)[-400:])
+if _r.returncode != 0:
+    raise SystemExit(1)
