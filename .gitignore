@@ -22,3 +22,5 @@ Thumbs.db
 
 # Local Lambda-deploy scratch space (unrelated to this app)
 .deploy-tmp/
+research/latent_state/data/series/
+research/latent_state/data/windows.json
