@@ -102,3 +102,11 @@ if not _want or _clean["n_problems"] != 0:
     print(f"FAIL: feed-integrity detector is wrong: {_r} / clean={_clean}")
     raise SystemExit(1)
 print("OK: feed-integrity detector catches an orphan, a collision and stalled tickers, and passes a clean registry")
+
+# Fourth guard: a copy that is ONE date behind FRED is within the nightly-run grace and
+# is not a problem; two dates behind has missed a run and is. (DFEDTARU, 2026-10-04.)
+if (_fr.is_behind("2026-10-03", "2026-10-04") or not _fr.is_behind("2026-10-02", "2026-10-04")
+        or _fr.is_behind("2026-10-04", "2026-10-04") or _fr.is_behind("2026-10-05", "2026-10-04")):
+    print("FAIL: freshness.is_behind grace window is wrong")
+    raise SystemExit(1)
+print("OK: a copy one night behind FRED is not flagged; two nights behind is")

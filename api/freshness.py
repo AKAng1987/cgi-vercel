@@ -231,6 +231,19 @@ def write_heartbeat(summary: Optional[str] = None,
     return body
 
 
+# The copy Lambda runs once a night (00:05 UTC). FRED can post the next day's value
+# at any hour after that, so for up to a day we are legitimately one date behind
+# with nothing wrong: on 2026-10-04 FRED had Sunday's DFEDTARU (4.0) and we held
+# Saturday's (4.0) until the 00:05 run. Flagging that is the third time this check
+# has cried wolf by comparing two feeds with different publication times as if they
+# were one. One night of grace; a copy two or more dates behind has missed a run.
+COPY_GRACE_DAYS = 1
+
+
+def is_behind(ours_date: str, source_date: str) -> bool:
+    return (dt.date.fromisoformat(source_date) - dt.date.fromisoformat(ours_date)).days > COPY_GRACE_DAYS
+
+
 def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
     """Compare our copy of each FRED series against FRED itself.
 
@@ -276,7 +289,7 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
             rows.append(row)
             continue
 
-        if row["ours_date"] < row["source_date"]:
+        if is_behind(row["ours_date"], row["source_date"]):
             row["status"] = "behind"
             row["detail"] = (f"FRED has {row['source_date']}, we hold "
                              f"{row['ours_date']} -- the copy is behind")
