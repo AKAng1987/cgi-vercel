@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import backtest_data
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3   # 3: PIN retired (stopped trading 2023)
 
 # Countries in the user's stated order of interest, then the rest of what the
 # backtest already covers. `etfs` is ordered: the first one that exists in the
@@ -49,7 +49,7 @@ COUNTRIES: list[dict] = [
     {"code": "GB", "name": "United Kingdom","etfs": ["EWU"],          "pair": "USDGBP", "trade": "mixed",    "trade_why": "services surplus against a goods deficit"},
     {"code": "EU", "name": "Euro area",     "etfs": ["EWG", "EWI", "EWP", "EWQ"], "pair": "USDEUR", "trade": "mixed", "trade_why": "German surplus inside a mixed bloc"},
     # --- the rest of what the blob already covers, same treatment ---
-    {"code": "IN", "name": "India",         "etfs": ["INDA", "PIN"],  "pair": "USDINR", "trade": "importer", "trade_why": "energy importer"},
+    {"code": "IN", "name": "India",         "etfs": ["INDA"],        "pair": "USDINR", "trade": "importer", "trade_why": "energy importer"},
     {"code": "ID", "name": "Indonesia",     "etfs": ["EIDO", "IDX"],  "pair": "USDIDR", "trade": "exporter", "trade_why": "commodity exporter"},
     {"code": "TW", "name": "Taiwan",        "etfs": ["EWT"],          "pair": "USDTWD", "trade": "exporter", "trade_why": "semiconductors; TWD is actively managed, so the FX leg is a weak read"},
     {"code": "HK", "name": "Hong Kong",     "etfs": ["EWH"],          "pair": "USDHKD", "trade": "mixed",    "trade_why": "entrepot; HKD is pegged, so the FX leg is near-meaningless"},

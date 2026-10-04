@@ -166,6 +166,12 @@ def _read_blob() -> Optional[dict]:
         return _blob_cache["data"]  # type: ignore[return-value]
     data = _s3_get_json(BLOB_KEY)
     if data is not None:
+        # The stored blob predates a ticker's retirement until the nightly rebuild
+        # runs; drop retired names here so every consumer (BACKTEST, LIVE, watchlists,
+        # COUNTRIES, mixture) agrees immediately instead of after the next rebuild.
+        retired = dashboard_data.RETIRED_TICKERS
+        if any(t in retired for t in data.get("tickers", {})):
+            data = {**data, "tickers": {t: v for t, v in data["tickers"].items() if t not in retired}}
         _blob_cache["etag"], _blob_cache["data"] = etag, data
     return data
 

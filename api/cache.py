@@ -147,7 +147,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
-    "watchlists": 5,  # 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
+    "watchlists": 6,  # 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 3,  # 2026-10-04: embeds markov next_release.market, now lagged + relabelled
     "liquidity": 1,

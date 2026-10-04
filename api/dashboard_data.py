@@ -28,12 +28,27 @@ MODEL_TABLE = "cmon-stage-backend-model-history"
 
 # Ported as-is from app.py:51-120, including CRYPTO (approved deviation #2 --
 # the original spec's hud_group_order omitted it, that was an oversight).
+# Tickers removed from the universe because they no longer trade (or cannot be found
+# on a chart), with the evidence. Their frozen history otherwise ranked in BACKTEST,
+# LIVE and the watchlists as names nobody could buy. Price rows stay in price-history;
+# backtest_data filters them out of the stored blob until the nightly rebuild drops them.
+# 2026-10-04, approved by the user.
+RETIRED_TICKERS: dict[str, str] = {
+    "PBS": "Invesco Dynamic Media ETF -- price history ends 2023-09-13",
+    "JJC": "iPath copper ETN -- price history ends 2023-07-14",
+    "JJN": "iPath nickel ETN -- price history ends 2023-07-14",
+    "PIN": "price history ends 2023-09-01",
+    "BJK": "VanEck Gaming ETF -- price history ends 2026-06-10, not found on TradingView",
+    "VICE": "AdvisorShares Vice ETF -- price history ends 2026-08-28, not found on TradingView",
+    "CNCR": "Range Cancer Therapeutics ETF -- not found on TradingView",
+}
+
 HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     ("US EQUITIES", (["DJI", "SPX", "IXIC", "RUT", "VIX"], "SPX")),
     ("INDEX ETF", (["DIA", "SPY", "QQQ", "IWM"], "SPX")),
     ("SECTOR ETF", (
         ["XLB", "XLI", "XLY", "XLC", "XLK", "XME", "XLRE", "XLP", "XLU",
-         "XLE", "XOP", "XHB", "PBS", "PBJ", "PEJ", "TAN", "ICLN",
+         "XLE", "XOP", "XHB", "PBJ", "PEJ", "TAN", "ICLN",
          "XLF", "KBE", "KRE", "KIE", "IAI", "XLV", "XHE",
          "IYT", "JETS", "BLOK", "SOCL", "SOXX", "ROBO", "SKYY",
          "FDN", "HACK", "CIBR", "KWEB", "MJ",
@@ -46,12 +61,12 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
          # Magnificent-7 breakout; FNGU and UVXY deliberately left out
          # (leveraged, their multi-month returns are compounding drag).
          "SMH", "MAGS", "AIQ", "WCLD",            # semis / AI / cloud
-         "IBB", "IHI", "IHE", "IYH", "CNCR",      # healthcare depth
+         "IBB", "IHI", "IHE", "IYH",              # healthcare depth
          "ITA", "XAR",                            # aerospace & defense
          "VNQ", "MORT",                           # real estate
          "XRT", "IBUY",                           # retail
          "KCE", "KBWP", "PSP",                    # capital markets, insurance, PE
-         "ESPO", "BJK", "VICE",                   # gaming
+         "ESPO",                                   # gaming
          "IDRV", "KARS", "BATT",                  # EV and batteries
          "GRID", "FAN", "PBD", "NLR", "EVX",      # grid, wind, clean, nuclear, environmental
          "SEA", "IGF"],                           # shipping; global infrastructure
@@ -63,7 +78,7 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     ("RATES", (["DFEDTARU", "FEDFUNDS", "CPIAUCSL", "GDP", "DRTSCILM"], None)),
     ("COMMODITIES METALS", (
         ["DBC", "USO", "UNG", "GLD", "GDX", "GDXJ", "SLV", "SIL",
-         "JJC", "CPER", "JJN", "WOOD", "SLX", "URA", "COPX",
+         "CPER", "WOOD", "SLX", "URA", "COPX",
          # energy value chain -- the split the user's own watchlist lacks:
          # upstream E&P (IEO), oilfield services (OIH), gas producers (FCG),
          # midstream (MLPX), refiners (CRAK). XOP/XLE already cover E&P and
@@ -81,7 +96,7 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     ("AGRICULTURAL", (["DBA", "WEAT", "SOYB", "CORN", "RICE", "CANE", "COTTON"], "DBA")),
     ("COUNTRY ETF", (
         ["EWQ", "KWEB", "FXI", "EWJ", "EWZ", "EWT", "EWG", "EWH", "EWI",
-         "EWW", "EWU", "PIN", "IDX", "VNM", "EWM", "EIDO", "EPHE",
+         "EWW", "EWU", "IDX", "VNM", "EWM", "EIDO", "EPHE",
          "EWY", "EWA", "EWC", "EWS", "EWP", "EWL", "EZA", "INDA"],
         "SPX",
     )),
@@ -106,6 +121,10 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     )),
     ("CRYPTO", (["BTC", "ETH", "BITO"], "DXY")),
 ])
+
+# A retired ticker must not drift back into the universe through a later edit.
+_back = sorted(t for g in HUD_GROUPS.values() for t in g[0] if t in RETIRED_TICKERS)
+assert not _back, f"retired tickers are back in HUD_GROUPS: {_back}"
 
 HUD_GROUP_ORDER = list(HUD_GROUPS.keys())
 

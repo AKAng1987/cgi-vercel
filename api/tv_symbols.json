@@ -119,13 +119,5 @@
   "XOP": "AMEX:XOP",
   "XRT": "AMEX:XRT"
  },
- "unplaceable": {
-  "BJK": "price history ends 2026-06-10; not found on TradingView",
-  "CNCR": "still updating (to 2026-10-02) but not found on TradingView search -- unverified",
-  "JJC": "iPath copper ETN: price history ends 2023-07-14; not found on TradingView",
-  "JJN": "iPath nickel ETN: price history ends 2023-07-14; not found on TradingView",
-  "PBS": "price history ends 2023-09-13; not found on TradingView",
-  "PIN": "price history ends 2023-09-01; TradingView only has an unrelated LSE:PIN",
-  "VICE": "price history ends 2026-08-28; not found on TradingView"
- }
+ "unplaceable": {}
 }

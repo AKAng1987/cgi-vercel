@@ -54,17 +54,11 @@ OVERRIDES = {
 }
 # our label -> the real ETF ticker (metrics-source.source_symbol), resolved normally
 SOURCE_TICKER = {"LITHIUM": "LIT", "NICKEL": "NIKL", "URANIUM": "URA"}
-# Cannot be put on a TradingView chart. Recorded WITH the reason, so a missing entry
-# is a decision and not an oversight, and --check can tell the two apart.
-UNPLACEABLE = {
-    "PBS": "price history ends 2023-09-13; not found on TradingView",
-    "JJC": "iPath copper ETN: price history ends 2023-07-14; not found on TradingView",
-    "JJN": "iPath nickel ETN: price history ends 2023-07-14; not found on TradingView",
-    "PIN": "price history ends 2023-09-01; TradingView only has an unrelated LSE:PIN",
-    "BJK": "price history ends 2026-06-10; not found on TradingView",
-    "VICE": "price history ends 2026-08-28; not found on TradingView",
-    "CNCR": "still updating (to 2026-10-02) but not found on TradingView search -- unverified",
-}
+# Universe tickers that cannot be put on a TradingView chart. Recorded WITH the reason, so a
+# missing entry is a decision and not an oversight, and --check can tell the two apart.
+UNPLACEABLE: dict[str, str] = {}
+# (empty on purpose: PBS, JJC, JJN, PIN, BJK, VICE and CNCR were the unplaceable names,
+# and they were retired from the universe instead -- see dashboard_data.RETIRED_TICKERS.)
 
 
 def _ensure_api_env() -> None:
