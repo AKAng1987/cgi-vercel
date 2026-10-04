@@ -139,23 +139,24 @@ would have replaced the country macro are all discontinued:
 | GB CPI | `CPALTT01GBM657N` | 2024-02 |
 | CN CPI | `CHNCPIALLMINMEI` | 2025-04 |
 
-**Only two can move**, and both are confirmed live and identical to what we
-already hold:
+**Only two could move, and both did (2026-10-04).** `JP_CB_ASSETS` reads `JPNASSETS`
+(x10^8, 100M yen) and `EU_CB_ASSETS` reads `ECBASSETSW` (x10^6, millions of EUR, **weekly**).
+Both were already maintained nightly by the FRED Lambda, so no backfill or registration
+was needed; `country_data.FRED_SCALED` applies the scale and falls back to the held copy.
+Each factor was asserted equal to the stored value on shared dates first.
 
-| ours | FRED | note |
-|---|---|---|
-| `JP_CB_ASSETS` | `JPNASSETS` | matches to the digit on 2026-08-01; FRED is in units of 100M yen (×10^8) |
-| `EU_CB_ASSETS` | `ECBASSETSW` | matches; FRED is in millions of EUR (×10^6) and is **weekly**, an upgrade on our monthly |
+Comparing the old and new paths caught a real bug: `_bars_per_year` classed any spacing
+of 10 days or less as daily, so a weekly series looked back 252 *bars* (about five
+years) for "a year ago". EU would have printed -30.27% instead of -2.86%. Weekly is now
+its own class.
 
-Both need a unit conversion, which is the exact class of error that once put
-a BOJ balance sheet out by 1000× and still looked plausible. Worth doing,
-but only with the converted value asserted equal to the stored one on a
-shared date first.
+Two more looked movable and were not, which is why the check matters:
+`ECBDFR` is the ECB *deposit* rate and ours is the *main refinancing* rate (a constant
+15bp apart), and FRED's Japan rate is the market call-money rate, not the BoJ target.
 
 **The rest cannot move**: ISM is licensed, Challenger has no free API, the
 breadth series are computed by TradingView itself, and the PH curve has no
-free source. Roughly 54 of 56 symbols are irreducibly dependent on a Claude
-session.
+free source. 54 symbols remain irreducibly dependent on a Claude session.
 
 That is why the answer to "can the refresh stop needing tokens" is **no**,
 and why the work went into making the routine's death *visible* (the
@@ -163,15 +164,44 @@ heartbeat) and *cheap* (`scripts/cgi_refresh.py`) instead.
 
 ### What is manual
 
-46 symbols in `api/series_write.py` `ALLOWED` — every country macro series,
-the Philippine curve, ISM, Challenger, BDI — are refreshed by a **Claude
-routine, not by AWS**. No Lambda serves `source=tradingview`. The routine
-runs monthly and pulls from TradingView's MCP.
+54 symbols in `api/series_write.py` `ALLOWED` — the country macro series, the
+Philippine curve, ISM, Challenger, BDI and the ten breadth series — are refreshed
+by a **Claude routine, not by AWS**. No Lambda serves `source=tradingview`. The
+scheduled task runs 09:30 Monday to Saturday, is script-driven
+(`~/market-dashboard/scripts/cgi_refresh.py`), and writes a heartbeat that
+`/api/freshness` reports; it is flagged stale after 48 hours.
 
 `GET /api/freshness` is the worklist that drives it. A symbol added to
 `ALLOWED` joins the routine automatically, which is the specific failure
 that let 38 backtest tickers go unnoticed for a day: the list lived in one
 place and the work in another.
+
+### Alerts to CTS Ideas (built, awaiting a token)
+
+`cgi-cts-poster` (Lambda, EventBridge `cgi-cts-poster-daily`, 02:30 UTC) posts regime
+flips and theme starts/ends to the CTS Ideas feed. No Claude in the loop, no CGI secret:
+it reads the public `/api/brief` and `/api/watchlists` proxies. **It is deployed with
+`DRY_RUN=1` and posts nothing.** To go live: a CTS admin mints an agent token (Admin >
+Agents > + New); add it as `CTS_AGENT_TOKEN` in the Lambda *console* (the CLI replaces
+the whole environment map and would wipe `DRY_RUN`); read one dry-run log; set `DRY_RUN=0`.
+Its first live run seeds its state and posts nothing. De-dup state is
+`State/cts_alerts_posted.json`; a state read that fails for any reason except "not found"
+raises rather than re-seeding. Code and tests: `~/market-dashboard/lambda/cgi-cts-poster`.
+
+### Feed integrity: does the registry agree with the data
+
+`/api/freshness` -> `feed_integrity` catches three failures that each silently starved a
+series and were each found by eye:
+
+| failure | meaning | example |
+|---|---|---|
+| orphan | registered under `tradingview` (no Lambda serves it) but not in `ALLOWED` | MAGS, UUP |
+| collision | two symbols share one `(source, source_symbol)`; the updater keys on source_symbol, so only one is fed | URA vs URANIUM |
+| stalled | a backtest-universe ticker whose newest bar is more than 5 sessions behind (FRED rows: 14 days, for the weekly H.10 lag) | PBS, JJC, JJN stopped in 2023 |
+
+If the check cannot run it reports itself as a problem rather than a healthy zero. The
+brief's freshness section lists whatever it finds. A FRED copy gets one night of grace
+before it counts as behind (the copy runs once a night).
 
 ---
 
@@ -231,6 +261,16 @@ build.
 Almost certainly a schema version that was not bumped. This has happened six
 times. Check the module constant, not the table in `cache.py`.
 
+### A TradingView list will not load
+
+Almost always a wrong EXCHANGE prefix: TradingView drops a symbol it cannot place without
+saying so. Symbols come from `api/tv_symbols.json`, built by `scripts/build_tv_symbols.py`
+from TradingView's own symbol search, and stocks from the SEC's ticker file; a ticker with no
+verified symbol is left out and reported, never guessed (the old code answered `AMEX:` for
+125 of 173 tickers). `check_api_imports.py` fails if a universe ticker has no symbol. After
+fixing the API, the TradingView lists themselves still hold the old symbols until they are
+rewritten from `/api/watchlists`.
+
 ### The backtest banner says tickers are missing
 
 The refresher Lambda ran against a different ticker list than the API
@@ -269,6 +309,13 @@ Stated here rather than discovered later.
 - **`DFEDTARL` is not in `price-history`** and is not registered. The lower
   bound of the target range is reconstructed as upper − 25bp when FRED is
   unavailable, flagged per row as `lower_is_derived`.
+- **The "Drivers" P(flip) is not a market price.** For inflation, growth and credit it is
+  a table of how often the axis flipped when each driver sat in its current tercile, cut
+  over the same history the drivers were chosen on (in-sample), with readings taken at
+  publication lags. Only liquidity has a real market read (fed funds futures). Reading
+  monthly data by its stamped date had leaked the future and inflated the table.
+- **A latent-state (Kalman) P(flip) was tested and not shipped** (2026-10-04,
+  `research/latent_state/RESULTS.md`): no out-of-sample edge over the Markov base rate.
 - **No staleness alarm in CloudWatch.** `STALENESS_ALARM_DESIGN.md`
   specifies one measured on age. Age is the wrong measure — see §5 — so it
   was deliberately not built as designed.
