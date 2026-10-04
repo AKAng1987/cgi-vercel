@@ -51,6 +51,7 @@ TTL_HOURS: dict[str, float] = {
     "cot": 12.0,  # COT publishes Friday 15:30 ET; 12h keeps it fresh without hammering CFTC
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
+    "sec_exchanges": 168.0,  # SEC ticker -> exchange, for TradingView symbols; listings change slowly
     "watchlists": 34.0,  # TradingView list contents for the cloud routine
     "mixture": 6.0,  # probability-weighted returns across now / if-next-flips; moves with p_flip
     "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
@@ -145,7 +146,8 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
-    "watchlists": 3,  # 2026-10-03: worst 10 -> 20, and no overlap with best
+    "sec_exchanges": 1,
+    "watchlists": 4,  # 2026-10-04: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 3,  # 2026-10-04: embeds markov next_release.market, now lagged + relabelled
     "liquidity": 1,

@@ -12,6 +12,8 @@ section headers. Mirror of market-dashboard/scripts/cgi_watchlists.py.
 from __future__ import annotations
 
 import datetime as dt
+import json
+import urllib.request
 
 import backtest_data as bd
 import markov_data as md
@@ -49,6 +51,46 @@ def tv_symbol(ticker: str, group: str) -> str:
     if "ETF" in g or g in ("SECTOR ETF", "COUNTRY ETF", "US EQUITIES"):
         return f"AMEX:{ticker}"
     return f"AMEX:{ticker}"
+
+
+SEC_EXCHANGES_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
+SEC_UA = "CGI macro-regime research (ang.arvin@ymail.com)"     # same identity sec_xbrl uses
+# SEC's exchange name -> TradingView's prefix. Anything else (None, unknown) is
+# NOT guessed: see equity_tv_symbol.
+SEC_TO_TV = {"Nasdaq": "NASDAQ", "NYSE": "NYSE", "CBOE": "CBOE", "OTC": "OTC"}
+
+
+def fetch_sec_exchanges() -> dict[str, str]:
+    """ticker -> TradingView exchange prefix, for every US-listed ticker the SEC knows.
+
+    Fetched at run time rather than kept as a map: the fundamentals universe is
+    derived from the theme ETFs' holdings and changes, so a hand-built table would
+    go stale the first time a holding does -- which is exactly how this list ended
+    up with every stock on AMEX.
+    """
+    req = urllib.request.Request(SEC_EXCHANGES_URL, headers={"User-Agent": SEC_UA})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        d = json.loads(r.read().decode("utf-8"))
+    ix = {f: i for i, f in enumerate(d["fields"])}
+    out = {}
+    for row in d["data"]:
+        exch = SEC_TO_TV.get(row[ix["exchange"]])
+        if exch:
+            # SEC writes share classes as BRK-B; TradingView as BRK.B
+            out[row[ix["ticker"]].replace("-", ".")] = exch
+    return out
+
+
+def equity_tv_symbol(ticker: str, exchanges: dict[str, str]) -> str | None:
+    """EXCHANGE:TICKER for a stock, or None when the exchange is not known.
+
+    The old code answered 'AMEX:' for anything it did not recognise, so MU, NVDA,
+    AVGO and the rest of the earning-it list pointed at a venue none of them trade
+    on and TradingView would not load them. A symbol we cannot place is left out
+    and reported; a wrong one fails silently inside TradingView.
+    """
+    exch = exchanges.get(ticker.replace("-", "."))
+    return f"{exch}:{ticker.replace('-', '.')}" if exch else None
 
 
 def leaderboard(c: int, g: int, min_occ: int) -> list[dict]:
@@ -113,11 +155,23 @@ def build_watchlists_response() -> dict:
         import cache as _cache
         import fundamentals_data as _fd
         fund = _cache.get("fundamentals") or _fd.build_fundamentals_response()
-        ranked = sorted(
+        exchanges = _cache.get_or_fetch("sec_exchanges", fetch_sec_exchanges)
+        candidates = sorted(
             (c for c in fund.get("companies", [])
              if not c.get("annual_only")
              and (c.get("revenue") or {}).get("acceleration_pp") is not None),
-            key=lambda c: -c["revenue"]["acceleration_pp"])[:EARNING_IT]
+            key=lambda c: -c["revenue"]["acceleration_pp"])
+        # Walk down the ranking until EARNING_IT names that can actually be placed
+        # on an exchange, so one unresolvable ticker costs a slot to the next name,
+        # not a broken row. What was skipped is returned, not hidden.
+        ranked, unresolved = [], []
+        for c in candidates:
+            if equity_tv_symbol(c["symbol"], exchanges):
+                ranked.append(c)
+                if len(ranked) == EARNING_IT:
+                    break
+            else:
+                unresolved.append(c["symbol"])
         if ranked:
             out.append({
                 "name": "CGI · earning it",
@@ -125,8 +179,9 @@ def build_watchlists_response() -> dict:
                 "regime": "fundamentals",
                 "note": f"top {len(ranked)} by revenue acceleration, quarterly filers only",
                 "min_occ": None,
+                "unresolved": unresolved,
                 "symbols": ([f"###EARNING IT · TOP {len(ranked)} BY REVENUE ACCELERATION"]
-                            + [tv_symbol(c["symbol"], "EQUITY") for c in ranked]),
+                            + [equity_tv_symbol(c["symbol"], exchanges) for c in ranked]),
                 "best": [{"ticker": c["symbol"],
                           "acceleration_pp": c["revenue"]["acceleration_pp"],
                           "yoy_pct": c["revenue"].get("yoy_pct"),
