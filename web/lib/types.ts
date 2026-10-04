@@ -173,6 +173,7 @@ export interface MarketRead {
   p_flip: number;
   source: string;
   detail: string;
+  label?: string;
   experimental: boolean;
 }
 

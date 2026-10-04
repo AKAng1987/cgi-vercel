@@ -137,6 +137,7 @@ def _market_liquidity(fomc_date: str, state: int) -> Optional[dict]:
             p_flip = p["p_hike"] if state == 1 else p["p_cut"]
             return {
                 "p_flip": round(float(p_flip), 3),
+                "label": "Market",          # a real price: the only one of the three
                 "source": "fed funds futures (FedWatch method)",
                 "detail": f"{p.get('most_likely')} {round(float(p.get('prob_most_likely', 0)) * 100)}% · hike {round(p['p_hike']*100)} / hold {round(p['p_hold']*100)} / cut {round(p['p_cut']*100)}",
                 "experimental": False,
@@ -152,6 +153,7 @@ def _market_from_classifier(latest_daily: Optional[dict], axis: str, state: int)
     p_up = float(a["p_up"])
     return {
         "p_flip": round(1.0 - p_up if state == 1 else p_up, 3),
+        "label": "Model",
         "source": f"experimental classifier ({d.get('model_version')}, as of {d.get('features_as_of')})",
         "detail": f"P(up)={p_up:.2f}",
         "experimental": True,
@@ -171,7 +173,14 @@ def _market_from_drivers(drv: Optional[dict], axis: str) -> Optional[dict]:
     lead = top[0] if top else None
     return {
         "p_flip": c["conditioned_p_flip"],
-        "source": f"nowcast: flip rate conditioned on current driver terciles ({c['n_drivers_used']} drivers, {c['n_windows']} windows)",
+        # NOT a market price. It is a table of how often the axis flipped when each
+        # driver sat in its current tercile, cut over the same history the drivers
+        # were chosen on (in-sample), with readings taken at what had been published.
+        # Calling it "market" put a descriptive table beside real futures pricing.
+        "label": "Drivers",
+        "source": (f"driver table (in-sample, descriptive -- not a market price): flip rate "
+                   f"given current driver terciles ({c['n_drivers_used']} drivers, "
+                   f"{c['n_windows']} windows)"),
         "detail": (f"{lead['name']} {lead['current_value']:+g} → {round(lead['p_current']*100)}% vs base {round(c['base_rate']*100)}%" if lead else f"base {round(c['base_rate']*100)}%"),
         "experimental": True,
     }

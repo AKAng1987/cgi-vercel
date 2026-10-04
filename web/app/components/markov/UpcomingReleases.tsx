@@ -59,7 +59,7 @@ export function UpcomingReleases({
                 </div>
                 <div title={u.market ? `${u.market.source} — ${u.market.detail}` : "no market read for this axis yet"}>
                   <div className="text-[0.65rem] uppercase tracking-wide text-slate-500">
-                    Market{u.market?.experimental && <span className="ml-1 text-[var(--cgi-gold)]/70">exp.</span>}
+                    {u.market?.label ?? "Market"}{u.market?.experimental && <span className="ml-1 text-[var(--cgi-gold)]/70">exp.</span>}
                   </div>
                   <div className={`text-2xl font-bold ${u.market ? (bigGap ? "text-[var(--cgi-gold)]" : "text-slate-100") : "text-slate-600"}`}>
                     {u.market ? pct(u.market.p_flip) : "—"}

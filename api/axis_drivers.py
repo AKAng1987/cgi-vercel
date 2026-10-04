@@ -46,6 +46,19 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 LOOKBACK_ROWS = 21  # ~30 calendar days of trading rows
 MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 
+# Bump when the payload's shape or the way readings are taken changes. cache.py
+# reads this constant, so the bump cannot be forgotten in a second file.
+#   11: readings are taken at (date - publication lag), not at the stamped date
+SCHEMA_VERSION = 11
+
+# A monthly series is STAMPED at its period start but published weeks later: the
+# August CPI is dated 08-01 and released mid-September. Reading "the value stamped
+# on or before the window start" therefore uses data that did not yet exist, which
+# manufactures an apparent edge (research/latent_state/RESULTS.md: a ~9% Brier gain
+# on inflation that disappears once readings are lagged). Deliberately conservative
+# -- it throws away information a trader would have had on release day.
+PUBLICATION_LAG_DAYS = {"daily": 1, "weekly": 7, "monthly": 45, "quarterly": 120}
+
 CADENCE_DAYS = {"inflation": 30, "growth": 30, "liquidity": 45, "credit": 91}
 
 # (label, symbol or (a, b), kind)
@@ -273,6 +286,26 @@ class _Series:
         return (v / prev - 1.0) * 100.0
 
 
+def _cadence(dates: list[str]) -> str:
+    """daily / weekly / monthly / quarterly from the series' own recent spacing."""
+    if len(dates) < 3:
+        return "monthly"
+    ds = [dt.date.fromisoformat(d) for d in dates[-60:]]
+    gaps = sorted((b - a).days for a, b in zip(ds, ds[1:]))
+    sp = gaps[len(gaps) // 2]
+    return "daily" if sp <= 4 else "weekly" if sp <= 10 else "monthly" if sp <= 45 else "quarterly"
+
+
+def _spec_lag(spec: tuple, loaded: dict) -> int:
+    """Publication lag for a driver: the slowest of the series it is built from."""
+    syms = spec[1] if isinstance(spec[1], tuple) else (spec[1],)
+    return max(PUBLICATION_LAG_DAYS[_cadence(loaded[x].dates)] for x in syms)
+
+
+def _shift(date: str, days: int) -> str:
+    return (dt.date.fromisoformat(date) - dt.timedelta(days=days)).isoformat() if days else date
+
+
 CURVE_LABELS = ("bull_steep", "bear_steep", "bull_flat", "bear_flat")
 
 
@@ -344,7 +377,12 @@ def _tercile(x: float, b: tuple[float, float]) -> int:
 
 
 def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list[dict],
-                drivers: list[tuple], series: dict[str, _Series], today: str) -> dict:
+                drivers: list[tuple], series: dict[str, _Series], today: str,
+                lags: Optional[dict[str, int]] = None) -> dict:
+    lags = lags or {}
+    # Every reading -- each window's and today's -- is taken as of what had been
+    # PUBLISHED by then, not what is stamped on or before the date.
+    rd = lambda label, date: _shift(date, lags.get(label, 0))
     slot = cal.SLOT_OF[axis]
     state_dates = [d for d, _ in rows]
     state_vals = [cal.Q_TO_AXES[q][slot] for _, q in rows]
@@ -371,11 +409,12 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
             lo = bisect.bisect_right(flip_dates, ts)
             hi = bisect.bisect_right(flip_dates, te)
             flipped = hi > lo
-            readings = {spec[0]: _reading(spec, series[spec[0]], ts) for spec in drivers}
+            readings = {spec[0]: _reading(spec, series[spec[0]], rd(spec[0], ts)) for spec in drivers}
             windows.append((ts, st, flipped, readings))
         t += dt.timedelta(days=cadence)
 
     out: dict = {"cadence_days": cadence, "n_windows": len(windows),
+                 "publication_lag_days": {k: v for k, v in lags.items() if v},
                  "window_range": [windows[0][0], windows[-1][0]] if windows else None, "from_state": {}}
 
     for s in (0, 1):
@@ -392,7 +431,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 for v, f in pairs:
                     by[v][0] += 1
                     by[v][1] += int(f)
-                cur = _reading(spec, series[label], today)
+                cur = _reading(spec, series[label], rd(label, today))
                 p_cur = (by[cur][1] / by[cur][0]) if cur in by and by[cur][0] >= MIN_TERCILE_N else None
                 drv_out.append({
                     "name": label, "n": len(pairs), "categorical": True,
@@ -405,7 +444,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 continue
             if len(pairs) < 3 * MIN_TERCILE_N:
                 drv_out.append({"name": label, "n": len(pairs), "insufficient": True,
-                                "current_value": (lambda v: round(v, 3) if v is not None else None)(_reading(spec, series[label], today))})
+                                "current_value": (lambda v: round(v, 3) if v is not None else None)(_reading(spec, series[label], rd(label, today)))})
                 continue
             drv_base = sum(1 for _, f in pairs if f) / len(pairs)
             vals = [p[0] for p in pairs]
@@ -418,7 +457,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
             p_by_t = [(by_t[k][1] / by_t[k][0]) if by_t[k][0] else None for k in (0, 1, 2)]
             mean_f = [v for v, f in pairs if f]
             mean_nf = [v for v, f in pairs if not f]
-            cur = _reading(spec, series[label], today)
+            cur = _reading(spec, series[label], rd(label, today))
             cur_t = _tercile(cur, b) if cur is not None else None
             p_cur = p_by_t[cur_t] if cur_t is not None and by_t[cur_t][0] >= MIN_TERCILE_N else None
             drv_out.append({
@@ -472,7 +511,8 @@ def compute_axis_drivers() -> dict:
     for axis, specs in DRIVERS.items():
         model = cal.MODEL_OF[axis]
         series = {spec[0]: _build_driver_series(spec, loaded) for spec in specs}
-        stats = _axis_stats(axis, model, hist[model], events, specs, series, today)
+        lags = {spec[0]: _spec_lag(spec, loaded) for spec in specs}
+        stats = _axis_stats(axis, model, hist[model], events, specs, series, today, lags)
         cur_state = cal.Q_TO_AXES[current[model]][cal.SLOT_OF[axis]]
         stats["current_state"] = cur_state
         stats["current"] = stats["from_state"][str(cur_state)]

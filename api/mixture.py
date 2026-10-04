@@ -43,7 +43,7 @@ import watchlists as wl
 
 # Bump on any change to the response shape: cache.SCHEMA_FROM_MODULE points at
 # this, so the new shape cannot be served stale from a cached old one.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3   # 3: the market p_flip it reads (driver table) is now publication-lagged
 
 # A thin "if flips" cell is expected -- by construction there are fewer
 # occurrences of the destination regime. These floors are deliberately lower
