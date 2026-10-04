@@ -39,6 +39,7 @@ Two halves, because the API can reach one set of sources and not the other:
 from __future__ import annotations
 
 import datetime as dt
+import pathlib
 import logging
 from typing import Optional
 
@@ -53,13 +54,16 @@ PRICE_TABLE = "cmon-stage-backend-price-history"
 _ddb = boto3.client("dynamodb", region_name=REGION)
 _logger = logging.getLogger(__name__)
 
-# Bump _SHAPE when the response SHAPE changes (6: refresh-routine heartbeat).
-# The symbol count is folded in because the manual worklist is DERIVED from
-# series_write.ALLOWED: moving a series off the routine changed what this
-# payload contains without changing its shape, and a hand-edited number did not
-# move, so the page served the old worklist for the cache's full hour.
-_SHAPE = 7   # 7: feed_integrity (orphans, source collisions, stalled universe tickers)
-SCHEMA_VERSION = _SHAPE * 1000 + len(series_write.ALLOWED)
+# The cache version is DERIVED from this module's own source plus the manual worklist,
+# not typed. A hand-edited number has been forgotten three times for this payload: a
+# change to what it contains (the worklist), then to the rule behind a flag (the
+# one-night grace) both deployed correctly and were served stale for the cache's hour.
+# Any edit to this file, or to series_write.ALLOWED, now invalidates the cached copy.
+import hashlib as _hashlib
+
+SCHEMA_VERSION = int(_hashlib.sha1(
+    (pathlib.Path(__file__).read_bytes() + ",".join(sorted(series_write.ALLOWED)).encode())
+).hexdigest()[:8], 16)
 
 # How far apart two copies of the same observation may be before it is a
 # disagreement rather than a rounding difference between two float paths.
