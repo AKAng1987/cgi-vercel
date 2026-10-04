@@ -147,12 +147,12 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
-    "watchlists": 6,  # 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
+    "watchlists": 7,  # URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
-    "brief_daily": 3,  # 2026-10-04: embeds markov next_release.market, now lagged + relabelled
+    "brief_daily": 4,  # 2026-10-04: feed-integrity problems in the freshness section; 3: markov market lagged + relabelled
     "liquidity": 1,
     "customer_links": 1,
-    "brief_weekly": 3,  # 2026-10-04: same
+    "brief_weekly": 4,  # 2026-10-04: same
     "countries": 1,
     "context_tables": 4,  # 2026-09-26: NameError fix; v3 never actually served.  # 2026-09-26: Warsh added + chair carries a confirmation date.  # fed_episodes -> derived rate_cycles + balance_sheet
     "fundamentals": 10,  # 2026-09-26: traded data removed from the public response.  # 2026-09-26: proper median + n.  # 2026-09-26: traded universe unioned.  # 2026-09-26: cadence-aware reads.  # 2026-09-26: sector per company.  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --

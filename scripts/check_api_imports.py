@@ -74,3 +74,31 @@ _out = [l for l in _r.stdout.splitlines() if l.startswith(("OK", "FAIL"))]
 print(_out[-1] if _out else (_r.stdout + _r.stderr)[-400:])
 if _r.returncode != 0:
     raise SystemExit(1)
+
+# Third guard: the feed-integrity DETECTOR must still detect. It is the thing that is
+# supposed to notice a silently starved series, so a bug in it would look exactly like
+# a healthy system. One of each failure must be caught, and a clean registry must pass.
+import datetime as _dt  # noqa: E402
+import freshness as _fr  # noqa: E402
+
+_today = _dt.date(2026, 10, 7)                       # a Wednesday
+_reg = [
+    {"source": "tradingview", "symbol": "ORPHAN1", "source_symbol": "ORPHAN1"},   # not on the worklist
+    {"source": "tradingview", "symbol": "LISTED", "source_symbol": "LISTED"},     # is on the worklist
+    {"source": "marketstack", "symbol": "DUP_A", "source_symbol": "XYZ"},         # collision pair
+    {"source": "marketstack", "symbol": "DUP_B", "source_symbol": "XYZ"},
+    {"source": "marketstack", "symbol": "OK", "source_symbol": "OK"},
+]
+_last = {"OK": {"date": "2026-10-06", "source": "marketstack"},
+         "OLD": {"date": "2026-09-01", "source": "marketstack"},                   # stalled
+         "FXLAG": {"date": "2026-09-30", "source": "fred"},                        # 7d old but FRED: fine
+         "NONE": None}                                                             # never loaded
+_r = _fr.integrity_problems(_reg, {"LISTED"}, ["OK", "OLD", "FXLAG", "NONE"], _last, _today)
+_want = (_r["orphans"] == ["ORPHAN1"]
+         and [c["symbols"] for c in _r["collisions"]] == [["DUP_A", "DUP_B"]]
+         and sorted(s["symbol"] for s in _r["stalled"]) == ["NONE", "OLD"])
+_clean = _fr.integrity_problems([_reg[1], _reg[4]], {"LISTED"}, ["OK", "FXLAG"], _last, _today)
+if not _want or _clean["n_problems"] != 0:
+    print(f"FAIL: feed-integrity detector is wrong: {_r} / clean={_clean}")
+    raise SystemExit(1)
+print("OK: feed-integrity detector catches an orphan, a collision and stalled tickers, and passes a clean registry")

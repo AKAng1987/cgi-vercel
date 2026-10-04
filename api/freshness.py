@@ -58,7 +58,7 @@ _logger = logging.getLogger(__name__)
 # series_write.ALLOWED: moving a series off the routine changed what this
 # payload contains without changing its shape, and a hand-edited number did not
 # move, so the page served the old worklist for the cache's full hour.
-_SHAPE = 6
+_SHAPE = 7   # 7: feed_integrity (orphans, source collisions, stalled universe tickers)
 SCHEMA_VERSION = _SHAPE * 1000 + len(series_write.ALLOWED)
 
 # How far apart two copies of the same observation may be before it is a
@@ -340,6 +340,99 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
     }
 
 
+# ── feed integrity: does the REGISTRY agree with the DATA ───────────────────
+#
+# Every other check here asks whether a series is behind its source. These ask the
+# question one level up, and each is a failure that already starved a series for weeks
+# without anything saying so -- all three were found by eye:
+#
+#   orphan     registered under source=tradingview, which no Lambda serves, but absent
+#              from series_write.ALLOWED, so the manual routine skips it too. Nothing
+#              refreshes it. (The breadth series; then MAGS and UUP.)
+#   collision  two symbols registered with the same (source, source_symbol). The
+#              updaters key their lookup on source_symbol, so the last registration
+#              overwrites the others and the rest starve. (URA starved by URANIUM.)
+#   stalled    a backtest-universe ticker whose newest bar is far behind. (PBS, JJC and
+#              JJN stopped in 2023 and ranked in the leaderboards for two years.)
+#
+# STALLED_SESSIONS is weekday-aware via _sessions_since. FRED-sourced rows are exempt
+# from it: the Fed's H.10 exchange rates publish weekly with a lag, so a nine-day-old
+# USDCAD is current, and they get a calendar-day allowance instead.
+METRICS_TABLE = "cmon-stage-backend-metrics-source"
+STALLED_SESSIONS = 5
+STALLED_FRED_DAYS = 14
+
+
+def integrity_problems(registry: list[dict], allowed: set[str], universe: list[str],
+                       last_rows: dict[str, Optional[dict]],
+                       today: Optional[dt.date] = None) -> dict:
+    """Pure core: registry rows {source, symbol, source_symbol}, the manual worklist,
+    the universe, and each ticker's newest row {date, source} -> what is wrong."""
+    orphans = sorted(r["symbol"] for r in registry
+                     if r["source"] == "tradingview" and r["symbol"] not in allowed)
+
+    groups: dict[tuple, list[str]] = {}
+    for r in registry:
+        groups.setdefault((r["source"], r.get("source_symbol") or r["symbol"]), []).append(r["symbol"])
+    collisions = [{"source": k[0], "source_symbol": k[1], "symbols": sorted(v)}
+                  for k, v in sorted(groups.items()) if len(v) > 1]
+
+    stalled = []
+    for t in universe:
+        row = last_rows.get(t)
+        if row is None:
+            stalled.append({"symbol": t, "newest": None, "behind": "no rows at all", "source": None})
+            continue
+        if row["source"] == "fred":
+            behind_n, bad = _age_days(row["date"], today), _age_days(row["date"], today) > STALLED_FRED_DAYS
+            unit = "days"
+        else:
+            behind_n = _sessions_since(row["date"], today)
+            bad, unit = behind_n > STALLED_SESSIONS, "sessions"
+        if bad:
+            stalled.append({"symbol": t, "newest": row["date"], "behind": f"{behind_n} {unit}",
+                            "source": row["source"]})
+    return {"orphans": orphans, "collisions": collisions, "stalled": stalled,
+            "n_problems": len(orphans) + len(collisions) + len(stalled), "checked": len(universe)}
+
+
+def _registry() -> list[dict]:
+    rows, kw = [], dict(TableName=METRICS_TABLE, ProjectionExpression="#src, #sym, source_symbol",
+                        ExpressionAttributeNames={"#src": "source", "#sym": "symbol"})
+    while True:
+        page = _ddb.scan(**kw)
+        rows += [{"source": i["source"]["S"], "symbol": i["symbol"]["S"],
+                  "source_symbol": i.get("source_symbol", {}).get("S")} for i in page["Items"]]
+        if "LastEvaluatedKey" not in page:
+            return rows
+        kw["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+
+
+def _last_row(symbol: str) -> Optional[dict]:
+    resp = _ddb.query(TableName=PRICE_TABLE, KeyConditionExpression="#s = :s",
+                      ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#src": "source"},
+                      ExpressionAttributeValues={":s": {"S": symbol}},
+                      ProjectionExpression="#d, #src", ScanIndexForward=False, Limit=1)
+    it = (resp.get("Items") or [None])[0]
+    return {"date": it["date"]["S"], "source": it.get("source", {}).get("S")} if it else None
+
+
+def feed_integrity(today: Optional[dt.date] = None) -> dict:
+    """I/O wrapper. A check that cannot run reports itself as a problem rather than as
+    a healthy zero: silence from a broken guard looks identical to a clean bill."""
+    try:
+        import backtest_data
+        from concurrent.futures import ThreadPoolExecutor
+        universe = backtest_data.build_backtest_universe()[0]
+        with ThreadPoolExecutor(16) as ex:
+            rows = dict(zip(universe, ex.map(_last_row, universe)))
+        return integrity_problems(_registry(), set(series_write.ALLOWED), universe, rows, today)
+    except Exception as exc:  # noqa: BLE001
+        _logger.exception("[freshness] feed_integrity could not run")
+        return {"orphans": [], "collisions": [], "stalled": [], "n_problems": 1, "checked": 0,
+                "error": f"{type(exc).__name__}: {exc}"}
+
+
 def manual_worklist(today: Optional[dt.date] = None) -> dict:
     """What we hold for every hand-loaded symbol, and what to fetch.
 
@@ -413,13 +506,15 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     fred = fred_crosscheck(today)
     manual = manual_worklist(today)
     beat = read_heartbeat(today)
+    integrity = feed_integrity(today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
         "manual": manual,
         "refresh_routine": beat,
+        "feed_integrity": integrity,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
-                       + (1 if beat.get("stale") else 0)),
+                       + (1 if beat.get("stale") else 0) + integrity["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

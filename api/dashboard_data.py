@@ -41,6 +41,10 @@ RETIRED_TICKERS: dict[str, str] = {
     "BJK": "VanEck Gaming ETF -- price history ends 2026-06-10, not found on TradingView",
     "VICE": "AdvisorShares Vice ETF -- price history ends 2026-08-28, not found on TradingView",
     "CNCR": "Range Cancer Therapeutics ETF -- not found on TradingView",
+    # Duplicate, not dead: the same Global X Uranium ETF is also the universe's "URANIUM".
+    # Both were registered under marketstack with source_symbol=URA; the updater keys on
+    # source_symbol, so URANIUM kept updating and URA starved (last bar 2026-09-01).
+    "URA": "duplicate of URANIUM (same ETF); starved by a shared source_symbol since 2026-09-01",
 }
 
 HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
@@ -78,7 +82,7 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
     ("RATES", (["DFEDTARU", "FEDFUNDS", "CPIAUCSL", "GDP", "DRTSCILM"], None)),
     ("COMMODITIES METALS", (
         ["DBC", "USO", "UNG", "GLD", "GDX", "GDXJ", "SLV", "SIL",
-         "CPER", "WOOD", "SLX", "URA", "COPX",
+         "CPER", "WOOD", "SLX", "COPX",
          # energy value chain -- the split the user's own watchlist lacks:
          # upstream E&P (IEO), oilfield services (OIH), gas producers (FCG),
          # midstream (MLPX), refiners (CRAK). XOP/XLE already cover E&P and

@@ -235,15 +235,25 @@ def build_brief(cadence: str = "daily") -> dict:
         auto = fresh.get("automated", {})
         behind = [r for r in auto.get("series", [])
                   if r.get("status") in ("behind", "value_disagrees", "missing")]
+        integ = fresh.get("feed_integrity") or {}
         sections.append(_section(
             "freshness",
-            f"{fresh['n_problems']} series behind their source",
+            f"{fresh['n_problems']} data problems",
             {"behind": [{"symbol": r["symbol"], "status": r["status"],
                          "detail": r.get("detail")} for r in behind],
              "never_loaded": fresh.get("manual", {}).get("n_never_loaded", 0),
-             "what_to_do": ("Run the TradingView refresh for anything manual; "
-                            "for a FRED series, check whether the nightly copy "
-                            "Lambda is still running.")}))
+             # Registry-vs-data failures, each of which has silently starved a series.
+             "orphans": integ.get("orphans", []),
+             "collisions": integ.get("collisions", []),
+             "stalled": integ.get("stalled", []),
+             "integrity_error": integ.get("error"),
+             "what_to_do": ("Run the TradingView refresh for anything manual; for a FRED "
+                            "series, check whether the nightly copy Lambda is still running. "
+                            "An ORPHAN is registered under tradingview but not on the manual "
+                            "worklist: add it to series_write.ALLOWED or move it to an "
+                            "automated source. A COLLISION is two symbols sharing one source "
+                            "ticker: the updater feeds only one. STALLED is a universe "
+                            "ticker whose newest bar is days behind.")}))
     elif e_fr:
         sections.append(_section("freshness", "unavailable", None, e_fr))
 
