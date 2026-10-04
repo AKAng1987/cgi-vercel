@@ -188,6 +188,19 @@ Its first live run seeds its state and posts nothing. De-dup state is
 `State/cts_alerts_posted.json`; a state read that fails for any reason except "not found"
 raises rather than re-seeding. Code and tests: `~/market-dashboard/lambda/cgi-cts-poster`.
 
+### TradingView lists stay in sync (write only on change)
+
+Nothing in AWS can write to TradingView, so the three lists (`CGI · now`, `CGI · if next flips`,
+`CGI · earning it`) are rewritten by the same scheduled task as the series refresh, **after** its
+heartbeat so a list problem can never stop the heartbeat. `scripts/cgi_refresh.py lists plan` diffs
+`/api/watchlists` against `~/.cgi/tv_lists_state.json` (what was last written) and prints remove/add
+arrays only for lists that differ; the normal outcome is "unchanged" and **no TradingView call**.
+`lists done ID=HASH` records a write and refuses if the API moved since `plan`. On Saturdays the task
+reads the lists back and `lists verify` repairs drift (a manual edit, an interrupted rewrite: the tools
+cannot replace a list, so a rewrite is remove-then-add and is not atomic). The first run that uses the
+watchlist tools may pause on a tool-approval prompt: click "Run now" once to pre-approve them.
+The earning-it list excludes OTC names (read from the SEC file at run time).
+
 ### Feed integrity: does the registry agree with the data
 
 `/api/freshness` -> `feed_integrity` catches three failures that each silently starved a
