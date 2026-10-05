@@ -190,6 +190,19 @@ Its first live run seeds its state and posts nothing. De-dup state is
 `State/cts_alerts_posted.json`; a state read that fails for any reason except "not found"
 raises rather than re-seeding. Code and tests: `~/market-dashboard/lambda/cgi-cts-poster`.
 
+### The refresh routine must reach the API through Vercel, not Render
+
+The routine runs on the user's own machine, and the networks that machine sits on (office and home)
+**sinkhole `*.onrender.com`**: DNS answers with a private `192.168.x` address, so every call fails with
+"Network is unreachable", while `vercel.app` stays reachable. On 2026-10-05 the first weekday run failed this
+way, stopped as its rules say, wrote no heartbeat and still reported "succeeded": the session finished, it
+just did nothing. So everything the routine calls goes through a same-origin Vercel proxy:
+`/api/freshness`, `/api/freshness/heartbeat`, `/api/series/<symbol>` and `/api/watchlists`, and
+`scripts/cgi_refresh.py` defaults to the Vercel host (pinned by a test). A new endpoint the routine needs
+must get a proxy first. Diagnose with `host cgi-api-9mim.onrender.com`: a `192.168.x` answer is the sinkhole.
+Also affected, not fixed: `~/cgi-mcp` (the read-only tool for the execution project) defaults to Render
+and needs authenticated endpoints that have no proxy.
+
 ### TradingView lists stay in sync (write only on change)
 
 Nothing in AWS can write to TradingView, so the three lists (`CGI · now`, `CGI · if next flips`,
