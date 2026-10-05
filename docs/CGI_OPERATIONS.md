@@ -186,6 +186,12 @@ Agents > + New); add it as `CTS_AGENT_TOKEN` **and set `CTS_MCP_URL`** (the CTS 
 connection doc; it has no default and is not in the code because this repo is public) in the Lambda
 *console* (the CLI replaces the whole environment map and would wipe `DRY_RUN`); read one dry-run log;
 set `DRY_RUN=0`. A live run without the URL fails loudly before doing anything.
+A regime post is short text plus ONE picture, the regime card, drawn by the app at `/share/regime.png`
+(CTS's server fetches that public URL and re-hosts it), and links to the app and to the `CGI · now` TradingView list
+(the best/worst 20 live there, not in the text). The poster pre-flights the picture (200, a real PNG, under 5MB) and
+leaves it off rather than fail the post. Handy calls: `{"selftest": true}` (read-only: signs in, `whoami`),
+`{"replay": {"kind": ..., "when": ...}, "preview": true}` (shows the exact post, posts nothing; `"repost": true`
+bypasses only the already-posted check), `{"inspect": "<postId>"}` (what CTS actually stored, e.g. the image count).
 Its first live run seeds its state and posts nothing. De-dup state is
 `State/cts_alerts_posted.json`; a state read that fails for any reason except "not found"
 raises rather than re-seeding. Code and tests: `~/market-dashboard/lambda/cgi-cts-poster`.
@@ -200,8 +206,9 @@ just did nothing. So everything the routine calls goes through a same-origin Ver
 `/api/freshness`, `/api/freshness/heartbeat`, `/api/series/<symbol>` and `/api/watchlists`, and
 `scripts/cgi_refresh.py` defaults to the Vercel host (pinned by a test). A new endpoint the routine needs
 must get a proxy first. Diagnose with `host cgi-api-9mim.onrender.com`: a `192.168.x` answer is the sinkhole.
-Also affected, not fixed: `~/cgi-mcp` (the read-only tool for the execution project) defaults to Render
-and needs authenticated endpoints that have no proxy.
+`~/cgi-mcp` (the read-only tool for the execution project) also goes through Vercel by default, via
+`/proxy/<api path>`: a GET-only passthrough that forwards the caller's own bearer token to Render, so the
+login-protected endpoints stay protected; only the paths cgi-mcp uses are allowed (never the write endpoints).
 
 ### TradingView lists stay in sync (write only on change)
 
