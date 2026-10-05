@@ -4,6 +4,8 @@ import { useState } from "react";
 import { BacktestRow, MixtureResponse } from "@/lib/types";
 import { TradingViewChart } from "../TradingViewChart";
 import { MixtureTable } from "./MixtureTable";
+import { TvList } from "@/lib/tvLists";
+import { TvListLink } from "../TvListLink";
 
 /**
  * Edge cards for the current regime, and the "across the next release" table,
@@ -21,12 +23,17 @@ export function EdgeStrip({
   cq,
   gq,
   mixture,
+  tvNow,
+  tvFlip,
 }: {
   best: BacktestRow[];
   worst: BacktestRow[];
   cq: number;
   gq: number;
   mixture?: MixtureResponse | null;
+  /** TradingView lists for the current regime / the regime if the next release flips. */
+  tvNow?: TvList;
+  tvFlip?: TvList;
 }) {
   const [sel, setSel] = useState({ ticker: "SPY", symbol: "AMEX:SPY" });
   const select = (ticker: string, symbol: string) => setSel({ ticker, symbol });
@@ -59,6 +66,7 @@ export function EdgeStrip({
             <a href={`/backtest?cq=${cq}&gq=${gq}`} className="underline hover:text-slate-300">
               full table
             </a>
+            {tvNow && <> · <TvListLink list={tvNow} label="TradingView list" /></>}
           </div>
         </div>
 
@@ -89,8 +97,6 @@ export function EdgeStrip({
         )}
       </section>
 
-      {mixture && <MixtureTable data={mixture} selected={sel.ticker} onSelect={select} />}
-
       <section className="mb-6">
         <div className="mb-2 flex items-baseline gap-3">
           <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Chart</div>
@@ -101,6 +107,10 @@ export function EdgeStrip({
         </div>
         <TradingViewChart symbol={sel.symbol} />
       </section>
+
+      {mixture && (
+        <MixtureTable data={mixture} selected={sel.ticker} onSelect={select} tvList={tvFlip} />
+      )}
     </>
   );
 }

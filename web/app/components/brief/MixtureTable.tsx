@@ -1,6 +1,8 @@
 "use client";
 
 import { MixtureResponse, MixtureRow } from "@/lib/types";
+import { TvList } from "@/lib/tvLists";
+import { TvListLink } from "../TvListLink";
 
 /**
  * Each ticker's average return in the regime we are in vs the one the next
@@ -31,11 +33,14 @@ export function MixtureTable({
   data,
   selected,
   onSelect,
+  tvList,
 }: {
   data: MixtureResponse;
   selected?: string | null;
   /** Called with the CGI ticker and the VERIFIED TradingView symbol (falls back to the ticker). */
   onSelect?: (ticker: string, tvSymbol: string) => void;
+  /** The TradingView list for the regime the next release could land us in. */
+  tvList?: TvList;
 }) {
   if (data.error || data.rows.length === 0) return null;
 
@@ -62,6 +67,7 @@ export function MixtureTable({
       <div className="mb-2 text-xs text-slate-500">
         {reversing} of {data.n_tickers} tickers change sign if it flips. Two small samples, weighted —
         not a forecast.{onSelect && " Click a row to chart it."}
+        {tvList && <> · <TvListLink list={tvList} label="TradingView list if it flips" /></>}
       </div>
 
       <div className="overflow-x-auto rounded border border-slate-800">

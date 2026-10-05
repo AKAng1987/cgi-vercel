@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api";
 import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse, CalendarResponse, MixtureResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
+import { WatchlistsResponse, findList, LIST_NOW, LIST_FLIP } from "@/lib/tvLists";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
 import { ChangeStrip } from "./components/brief/ChangeStrip";
 import { PolicyNotes } from "./components/brief/PolicyNotes";
@@ -18,7 +19,7 @@ import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
  * The raw overnight scan moved to /tape; this page is what you open first.
  */
 export default async function Live() {
-  const [themes, signals, live, tech, notes, brief, edgeNow, calendar, mixture] = await Promise.all([
+  const [themes, signals, live, tech, notes, brief, edgeNow, calendar, mixture, tvLists] = await Promise.all([
     apiFetch<ThemesResponse>("/api/themes"),
     apiFetch<SignalsResponse>("/api/signals?limit=1"),
     apiFetch<LiveResponse>("/api/live"),
@@ -35,6 +36,8 @@ export default async function Live() {
     ).catch(() => null),
     apiFetch<CalendarResponse>("/api/calendar").catch(() => null),
     apiFetch<MixtureResponse>("/api/mixture").catch(() => null),
+    // Only for the links to the TradingView lists: a failure just drops the links.
+    apiFetch<WatchlistsResponse>("/api/watchlists").catch(() => null),
   ]);
 
   const sig = signals.signals?.[0];
@@ -85,7 +88,15 @@ export default async function Live() {
       <ThemesTable themes={themes.themes} runStats={themes.run_stats} />
 
       {top.length > 0 && cq && gq && (
-        <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} mixture={mixture} />
+        <EdgeStrip
+          best={top}
+          worst={worst}
+          cq={cq}
+          gq={gq}
+          mixture={mixture}
+          tvNow={findList(tvLists, LIST_NOW)}
+          tvFlip={findList(tvLists, LIST_FLIP)}
+        />
       )}
 
       {notes && notes.policy.filter((p) => p.is_live).length > 0 && (

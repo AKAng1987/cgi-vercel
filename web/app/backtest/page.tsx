@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/api";
 import { BacktestTableResponse, SignalsResponse } from "@/lib/types";
 import { BacktestClient } from "../components/backtest/BacktestClient";
 import { BacktestTable } from "../components/backtest/BacktestTable";
+import { TvListLink } from "../components/TvListLink";
+import { WatchlistsResponse, findList, LIST_NOW, LIST_FLIP } from "@/lib/tvLists";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
 
 /**
@@ -72,9 +74,11 @@ export default async function BacktestPage({
     lookback,
     from_combo: fromCombo,
   });
-  const data = await apiFetch<BacktestTableResponse>(
-    `/api/backtest/${compassQ}/${gridQ}?${qs}`
-  );
+  const [data, tvLists] = await Promise.all([
+    apiFetch<BacktestTableResponse>(`/api/backtest/${compassQ}/${gridQ}?${qs}`),
+    // Only for the links to the TradingView lists: a failure just drops the links.
+    apiFetch<WatchlistsResponse>("/api/watchlists").catch(() => null),
+  ]);
 
   // Refresh Lambda runs 03:30 UTC daily; >30h since last write means it
   // missed at least one cycle -- worth surfacing rather than silently
@@ -94,6 +98,15 @@ export default async function BacktestPage({
         Historical performance of every ETF during a specific Compass × Grid
         regime. Entry = close on signal date. Edge = Avg High% ÷ |Avg Low%|.
       </p>
+
+      {(findList(tvLists, LIST_NOW) || findList(tvLists, LIST_FLIP)) && (
+        <p className="mb-4 text-xs text-slate-400">
+          Best and worst 20 as TradingView watchlists, rewritten when they change:{" "}
+          <TvListLink list={findList(tvLists, LIST_NOW)} label="current regime" />
+          {findList(tvLists, LIST_NOW) && findList(tvLists, LIST_FLIP) && " · "}
+          <TvListLink list={findList(tvLists, LIST_FLIP)} label="if the next release flips" />
+        </p>
+      )}
 
       {stalenessHours !== null && stalenessHours > 30 && (
         <div className="mb-4 rounded border border-yellow-800 bg-yellow-950/40 px-3 py-2 text-xs text-yellow-300">

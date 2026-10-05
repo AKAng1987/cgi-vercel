@@ -1,4 +1,6 @@
 import { apiFetch } from "@/lib/api";
+import { TvListLink } from "../components/TvListLink";
+import { WatchlistsResponse, findList, LIST_EARN } from "@/lib/tvLists";
 import { PricedIn } from "../components/fundamentals/PricedIn";
 import { FundamentalsResponse, FundRollup } from "@/lib/types";
 import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
@@ -99,7 +101,12 @@ function RollupRow({ label, r, wide, fallback }: { label: string; r: FundRollup 
 }
 
 export default async function FundamentalsPage() {
-  const d = await apiFetch<FundamentalsResponse>("/api/fundamentals");
+  const [d, tvLists] = await Promise.all([
+    apiFetch<FundamentalsResponse>("/api/fundamentals"),
+    // Only for the link to the TradingView list: a failure just drops the link.
+    apiFetch<WatchlistsResponse>("/api/watchlists").catch(() => null),
+  ]);
+  const earn = findList(tvLists, LIST_EARN);
   const live = d.themes.filter((t) => t.is_live);
   const rest = d.themes.filter((t) => !t.is_live);
 
@@ -117,6 +124,13 @@ export default async function FundamentalsPage() {
         <span className="text-slate-200">second derivative</span>: a company going from +30% to +20%
         revenue growth is decelerating while still growing fast.
       </p>
+
+      {earn && (
+        <p className="mb-5 text-xs text-slate-400">
+          The top 15 by revenue acceleration (quarterly filers, exchange-listed only) as a TradingView
+          watchlist, rewritten when it changes: <TvListLink list={earn} />
+        </p>
+      )}
 
       {d.changes && d.changes.length > 0 && (
         <section className="mb-7">
