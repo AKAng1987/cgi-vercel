@@ -182,8 +182,10 @@ place and the work in another.
 flips and theme starts/ends to the CTS Ideas feed. No Claude in the loop, no CGI secret:
 it reads the public `/api/brief` and `/api/watchlists` proxies. **It is deployed with
 `DRY_RUN=1` and posts nothing.** To go live: a CTS admin mints an agent token (Admin >
-Agents > + New); add it as `CTS_AGENT_TOKEN` in the Lambda *console* (the CLI replaces
-the whole environment map and would wipe `DRY_RUN`); read one dry-run log; set `DRY_RUN=0`.
+Agents > + New); add it as `CTS_AGENT_TOKEN` **and set `CTS_MCP_URL`** (the CTS service address, from their
+connection doc; it has no default and is not in the code because this repo is public) in the Lambda
+*console* (the CLI replaces the whole environment map and would wipe `DRY_RUN`); read one dry-run log;
+set `DRY_RUN=0`. A live run without the URL fails loudly before doing anything.
 Its first live run seeds its state and posts nothing. De-dup state is
 `State/cts_alerts_posted.json`; a state read that fails for any reason except "not found"
 raises rather than re-seeding. Code and tests: `~/market-dashboard/lambda/cgi-cts-poster`.
