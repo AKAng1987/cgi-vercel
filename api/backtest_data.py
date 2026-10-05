@@ -33,6 +33,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 import dashboard_data
+import tv_symbols
 
 REGION = "ap-southeast-1"
 BUCKET = "cmon-stage-backend-369568916817-ap-southeast-1-reports"
@@ -332,6 +333,7 @@ def build_table_response(
         rows.append({
             "ticker": sym,
             "group": entry["group"],
+            "tv_symbol": tv_symbols.tv_symbol(sym, entry["group"]),   # chart the right instrument, never a guess
             "occurrences": stats["count"],
             "avg_high_pct": stats["avg_high_pct"],
             "avg_low_pct": stats["avg_low_pct"],

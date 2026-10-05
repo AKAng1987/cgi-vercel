@@ -51,6 +51,7 @@ export interface LiveResponse {
 export interface BacktestRow {
   ticker: string;
   group: string;
+  tv_symbol?: string | null;
   occurrences: number;
   avg_high_pct: number;
   avg_low_pct: number;
@@ -975,6 +976,7 @@ export interface PricedInResponse {
 export interface MixtureRow {
   ticker: string;
   group: string;
+  tv_symbol?: string | null;
   n_now: number;
   n_flip: number;
   ret_now: number;

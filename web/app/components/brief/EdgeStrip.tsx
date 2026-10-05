@@ -1,32 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { BacktestRow } from "@/lib/types";
+import { BacktestRow, MixtureResponse } from "@/lib/types";
 import { TradingViewChart } from "../TradingViewChart";
+import { MixtureTable } from "./MixtureTable";
 
 /**
- * Edge cards for the current regime, clickable to chart. The chart lives
- * here rather than as a sibling so a click can drive it without lifting
- * state into the server component.
+ * Edge cards for the current regime, and the "across the next release" table,
+ * both clickable to chart. The chart lives here rather than as a sibling so a click
+ * can drive it without lifting state into the server component.
+ *
+ * Selection is {ticker, symbol}: the ticker highlights the card/row, the symbol is
+ * what the chart is given. They differ for our custom labels (RICE is rough-rice
+ * futures, CBOT:ZR1!, not a stock), so the chart is handed the verified TradingView
+ * symbol and only falls back to the bare ticker when none is known.
  */
 export function EdgeStrip({
   best,
   worst,
   cq,
   gq,
+  mixture,
 }: {
   best: BacktestRow[];
   worst: BacktestRow[];
   cq: number;
   gq: number;
+  mixture?: MixtureResponse | null;
 }) {
-  const [symbol, setSymbol] = useState("SPY");
+  const [sel, setSel] = useState({ ticker: "SPY", symbol: "AMEX:SPY" });
+  const select = (ticker: string, symbol: string) => setSel({ ticker, symbol });
 
   const Card = ({ r, dim }: { r: BacktestRow; dim?: boolean }) => (
     <button
-      onClick={() => setSymbol(r.ticker)}
+      onClick={() => select(r.ticker, r.tv_symbol ?? r.ticker)}
       className={`rounded border px-2.5 py-1.5 text-left transition ${
-        symbol === r.ticker
+        sel.ticker === r.ticker
           ? "border-[var(--cgi-accent)] bg-slate-800"
           : dim
           ? "border-slate-800/60 bg-slate-950/60 hover:border-slate-700"
@@ -80,12 +89,17 @@ export function EdgeStrip({
         )}
       </section>
 
+      {mixture && <MixtureTable data={mixture} selected={sel.ticker} onSelect={select} />}
+
       <section className="mb-6">
         <div className="mb-2 flex items-baseline gap-3">
           <div className="text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Chart</div>
-          <div className="text-xs text-slate-500">{symbol}</div>
+          <div className="text-xs text-slate-500">
+            {sel.ticker}
+            {sel.symbol !== sel.ticker && sel.symbol !== `AMEX:${sel.ticker}` ? ` · ${sel.symbol}` : ""}
+          </div>
         </div>
-        <TradingViewChart symbol={symbol} />
+        <TradingViewChart symbol={sel.symbol} />
       </section>
     </>
   );

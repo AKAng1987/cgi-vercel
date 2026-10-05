@@ -2,7 +2,6 @@ import { apiFetch } from "@/lib/api";
 import { ThemesResponse, SignalsResponse, BacktestTableResponse, LiveResponse, TechnicalsResponse, NotesResponse, BriefResponse, CalendarResponse, MixtureResponse } from "@/lib/types";
 import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
-import { MixtureTable } from "./components/brief/MixtureTable";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
 import { ChangeStrip } from "./components/brief/ChangeStrip";
 import { PolicyNotes } from "./components/brief/PolicyNotes";
@@ -86,10 +85,7 @@ export default async function Live() {
       <ThemesTable themes={themes.themes} runStats={themes.run_stats} />
 
       {top.length > 0 && cq && gq && (
-        <>
-          <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} />
-          {mixture && <MixtureTable data={mixture} />}
-        </>
+        <EdgeStrip best={top} worst={worst} cq={cq} gq={gq} mixture={mixture} />
       )}
 
       {notes && notes.policy.filter((p) => p.is_live).length > 0 && (

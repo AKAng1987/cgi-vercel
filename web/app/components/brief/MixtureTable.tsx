@@ -1,3 +1,5 @@
+"use client";
+
 import { MixtureResponse, MixtureRow } from "@/lib/types";
 
 /**
@@ -9,8 +11,9 @@ import { MixtureResponse, MixtureRow } from "@/lib/types";
  * whole edge on the flip NOT happening. A ranked list hides that. "reverses"
  * marks the extreme case, where the sign itself changes with the release.
  *
- * Server component: no state, nothing to click. n sits beside every number
- * because both samples are a handful of occurrences and a figure without its
+ * Rows are clickable: the chart lives in EdgeStrip, which owns the selection and
+ * passes it down, so one chart serves the cards and this table. n sits beside every
+ * number because both samples are a handful of occurrences and a figure without its
  * count reads as more certain than it is.
  */
 const TOP = 20;
@@ -24,7 +27,16 @@ function tone(v: number | null) {
   return v > 0 ? "var(--cgi-up)" : "var(--cgi-down)";
 }
 
-export function MixtureTable({ data }: { data: MixtureResponse }) {
+export function MixtureTable({
+  data,
+  selected,
+  onSelect,
+}: {
+  data: MixtureResponse;
+  selected?: string | null;
+  /** Called with the CGI ticker and the VERIFIED TradingView symbol (falls back to the ticker). */
+  onSelect?: (ticker: string, tvSymbol: string) => void;
+}) {
   if (data.error || data.rows.length === 0) return null;
 
   const rows: MixtureRow[] = data.rows.slice(0, TOP);
@@ -49,7 +61,7 @@ export function MixtureTable({ data }: { data: MixtureResponse }) {
       </div>
       <div className="mb-2 text-xs text-slate-500">
         {reversing} of {data.n_tickers} tickers change sign if it flips. Two small samples, weighted —
-        not a forecast.
+        not a forecast.{onSelect && " Click a row to chart it."}
       </div>
 
       <div className="overflow-x-auto rounded border border-slate-800">
@@ -70,7 +82,25 @@ export function MixtureTable({ data }: { data: MixtureResponse }) {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.ticker}>
+              <tr
+                key={r.ticker}
+                onClick={onSelect ? () => onSelect(r.ticker, r.tv_symbol ?? r.ticker) : undefined}
+                onKeyDown={
+                  onSelect
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSelect(r.ticker, r.tv_symbol ?? r.ticker);
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={onSelect ? 0 : undefined}
+                title={onSelect ? `chart ${r.tv_symbol ?? r.ticker}` : undefined}
+                className={`${onSelect ? "cursor-pointer hover:bg-slate-800/50" : ""} ${
+                  selected === r.ticker ? "bg-slate-800/70" : ""
+                }`}
+              >
                 <td className="px-1.5 py-0.5 font-medium text-slate-100">{r.ticker}</td>
                 <td className="px-1.5 py-0.5 text-right" style={{ color: tone(r.ret_now) }}>{pct(r.ret_now)}</td>
                 <td className="px-1.5 py-0.5 text-right text-slate-500">{r.n_now}</td>
