@@ -1,4 +1,4 @@
-import { RegimeBlock } from "@/lib/types";
+import { MarkovAxis, RegimeBlock } from "@/lib/types";
 import { COMPASS_Q_MAP, GRID_Q_MAP, compassLabel, gridLabel, dirColor } from "@/lib/regimeConstants";
 
 /**
@@ -30,12 +30,26 @@ export interface RegimeView {
   since: string | null;
 }
 
+/**
+ * The ONE place the words for an axis state live. "up" is the arrow ↑: Easing for the Compass axes (liquidity,
+ * credit), Rising for the Grid axes (growth, inflation). The regime card and the "What moves each axis" panel both
+ * read from here, so an axis cannot be described in two vocabularies.
+ */
+const COMPASS_AXES: ReadonlySet<MarkovAxis> = new Set<MarkovAxis>(["liquidity", "credit"]);
+export function stateWord(axis: MarkovAxis, up: boolean): string {
+  if (COMPASS_AXES.has(axis)) return up ? "Easing" : "Tightening";
+  return up ? "Rising" : "Falling";
+}
+/** Where an axis goes when it flips: the opposite of its current state, with the arrow. */
+export function flipTo(axis: MarkovAxis, currentUp: boolean): { arrow: string; word: string } {
+  return { arrow: currentUp ? "↓" : "↑", word: stateWord(axis, !currentUp) };
+}
+
 export function regimeView(kind: "compass" | "grid", data: RegimeBlock): RegimeView {
   const isCompass = kind === "compass";
   const qMap = isCompass ? COMPASS_Q_MAP : GRID_Q_MAP;
   const [arr1, arr2] = data.quadrant ? qMap[data.quadrant] ?? ["?", "?"] : ["?", "?"];
-  const word = (arr: string) =>
-    isCompass ? (arr === "↑" ? "Easing" : "Tightening") : arr === "↑" ? "Rising" : "Falling";
+  const word = (axis: MarkovAxis, arr: string) => stateWord(axis, arr === "↑");
   const label = (k: string) => (isCompass ? compassLabel(k) : gridLabel(k));
 
   return {
@@ -43,9 +57,9 @@ export function regimeView(kind: "compass" | "grid", data: RegimeBlock): RegimeV
     regimeLabel: data.label,
     staleNote: data.stale_note ?? null,
     axes: [
-      { label: isCompass ? "LIQUIDITY" : "GROWTH", arrow: arr1, word: word(arr1),
+      { label: isCompass ? "LIQUIDITY" : "GROWTH", arrow: arr1, word: word(isCompass ? "liquidity" : "growth", arr1),
         color: dirColor(arr1, isCompass ? "liquidity" : "growth") },
-      { label: isCompass ? "CREDIT" : "INFLATION", arrow: arr2, word: word(arr2),
+      { label: isCompass ? "CREDIT" : "INFLATION", arrow: arr2, word: word(isCompass ? "credit" : "inflation", arr2),
         color: dirColor(arr2, isCompass ? "credit" : "inflation") },
     ],
     stats: Object.entries(data.metrics).map(([key, m]) => ({

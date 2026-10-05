@@ -1,10 +1,8 @@
 import { AxisDriver, AxisDrivers, MarkovAxis } from "@/lib/types";
+import { flipTo, stateWord } from "@/lib/regimeView";
 
 const ORDER: MarkovAxis[] = ["liquidity", "credit", "growth", "inflation"];
 const LABEL: Record<MarkovAxis, string> = { liquidity: "Liquidity", credit: "Credit", growth: "Growth", inflation: "Inflation" };
-const FLIP_WORD: Record<MarkovAxis, [string, string]> = {
-  liquidity: ["cuts", "hikes"], credit: ["loosens", "tightens"], growth: ["turns up", "turns down"], inflation: ["turns up", "cools"],
-};
 const CURVE_WORD: Record<string, string> = {
   bull_steep: "bull steepener", bear_steep: "bear steepener", bull_flat: "bull flattener", bear_flat: "bear flattener",
 };
@@ -100,13 +98,14 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
           if (!a) return null;
           const c = a.current;
           const up = a.current_state === 1;
-          const word = FLIP_WORD[axis][up ? 1 : 0];
+          const to = flipTo(axis, up);
+          const word = `flips to ${to.word} ${to.arrow}`;
           const dir = c.conditioned_p_flip !== null && c.base_rate !== null ? c.conditioned_p_flip - c.base_rate : null;
           return (
             <div key={axis} className="rounded border border-slate-800 bg-slate-900/60 p-3">
               <div className="mb-2 flex items-baseline justify-between">
                 <div className="text-sm font-bold text-slate-100">
-                  {LABEL[axis]} <span className="text-slate-500">{up ? "↑" : "↓"}</span>
+                  {LABEL[axis]} <span className="text-slate-500">{up ? "↑" : "↓"} {stateWord(axis, up)}</span>
                   <span className="ml-2 text-[0.65rem] font-normal uppercase tracking-wide text-slate-500">{a.release_type} · {c.n_windows} windows</span>
                 </div>
                 <div className="text-xs text-slate-400">
