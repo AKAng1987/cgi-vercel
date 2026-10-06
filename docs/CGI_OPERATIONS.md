@@ -243,6 +243,24 @@ reported success. Three things now cover it:
 Also known: FX (`alpha-vantage-updater`, 02:15 UTC) runs after the 00:20 UTC metrics step, so FX shows one
 extra day late; the catch-up step picks it up the next night.
 
+### 24-hour US equity trading: keep "the daily close" meaning the same
+
+Planned for late 2026 (confirm the go-live date and which venues: Nasdaq, NYSE, NYSE Arca for most ETFs).
+Every regime return, the backtest and TAPE assume one bar per trading day ending at the 16:00 ET close.
+Before go-live, confirm from marketstack what its EOD bar will contain, then hold these rules:
+
+| Item | Risk | Rule | Check |
+|---|---|---|---|
+| Close | provider switches to the last overnight trade | official 16:00 ET closing-auction price | compare the source close to the auction print for SPY/QQQ/DBA in the first week; alert on mismatch |
+| Date stamp | trades after 20:00 ET belong to the next trading date | bar date = exchange trade date | reject bars dated on weekends; spot-check the first week |
+| High / Low | overnight range widens H/L | regular-session H/L (the backtest's avg-high/avg-low excursions depend on it) | if unavailable, record the break date and stop comparing excursions across it |
+| Volume | overnight volume added | regular session, or record the break | as above |
+| Publication time | the bar becomes final later | 7-day backfill + catch-up (see Pipeline lag) | the price updater logs the newest bar date it received each run |
+| Regime history | none if the close holds | no change to thresholds or historical labels | flag first if a change is unavoidable |
+
+If the source changes its close definition, add a second source for the official close; do not let the
+definition change silently, because it would break every comparison with history.
+
 ### Feed integrity: does the registry agree with the data
 
 `/api/freshness` -> `feed_integrity` catches three failures that each silently starved a
