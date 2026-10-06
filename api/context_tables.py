@@ -9,6 +9,8 @@ computed, so the tables stay current without anyone maintaining them:
   * Yield-curve inversion cycles   -- fully derived from T10Y3M / T10Y2Y
   * Fed easing/tightening episodes -- boundaries curated, every market
                                       column derived
+  * Regime durations               -- how long Compass, Grid and combined
+                                      regimes have lasted (model-history)
 
 The point of the drawdown table is stated plainly by the user: to see the
 base rates often enough "to make the feelings even keel". So it leads with
@@ -42,10 +44,11 @@ import statistics as st
 from typing import Optional
 
 import axis_drivers
+import regime_durations
 
 # See cache.py SCHEMA_FROM_MODULE: bumping this invalidates the cached payload,
 # so a shape change and its version bump are the same edit.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # 2: regime_durations block
 
 # How far either side of an inversion to look for the market top it belongs to.
 # Module-level because joins() needs them too -- they previously lived inside
@@ -577,4 +580,5 @@ def build_context() -> dict:
         "rate_cycles": rate_cycles(),
         "balance_sheet": balance_sheet_regimes(),
         "joins": joins(),
+        "regime_durations": regime_durations.build_regime_durations_response(),
     }

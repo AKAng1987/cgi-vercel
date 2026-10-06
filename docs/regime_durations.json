@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-10-06",
+  "compass": {
+    "overall": {
+      "n": 55,
+      "mean_days": 148,
+      "median_days": 91,
+      "min_days": 12,
+      "max_days": 987,
+      "thin": false,
+      "anecdotal": false
+    },
+    "by_regime": {
+      "1": {
+        "n": 16,
+        "mean_days": 172,
+        "median_days": 161,
+        "min_days": 42,
+        "max_days": 516,
+        "thin": false,
+        "anecdotal": false
+      },
+      "2": {
+        "n": 20,
+        "mean_days": 165,
+        "median_days": 91,
+        "min_days": 41,
+        "max_days": 987,
+        "thin": false,
+        "anecdotal": false
+      },
+      "3": {
+        "n": 11,
+        "mean_days": 88,
+        "median_days": 49,
+        "min_days": 12,
+        "max_days": 273,
+        "thin": false,
+        "anecdotal": false
+      },
+      "4": {
+        "n": 8,
+        "mean_days": 137,
+        "median_days": 74,
+        "min_days": 30,
+        "max_days": 455,
+        "thin": true,
+        "anecdotal": false
+      }
+    },
+    "current": {
+      "regime": "3",
+      "since": "2026-09-17",
+      "age_days": 19,
+      "completed_runs_of_this_regime": 11,
+      "survival_pct_same_regime": 91,
+      "survival_pct_any_regime": 98,
+      "same_regime_median_days": 49
+    }
+  },
+  "grid": {
+    "overall": {
+      "n": 144,
+      "mean_days": 47,
+      "median_days": 34,
+      "min_days": 13,
+      "max_days": 154,
+      "thin": false,
+      "anecdotal": false
+    },
+    "by_regime": {
+      "1": {
+        "n": 30,
+        "mean_days": 51,
+        "median_days": 56,
+        "min_days": 13,
+        "max_days": 120,
+        "thin": false,
+        "anecdotal": false
+      },
+      "2": {
+        "n": 35,
+        "mean_days": 46,
+        "median_days": 34,
+        "min_days": 15,
+        "max_days": 141,
+        "thin": false,
+        "anecdotal": false
+      },
+      "3": {
+        "n": 44,
+        "mean_days": 42,
+        "median_days": 34,
+        "min_days": 16,
+        "max_days": 91,
+        "thin": false,
+        "anecdotal": false
+      },
+      "4": {
+        "n": 35,
+        "mean_days": 49,
+        "median_days": 34,
+        "min_days": 14,
+        "max_days": 154,
+        "thin": false,
+        "anecdotal": false
+      }
+    },
+    "current": {
+      "regime": "2",
+      "since": "2026-09-30",
+      "age_days": 6,
+      "completed_runs_of_this_regime": 35,
+      "survival_pct_same_regime": 100,
+      "survival_pct_any_regime": 100,
+      "same_regime_median_days": 34
+    }
+  },
+  "combined": {
+    "overall": {
+      "n": 190,
+      "mean_days": 36,
+      "median_days": 29,
+      "min_days": 1,
+      "max_days": 150,
+      "thin": false,
+      "anecdotal": false
+    },
+    "by_regime": {
+      "C1G1": {
+        "n": 17,
+        "mean_days": 36,
+        "median_days": 29,
+        "min_days": 4,
+        "max_days": 92,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C1G2": {
+        "n": 17,
+        "mean_days": 31,
+        "median_days": 27,
+        "min_days": 5,
+        "max_days": 113,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C1G3": {
+        "n": 20,
+        "mean_days": 33,
+        "median_days": 28,
+        "min_days": 4,
+        "max_days": 63,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C1G4": {
+        "n": 19,
+        "mean_days": 39,
+        "median_days": 30,
+        "min_days": 3,
+        "max_days": 113,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C2G1": {
+        "n": 16,
+        "mean_days": 42,
+        "median_days": 37,
+        "min_days": 1,
+        "max_days": 120,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C2G2": {
+        "n": 23,
+        "mean_days": 42,
+        "median_days": 34,
+        "min_days": 1,
+        "max_days": 136,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C2G3": {
+        "n": 27,
+        "mean_days": 35,
+        "median_days": 34,
+        "min_days": 4,
+        "max_days": 66,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C2G4": {
+        "n": 18,
+        "mean_days": 40,
+        "median_days": 32,
+        "min_days": 8,
+        "max_days": 150,
+        "thin": false,
+        "anecdotal": false
+      },
+      "C3G1": {
+        "n": 3,
+        "mean_days": 26,
+        "median_days": 29,
+        "min_days": 7,
+        "max_days": 42,
+        "thin": true,
+        "anecdotal": true
+      },
+      "C3G2": {
+        "n": 4,
+        "mean_days": 20,
+        "median_days": 18,
+        "min_days": 6,
+        "max_days": 36,
+        "thin": true,
+        "anecdotal": true
+      },
+      "C3G3": {
+        "n": 8,
+        "mean_days": 14,
+        "median_days": 10,
+        "min_days": 6,
+        "max_days": 43,
+        "thin": true,
+        "anecdotal": false
+      },
+      "C3G4": {
+        "n": 4,
+        "mean_days": 21,
+        "median_days": 20,
+        "min_days": 6,
+        "max_days": 36,
+        "thin": true,
+        "anecdotal": true
+      },
+      "C4G1": {
+        "n": 3,
+        "mean_days": 58,
+        "median_days": 63,
+        "min_days": 21,
+        "max_days": 91,
+        "thin": true,
+        "anecdotal": true
+      },
+      "C4G2": {
+        "n": 3,
+        "mean_days": 17,
+        "median_days": 13,
+        "min_days": 5,
+        "max_days": 34,
+        "thin": true,
+        "anecdotal": true
+      },
+      "C4G3": {
+        "n": 4,
+        "mean_days": 38,
+        "median_days": 33,
+        "min_days": 22,
+        "max_days": 63,
+        "thin": true,
+        "anecdotal": true
+      },
+      "C4G4": {
+        "n": 4,
+        "mean_days": 51,
+        "median_days": 29,
+        "min_days": 28,
+        "max_days": 119,
+        "thin": true,
+        "anecdotal": true
+      }
+    },
+    "current": {
+      "regime": "C3G2",
+      "since": "2026-09-30",
+      "age_days": 6,
+      "completed_runs_of_this_regime": 4,
+      "survival_pct_same_regime": 75,
+      "survival_pct_any_regime": 89,
+      "same_regime_median_days": 18
+    }
+  },
+  "caveat": "Descriptive history, not a forecast. Completed runs only; the run in force is shown separately because its age is censored. Rows with n<10 are thin and n<=4 anecdotal. Regimes here are in-sample over the model history."
+}

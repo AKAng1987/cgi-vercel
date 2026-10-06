@@ -850,6 +850,7 @@ export interface ContextResponse {
     method: string;
   };
   balance_sheet: { regimes: BalanceSheetRegime[]; window_days: number; threshold_pct: number; min_days: number; method: string };
+  regime_durations: RegimeDurationsResponse;
   joins: {
     inversion_to_drawdown: Record<string, {
       window: string; n_cycles: number; n_matched_to_a_decline: number; n_led_the_peak: number;
@@ -1001,5 +1002,39 @@ export interface MixtureResponse {
   min_flip: number;
   n_tickers: number;
   rows: MixtureRow[];
+  caveat: string;
+}
+
+export interface RegimeDurationStats {
+  n: number;
+  mean_days?: number;
+  median_days?: number;
+  min_days?: number;
+  max_days?: number;
+  thin: boolean;
+  anecdotal: boolean;
+}
+
+export interface RegimeDurationCurrent {
+  regime: string;
+  since: string;
+  age_days: number;
+  completed_runs_of_this_regime: number;
+  survival_pct_same_regime: number | null;
+  survival_pct_any_regime: number | null;
+  same_regime_median_days?: number;
+}
+
+export interface RegimeDurationLevel {
+  overall: RegimeDurationStats;
+  by_regime: Record<string, RegimeDurationStats>;
+  current: RegimeDurationCurrent | null;
+}
+
+export interface RegimeDurationsResponse {
+  as_of: string;
+  compass: RegimeDurationLevel;
+  grid: RegimeDurationLevel;
+  combined: RegimeDurationLevel;
   caveat: string;
 }

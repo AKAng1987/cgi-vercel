@@ -1,3 +1,4 @@
+import { RegimeDurations } from "./RegimeDurations";
 import { BalanceSheetRegime, ContextResponse, DrawdownWindow, InversionRow, RateCycle } from "@/lib/types";
 
 /**
@@ -224,6 +225,8 @@ export function ContextTables({ ctx }: { ctx: ContextResponse }) {
           Computed from held history, not typed in, so these stay current. Every figure carries its n.
         </p>
       </div>
+
+      <RegimeDurations d={ctx.regime_durations} />
 
       <div>
         <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">S&amp;P drawdowns</div>
