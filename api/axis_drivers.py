@@ -49,7 +49,7 @@ MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 # Bump when the payload's shape or the way readings are taken changes. cache.py
 # reads this constant, so the bump cannot be forgotten in a second file.
 #   11: readings are taken at (date - publication lag), not at the stamped date
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 13  # 13: rebuild after the ISM services Sep print was cached stale (in-process history)
 
 # A monthly series is STAMPED at its period start but published weeks later: the
 # August CPI is dated 08-01 and released mid-September. Reading "the value stamped
