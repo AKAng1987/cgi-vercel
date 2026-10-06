@@ -27,14 +27,23 @@ function fmt(v: number | null | undefined, name: string): string {
   const signed = /chg|%|target/.test(name) && !/y\/y/.test(name);
   return `${signed && v > 0 ? "+" : ""}${v.toFixed(dp)}${name.includes("%") ? "%" : ""}`;
 }
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "Sep print" for a monthly/weekly reading at least 20 days old; daily series read as of now, so no tag. */
+function printTag(readingOf: string | null | undefined, asOf: string): string | null {
+  if (!readingOf) return null;
+  const days = (Date.parse(asOf) - Date.parse(readingOf)) / 86400000;
+  return days >= 20 ? `${MONTHS[Number(readingOf.slice(5, 7)) - 1]} print` : null;
+}
+
 function pct(p: number | null | undefined): string {
   return p === null || p === undefined ? "—" : `${Math.round(p * 100)}%`;
 }
 
-function Row({ d, axis, flipUp }: { d: AxisDriver; axis: MarkovAxis; flipUp: boolean }) {
+function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipUp: boolean; asOf: string }) {
   const base = d.base_rate ?? null;
   const name = shortName(d.name);
   const kind = kindOf(d.name);
+  const tag = printTag(d.reading_of, asOf);
 
   if (d.insufficient) {
     return (
@@ -74,7 +83,10 @@ function Row({ d, axis, flipUp }: { d: AxisDriver; axis: MarkovAxis; flipUp: boo
   return (
     <tr className="border-t border-slate-800/60" title={tip}>
       <td className={TD}><span className="font-medium text-slate-200">{name}</span> <span className="text-[0.62rem] text-slate-600">{kind}</span>{d.n < 40 && <span className="ml-1 text-[0.6rem] text-slate-600">n={d.n}</span>}</td>
-      <td className={`${TD} text-right font-semibold text-slate-100`}>{fmt(d.current_value, d.name)}</td>
+      <td className={`${TD} text-right font-semibold text-slate-100`}>
+        {fmt(d.current_value, d.name)}
+        {tag && <div className="text-[0.6rem] font-normal text-slate-500">{tag}</div>}
+      </td>
       <td className={`${TD} text-slate-400`}>{where}</td>
       <td className={`${TD} text-right ${tone}`}>{pct(pc)}</td>
       <td className={`${TD} text-right text-slate-500`}>{pct(base)}</td>
@@ -125,7 +137,7 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
                   </tr>
                 </thead>
                 <tbody>
-                  {c.drivers.map((d) => <Row key={d.name} d={d} axis={axis} flipUp={up} />)}
+                  {c.drivers.map((d) => <Row key={d.name} d={d} axis={axis} flipUp={up} asOf={drivers.as_of} />)}
                 </tbody>
               </table>
             </div>

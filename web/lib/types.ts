@@ -219,6 +219,8 @@ export interface MarkovEvent {
 
 export interface AxisDriver {
   name: string;
+  /** Stamp date of the observation today's reading uses (monthly series: the month of the print). */
+  reading_of?: string | null;
   n: number;
   insufficient?: boolean;
   mean_flip?: number | null;

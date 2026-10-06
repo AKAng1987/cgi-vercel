@@ -49,7 +49,7 @@ MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 # Bump when the payload's shape or the way readings are taken changes. cache.py
 # reads this constant, so the bump cannot be forgotten in a second file.
 #   11: readings are taken at (date - publication lag), not at the stamped date
-SCHEMA_VERSION = 11
+SCHEMA_VERSION = 12
 
 # A monthly series is STAMPED at its period start but published weeks later: the
 # August CPI is dated 08-01 and released mid-September. Reading "the value stamped
@@ -58,6 +58,23 @@ SCHEMA_VERSION = 11
 # on inflation that disappears once readings are lagged). Deliberately conservative
 # -- it throws away information a trader would have had on release day.
 PUBLICATION_LAG_DAYS = {"daily": 1, "weekly": 7, "monthly": 45, "quarterly": 120}
+
+# Per-series release timing, in days after the period-start stamp, each a few days past the latest normal release.
+# The flat 45 above was wrong both ways (2026-10-06): it hid ISM a fortnight after release (ISM manufacturing
+# prints on the 1st business day, so September's 77.9 sat unused while the panel showed August's 71.1) and Empire
+# a month after (it prints the ~15th of the SAME month), while it let core PCE be read ~2 weeks BEFORE release
+# (PCE prints at the end of the following month) -- a look-ahead. Never earlier than the real release.
+SYMBOL_LAG_DAYS = {
+    "PPCDISA066MSFRBNY": 18,   # Empire State: ~15th of the same month
+    "GAFDFSA066MSFRBPHI": 23,  # Philly Fed: 3rd Thursday of the same month
+    "ISM_MFG_PMI": 34, "ISM_MFG_PRICES": 34,          # 1st business day of next month
+    "ISM_SVC_ACTIVITY": 37, "ISM_SVC_PRICES": 37,     # 3rd business day of next month
+    "UNRATE": 38, "CHALLENGER": 38,                   # first week of next month
+    "CPIAUCSL": 46, "PPIACO": 46, "IR": 46,           # mid next month
+    "INDPRO": 48, "RSXFS": 48,                        # mid next month
+    "CFNAI": 58, "DGORDER": 58, "NEWORDER": 58,       # last week of next month
+    "PCEPILFE": 62,                                   # end of next month
+}
 
 CADENCE_DAYS = {"inflation": 30, "growth": 30, "liquidity": 45, "credit": 91}
 
@@ -299,7 +316,7 @@ def _cadence(dates: list[str]) -> str:
 def _spec_lag(spec: tuple, loaded: dict) -> int:
     """Publication lag for a driver: the slowest of the series it is built from."""
     syms = spec[1] if isinstance(spec[1], tuple) else (spec[1],)
-    return max(PUBLICATION_LAG_DAYS[_cadence(loaded[x].dates)] for x in syms)
+    return max(SYMBOL_LAG_DAYS.get(x, PUBLICATION_LAG_DAYS[_cadence(loaded[x].dates)]) for x in syms)
 
 
 def _shift(date: str, days: int) -> str:
@@ -469,6 +486,8 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 "p_by_tercile": [round(p, 3) if p is not None else None for p in p_by_t],
                 "n_by_tercile": [by_t[k][0] for k in (0, 1, 2)],
                 "current_value": round(cur, 3) if cur is not None else None,
+                # Which observation today's reading is (its stamp date), so a stale row is visible as one.
+                "reading_of": (lambda hit: series[label].dates[hit[0]] if hit else None)(series[label].at(rd(label, today))),
                 "current_tercile": cur_t,
                 "p_current": round(p_cur, 3) if p_cur is not None else None,
                 "base_rate": round(drv_base, 3),
