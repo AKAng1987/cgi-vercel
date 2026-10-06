@@ -122,3 +122,21 @@ if [x["symbol"] for x in _picked] != ["MU", "BE"] or _otc != ["FGRS"] or _unres 
     print(f"FAIL: pick_earning wrong: {_picked} {_unres} {_otc}")
     raise SystemExit(1)
 print("OK: earning-it picker skips OTC and unplaceable names and still fills from the ranking")
+
+
+# Fourth guard: the pipeline-lag detector. Replays Oct 2026: prices current to 2026-10-02 while the workbook
+# still showed 2026-09-30. Must flag the workbook, must stay quiet when the two agree, and must flag a price
+# table that has stopped advancing.
+_t = __import__("datetime").date(2026, 10, 6)
+_frozen = _fr.pipeline_problems({"SPY": "2026-10-02", "QQQ": "2026-10-02", "DBA": "2026-10-02"},
+                                {"SPY": "2026-09-30", "QQQ": "2026-09-30", "DBA": "2026-09-30"}, _t)
+_ok = _fr.pipeline_problems({"SPY": "2026-10-02", "QQQ": "2026-10-02", "DBA": "2026-10-02"},
+                            {"SPY": "2026-10-02", "QQQ": "2026-10-02", "DBA": "2026-10-02"}, _t)
+_dead = _fr.pipeline_problems({"SPY": "2026-09-28", "QQQ": "2026-10-05", "DBA": "2026-10-05"},
+                              {"SPY": "2026-09-28", "QQQ": "2026-10-05", "DBA": "2026-10-05"}, _t)
+if not ({p["check"] for p in _frozen["problems"]} == {"workbook_behind_prices"} and _frozen["n_problems"] == 3
+        and _ok["n_problems"] == 0
+        and [(p["check"], p["symbol"]) for p in _dead["problems"]] == [("equity_close_behind", "SPY")]):
+    print(f"FAIL: pipeline-lag detector is wrong: frozen={_frozen} ok={_ok} dead={_dead}")
+    sys.exit(1)
+print("OK: pipeline-lag detector flags a workbook behind prices and a stalled close, and passes an in-step pipeline")

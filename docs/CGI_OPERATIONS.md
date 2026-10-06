@@ -223,6 +223,26 @@ cannot replace a list, so a rewrite is remove-then-add and is not atomic). The f
 watchlist tools may pause on a tool-approval prompt: click "Run now" once to pre-approve them.
 The earning-it list excludes OTC names (read from the SEC file at run time).
 
+### Pipeline lag: the nightly chain can run on time and still serve old numbers
+
+The 08:05 / 08:20 / 08:30 PHT chain (prices -> derived metrics -> workbook) feeds TAPE. In Oct 2026 the
+price source (marketstack) started publishing a day's close after the 08:05 run; the metrics step only looked
+for "yesterday", never caught up, and the workbook served the **Sep 30 close for a week** while every run
+reported success. Three things now cover it:
+
+- **Backend fix** (`cmon-backend-service`, branch `fix/stale-prices`): the price updater reads a 7-day window
+  instead of `/eod/latest`, and the metrics step fills every unprocessed recent close, oldest first. Lambdas
+  are invoked through the `live` alias: deploy = update code, publish a version, move `live` (roll back by
+  pointing `live` at the previous version). The repo now also holds the Sep 2026 hand-patches that had only
+  ever lived on AWS.
+- **`/api/freshness` `pipeline_lag`**: flags `workbook_behind_prices` (the workbook shows an older close than
+  the price table holds for SPY/QQQ/DBA) and `equity_close_behind` (the newest close is more than 2 sessions old).
+- **TAPE fallback**: when the workbook is behind, `/api/live` rebuilds those rows from price-history and
+  the page shows a note saying so (`hud_note`).
+
+Also known: FX (`alpha-vantage-updater`, 02:15 UTC) runs after the 00:20 UTC metrics step, so FX shows one
+extra day late; the catch-up step picks it up the next night.
+
 ### Feed integrity: does the registry agree with the data
 
 `/api/freshness` -> `feed_integrity` catches three failures that each silently starved a

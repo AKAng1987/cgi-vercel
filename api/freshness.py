@@ -455,6 +455,52 @@ def feed_integrity(today: Optional[dt.date] = None) -> dict:
                 "error": f"{type(exc).__name__}: {exc}"}
 
 
+
+# Pipeline lag: the nightly price -> metrics -> workbook chain can run on time and still serve old numbers.
+#
+# 2026-10: the price source began publishing a close a day late; the metrics step only looked for "yesterday",
+# never caught up, and the workbook served the Sep 30 close for a week while every run "succeeded" and this page
+# said 0 problems. Prices were only ~2 sessions behind (under STALLED_SESSIONS), so nothing here could see it.
+# Two narrower questions catch it: is the workbook older than the prices we already hold, and are the
+# benchmark closes themselves further behind than the source's normal one-day lateness.
+PIPELINE_BENCHMARKS = ("SPY", "QQQ", "DBA")
+EQUITY_BEHIND_SESSIONS = 2   # D-1 is normal, D-2 is the source's current lateness; more is a problem
+
+
+def pipeline_problems(price_newest: dict[str, Optional[str]], workbook_newest: dict[str, Optional[str]],
+                      today: Optional[dt.date] = None) -> dict:
+    """Pure core: newest stored close and the workbook's close date per benchmark -> what is wrong."""
+    problems = []
+    for sym in PIPELINE_BENCHMARKS:
+        p, w = price_newest.get(sym), workbook_newest.get(sym)
+        if p is None:
+            problems.append({"check": "equity_close_behind", "symbol": sym, "detail": "no stored close"})
+            continue
+        behind = _sessions_since(p, today)
+        if behind > EQUITY_BEHIND_SESSIONS:
+            problems.append({"check": "equity_close_behind", "symbol": sym,
+                             "detail": f"newest close {p} is {behind} sessions old"})
+        if w is not None and w < p and _sessions_since(w, dt.date.fromisoformat(p)) >= 1:
+            problems.append({"check": "workbook_behind_prices", "symbol": sym,
+                             "detail": f"workbook shows the {w} close; prices hold {p}"})
+    return {"problems": problems, "n_problems": len(problems)}
+
+
+def pipeline_lag(today: Optional[dt.date] = None) -> dict:
+    """I/O wrapper; a check that cannot run reports itself as a problem."""
+    try:
+        import dashboard_data as dd
+        _wb, _lm, hud, _c, _g = dd._parsed_workbook(dd.list_dashboard_dates()[0])
+        wb = {r["symbol"]: r.get("as_of") for r in hud if r.get("symbol") in PIPELINE_BENCHMARKS}
+        prices = {s: (_last_row(s) or {}).get("date") for s in PIPELINE_BENCHMARKS}
+        out = pipeline_problems(prices, wb, today)
+        out.update(price_newest=prices, workbook_newest=wb)
+        return out
+    except Exception as exc:  # noqa: BLE001
+        _logger.exception("[freshness] pipeline_lag could not run")
+        return {"problems": [], "n_problems": 1, "error": f"{type(exc).__name__}: {exc}"}
+
+
 def manual_worklist(today: Optional[dt.date] = None) -> dict:
     """What we hold for every hand-loaded symbol, and what to fetch.
 
@@ -529,14 +575,17 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     manual = manual_worklist(today)
     beat = read_heartbeat(today)
     integrity = feed_integrity(today)
+    pipeline = pipeline_lag(today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
         "manual": manual,
         "refresh_routine": beat,
         "feed_integrity": integrity,
+        "pipeline_lag": pipeline,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
-                       + (1 if beat.get("stale") else 0) + integrity["n_problems"]),
+                       + (1 if beat.get("stale") else 0) + integrity["n_problems"]
+                       + pipeline["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

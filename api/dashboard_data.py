@@ -12,6 +12,7 @@ column (index 15) that parse_hud never read, for per-ticker stale_days.
 from __future__ import annotations
 
 import datetime
+import logging
 import re
 from collections import OrderedDict
 from io import BytesIO
@@ -523,6 +524,37 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
 
     hud_by_symbol = {r["symbol"]: r for r in hud_records}
 
+    # The workbook can be older than the prices we already hold: in Oct 2026 the price source started
+    # publishing late, the nightly metrics step never caught up, and the workbook served the Sep 30 close for
+    # a week. When that happens, rebuild the stale rows from price-history -- the same way rows the workbook
+    # lacks are built below -- and say so in the payload. Never fatal: on any error the workbook rows stand.
+    hud_note = None
+    try:
+        wb_spy = (hud_by_symbol.get("SPY") or {}).get("as_of")
+        px = _recent_closes("SPY", limit=1)
+        px_spy = px[-1][0] if px else None
+        if wb_spy and px_spy and wb_spy < px_spy:
+            behind = [(sym, r.get("sector") or "Unknown") for sym, r in hud_by_symbol.items()
+                      if (r.get("as_of") or "") < px_spy]
+            import cache as _cache
+            from concurrent.futures import ThreadPoolExecutor
+
+            def _rebuild() -> dict:
+                with ThreadPoolExecutor(max_workers=12) as ex:
+                    rows = ex.map(lambda b: hud_from_price_history(b[0], b[1]), behind)
+                    return {"px_date": px_spy, "rows": {b[0]: r for b, r in zip(behind, rows) if r}}
+
+            rebuilt = _cache.get_or_fetch("hud_fallback", _rebuild)
+            if rebuilt.get("px_date") != px_spy:
+                rebuilt = _rebuild()
+            for sym, row in rebuilt["rows"].items():
+                if (row.get("as_of") or "") > (hud_by_symbol[sym].get("as_of") or ""):
+                    hud_by_symbol[sym] = row
+            hud_note = (f"Nightly workbook is behind (its SPY close is {wb_spy}); "
+                        f"{len(rebuilt['rows'])} rows rebuilt from stored prices up to {px_spy}.")
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("[live] HUD fallback to price-history failed; serving workbook rows")
+
     # Tickers the workbook does not carry are computed from price-history.
     # Done in parallel and cached: doing it serially added ~25s to every
     # request, which is what made LIVE and TAPE take half a minute.
@@ -579,4 +611,5 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
         },
         "hud_groups": hud_groups,
         "hud_group_order": HUD_GROUP_ORDER,
+        "hud_note": hud_note,
     }

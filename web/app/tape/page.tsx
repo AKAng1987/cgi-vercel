@@ -12,6 +12,11 @@ export default async function Tape() {
       <h1 className="mb-1 text-2xl font-bold">TAPE</h1>
       <p className="mb-3 text-xs text-slate-400">Overnight and weekly moves across the whole universe — the scan. The brief is on <a href="/" className="underline">LIVE</a>.</p>
       <DateHeader asOf={data.as_of} generatedAt={data.generated_at} />
+      {data.hud_note && (
+        <p className="mb-3 rounded border border-[var(--cgi-gold)]/40 bg-[var(--cgi-gold-panel)] px-3 py-2 text-xs text-slate-300">
+          {data.hud_note}
+        </p>
+      )}
 
       <section className="mb-2 grid grid-cols-1 gap-4 md:grid-cols-2">
         <RegimeCard kind="compass" data={data.compass} />

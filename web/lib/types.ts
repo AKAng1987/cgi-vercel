@@ -46,6 +46,8 @@ export interface LiveResponse {
   grid: RegimeBlock;
   hud_groups: HudGroup[];
   hud_group_order: string[];
+  /** Set when the nightly workbook was behind stored prices and rows were rebuilt from price-history. */
+  hud_note?: string | null;
 }
 
 export interface BacktestRow {

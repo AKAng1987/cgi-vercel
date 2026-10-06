@@ -47,6 +47,7 @@ TTL_HOURS: dict[str, float] = {
     "dot_plot": 168.0,  # 7d
     "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
     "hud_extra": 6.0,  # HUD rows computed from price-history for tickers the workbook lacks
+    "hud_fallback": 1.0,  # HUD rows rebuilt from price-history when the nightly workbook is behind the prices
     "policy_watch": 6.0,  # central bank feeds; 6h so an announcement lands same-day
     "cot": 12.0,  # COT publishes Friday 15:30 ET; 12h keeps it fresh without hammering CFTC
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
@@ -142,6 +143,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "pce": 1,
     "dot_plot": 1,
     "hud_extra": 1,
+    "hud_fallback": 1,
     "policy_watch": 1,
     "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
