@@ -248,6 +248,14 @@ def _invalidate(symbol: str) -> list[str]:
     import cache as _cache
 
     dropped: list[str] = []
+    # The driver table also memoises each series' history in-process for 5 minutes. Without dropping it, a
+    # rebuild right after the write (2026-10-06: ISM services' September print) re-read the old history and
+    # cached the stale table for another 24h.
+    try:
+        import axis_drivers as _ad
+        _ad._close_cache.pop(symbol, None)
+    except Exception:  # noqa: BLE001 -- see docstring
+        _logger.exception("[series] could not drop the in-process history of %r", symbol)
     for key in _dependent_cache_keys(symbol):
         try:
             dropped += _cache.invalidate(key)
