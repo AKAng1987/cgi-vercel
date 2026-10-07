@@ -1,4 +1,4 @@
-import { AxisDriver, AxisDrivers, MarkovAxis } from "@/lib/types";
+import { AxisAnchor, AxisDriver, AxisDrivers, DriverLevel, MarkovAxis } from "@/lib/types";
 import { flipTo, stateWord } from "@/lib/regimeView";
 
 const ORDER: MarkovAxis[] = ["liquidity", "credit", "growth", "inflation"];
@@ -10,7 +10,8 @@ const TH = "px-2 py-1 text-[0.62rem] font-normal uppercase tracking-wide text-sl
 const TD = "px-2 py-1 text-[0.74rem]";
 
 function kindOf(name: string): string {
-  if (/\(level\)|\(k\)|y\/y|- Fed target/.test(name)) return "level";
+  if (/- Fed target/.test(name)) return "spread";
+  if (/\(level\)|\(k\)|y\/y/.test(name)) return "level";
   if (/13w/.test(name)) return "13w chg";
   if (/3m %|3m chg/.test(name)) return "3m chg";
   if (/m\/m/.test(name)) return "vs last print";
@@ -19,7 +20,7 @@ function kindOf(name: string): string {
   return "";
 }
 function shortName(name: string): string {
-  return name.replace(/ 30d.*| 13w.*| 3m %| 3m chg| \(level\)| \(k\)| m\/m.*| - Fed target/, "").replace("Curve regime", "Curve");
+  return name.replace(/ 30d.*| 13w.*| 3m %| 3m chg| \(level\)| \(k\)| m\/m.*/, "").replace(" - Fed target", " − Fed target").replace("Curve regime", "Curve");
 }
 function fmt(v: number | null | undefined, name: string): string {
   if (v === null || v === undefined) return "—";
@@ -33,6 +34,48 @@ function printTag(readingOf: string | null | undefined, asOf: string): string | 
   if (!readingOf) return null;
   const days = (Date.parse(asOf) - Date.parse(readingOf)) / 86400000;
   return days >= 20 ? `${MONTHS[Number(readingOf.slice(5, 7)) - 1]} print` : null;
+}
+
+// Treasury yields here are the US Treasury's official daily curve (constant maturity), which sits a few bp
+// from TradingView's traded-bill quote of the same name.
+const LEVEL_NAME: Record<string, string> = {
+  US03MY: "3m (Treasury)", US02Y: "2y (Treasury)", US05Y: "5y (Treasury)", US10Y: "10y (Treasury)",
+  DFEDTARU: "Fed target", UNRATE: "rate",
+};
+function fmtLevel(v: number, unit: DriverLevel["unit"]): string {
+  return unit === "%" ? `${v.toFixed(2)}%` : unit === "k" ? `${v.toFixed(1)}k` : v.toFixed(1);
+}
+function LevelLine({ levels }: { levels?: DriverLevel[] }) {
+  if (!levels || levels.length === 0) return null;
+  return (
+    <div className="text-[0.6rem] font-normal text-slate-400">
+      {levels.map((l) => (
+        <div key={l.symbol}>
+          {LEVEL_NAME[l.symbol] ? `${LEVEL_NAME[l.symbol]} ` : ""}{fmtLevel(l.value, l.unit)}
+          {l.prev !== null && l.unit !== "%" && <span className="text-slate-500"> (was {fmtLevel(l.prev, l.unit)})</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+function AnchorRows({ anchors }: { anchors?: AxisAnchor[] }) {
+  if (!anchors || anchors.length === 0) return null;
+  return (
+    <>
+      {anchors.map((a) => (
+        <tr key={a.label} className="border-t border-slate-800/60 bg-slate-800/30">
+          <td className={TD}><span className="font-semibold text-slate-100">{a.label}</span> <span className="text-[0.62rem] text-slate-500">headline</span></td>
+          <td className={`${TD} text-right font-bold text-slate-100`}>
+            {a.value === null ? "—" : `${a.value}${a.unit === "%" ? "%" : ""}`}
+            {a.date && <div className="text-[0.6rem] font-normal text-slate-500">{a.date.length === 7 ? `${MONTHS[Number(a.date.slice(5, 7)) - 1]} print` : `since ${a.date}`}</div>}
+          </td>
+          <td className={`${TD} text-slate-400`} colSpan={3}>
+            {a.prev !== null ? `was ${a.prev}${a.unit === "%" ? "%" : ""}` : ""} <span className="text-slate-600">· context, not scored</span>
+          </td>
+        </tr>
+      ))}
+    </>
+  );
 }
 
 function pct(p: number | null | undefined): string {
@@ -49,7 +92,7 @@ function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipU
     return (
       <tr className="border-t border-slate-800/60 text-slate-600">
         <td className={TD}><span className="font-medium text-slate-500">{name}</span> <span className="text-[0.62rem]">{kind}</span></td>
-        <td className={`${TD} text-right`}>{fmt(d.current_value, d.name)}</td>
+        <td className={`${TD} text-right`}>{fmt(d.current_value, d.name)}<LevelLine levels={d.levels} /></td>
         <td className={TD} colSpan={3}>not enough history yet (n={d.n}, needs 24)</td>
       </tr>
     );
@@ -86,6 +129,7 @@ function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipU
       <td className={`${TD} text-right font-semibold text-slate-100`}>
         {fmt(d.current_value, d.name)}
         {tag && <div className="text-[0.6rem] font-normal text-slate-500">{tag}</div>}
+        <LevelLine levels={d.levels} />
       </td>
       <td className={`${TD} text-slate-400`}>{where}</td>
       <td className={`${TD} text-right ${tone}`}>{pct(pc)}</td>
@@ -137,6 +181,7 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
                   </tr>
                 </thead>
                 <tbody>
+                  <AnchorRows anchors={a.anchors} />
                   {c.drivers.map((d) => <Row key={d.name} d={d} axis={axis} flipUp={up} asOf={drivers.as_of} />)}
                 </tbody>
               </table>

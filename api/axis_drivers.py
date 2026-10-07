@@ -49,7 +49,7 @@ MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 # Bump when the payload's shape or the way readings are taken changes. cache.py
 # reads this constant, so the bump cannot be forgotten in a second file.
 #   11: readings are taken at (date - publication lag), not at the stamped date
-SCHEMA_VERSION = 14  # 14: today's reading = newest stored print (lags only for past windows)
+SCHEMA_VERSION = 15  # 15: display levels per driver + headline anchors per axis (no probability change)
 
 # A monthly series is STAMPED at its period start but published weeks later: the
 # August CPI is dated 08-01 and released mid-September. Reading "the value stamped
@@ -509,6 +509,50 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
 
 # ── public ───────────────────────────────────────────────────────────────────
 
+# Display only -- nothing here enters a probability. Each driver is SCORED on its own measure (a change, a spread,
+# a level); readers also want the actual level of the thing (the 3m bill at 4.14%, ISM services prices at 74.0),
+# so rows whose raw series is meaningful as a level carry it. Unit: "%" or "pt" or "k" (divide by 1000).
+LEVEL_UNITS = {
+    "US03MY": "%", "US02Y": "%", "US05Y": "%", "US10Y": "%", "T10Y2Y": "%", "T5YIE": "%", "BAA10Y": "%",
+    "UNRATE": "%", "GDPNOW": "%", "DFEDTARU": "%",
+    "ISM_MFG_PMI": "pt", "ISM_MFG_PRICES": "pt", "ISM_SVC_ACTIVITY": "pt", "ISM_SVC_PRICES": "pt",
+    "PPCDISA066MSFRBNY": "pt", "GAFDFSA066MSFRBPHI": "pt", "CFNAI": "pt", "NFCICREDIT": "pt",
+    "CHALLENGER": "k",
+}
+
+
+def _level_of(sym: str, series: "_Series", today: str) -> Optional[dict]:
+    hit = series.at(today)
+    if hit is None or sym not in LEVEL_UNITS:
+        return None
+    i, v = hit
+    scale = 1000.0 if LEVEL_UNITS[sym] == "k" else 1.0
+    prev = series.values[i - 1] / scale if i > 0 else None
+    return {"symbol": sym, "value": round(v / scale, 3), "prev": round(prev, 3) if prev is not None else None,
+            "date": series.dates[i], "unit": LEVEL_UNITS[sym]}
+
+
+def _anchors() -> dict[str, list[dict]]:
+    """The headline number per axis, from the same workbook the regime card reads, so the two cannot disagree."""
+    try:
+        import dashboard_data as dd
+        _wb, _lm, _hud, compass, grid = dd._parsed_workbook(dd.list_dashboard_dates()[0])
+        c, g = compass[0], grid[0]
+        def row(label, m, unit, date_key):
+            return {"label": label, "value": m.get("current_value"),
+                    "prev": m.get("reference_value", m.get("previous_value")),
+                    "date": m.get(date_key), "unit": unit} if m else None
+        out = {
+            "liquidity": [row("Fed funds target (upper)", c.get("DFEDTARU"), "%", "current_date")],
+            "credit": [row("SLOOS C&I tightening", c.get("DRTSCILM"), "pt", "current_date")],
+            "growth": [row("GDP (q/q ann.)", g.get("Growth / GDP"), "%", "release_date")],
+            "inflation": [row("CPI y/y", g.get("Inflation Rate"), "%", "release_date")],
+        }
+        return {k: [r for r in v if r] for k, v in out.items()}
+    except Exception:  # noqa: BLE001 -- context only; the panel works without it
+        return {}
+
+
 def compute_axis_drivers() -> dict:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     hist = {m: md._load_model(f"{m}_US") for m in ("compass", "grid")}
@@ -538,6 +582,17 @@ def compute_axis_drivers() -> dict:
         stats["current_state"] = cur_state
         stats["current"] = stats["from_state"][str(cur_state)]
         stats["release_type"] = cal.AXIS_OF and {v: k for k, v in cal.AXIS_OF.items()}[axis]
+        by_label = {spec[0]: spec for spec in specs}
+        for st in stats["from_state"].values():
+            for d in st.get("drivers", []):
+                spec = by_label.get(d["name"])
+                if spec is None:
+                    continue
+                syms = spec[1] if isinstance(spec[1], tuple) else (spec[1],)
+                d["levels"] = [lv for lv in (_level_of(x, loaded[x], today) for x in syms) if lv]
         axes_out[axis] = stats
 
+    anchors = _anchors()
+    for axis, a in axes_out.items():
+        a["anchors"] = anchors.get(axis, [])
     return {"as_of": today, "lookback_rows": LOOKBACK_ROWS, "axes": axes_out}

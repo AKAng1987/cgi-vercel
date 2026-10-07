@@ -221,6 +221,8 @@ export interface AxisDriver {
   name: string;
   /** Stamp date of the observation today's reading uses (monthly series: the month of the print). */
   reading_of?: string | null;
+  /** Display only: the actual level of each series the driver is built from (never enters a probability). */
+  levels?: DriverLevel[];
   n: number;
   insufficient?: boolean;
   mean_flip?: number | null;
@@ -247,7 +249,25 @@ export interface AxisDriverState {
   n_drivers_used: number;
 }
 
+export interface DriverLevel {
+  symbol: string;
+  value: number;
+  prev: number | null;
+  date: string;
+  unit: "%" | "pt" | "k";
+}
+
+/** The headline number for an axis (Fed target, GDP, CPI, SLOOS), from the regime card's own source. */
+export interface AxisAnchor {
+  label: string;
+  value: number | null;
+  prev: number | null;
+  date: string | null;
+  unit: "%" | "pt";
+}
+
 export interface AxisDrivers {
+  anchors?: AxisAnchor[];
   cadence_days: number;
   n_windows: number;
   window_range: [string, string] | null;
