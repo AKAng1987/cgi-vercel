@@ -466,8 +466,15 @@ def _recent_closes(symbol: str, limit: int = 300) -> list[tuple[str, float]]:
     return rows
 
 
+# Only these trade at weekends. A weekend-dated bar on anything else is not a close (2026-09/10: the Yahoo
+# updater stored a Sunday-evening futures session as a day), so it is never used as one.
+WEEKEND_TRADING = {"BTC", "ETH"}
+
+
 def hud_from_price_history(symbol: str, sector: str) -> Optional[dict]:
     rows = _recent_closes(symbol)
+    if symbol not in WEEKEND_TRADING:
+        rows = [(d, c) for d, c in rows if datetime.date.fromisoformat(d).weekday() < 5]
     if len(rows) < 2:
         return None
     dates = [d for d, _ in rows]
@@ -563,6 +570,12 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
     if missing:
         import cache as _cache
 
+        # The cached rows remember which close they were built from. A fixed 6h TTL kept serving
+        # pre-correction prices after a source was repaired (2026-10-07: MAGS and the futures stayed on
+        # the Oct 2/Oct 4 rows for hours after the corrected closes were stored).
+        _px = _recent_closes("SPY", limit=1)
+        px_date = _px[-1][0] if _px else None
+
         def _compute() -> dict:
             from concurrent.futures import ThreadPoolExecutor
             out: dict[str, dict] = {}
@@ -571,12 +584,15 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
                                     ex.map(lambda m: hud_from_price_history(m[0], m[1]), missing)):
                     if row:
                         out[sym] = row
-            return out
+            return {"px_date": px_date, "rows": out}
 
         try:
-            extra_rows = _cache.get_or_fetch("hud_extra", _compute)
+            cached = _cache.get_or_fetch("hud_extra", _compute)
+            if cached.get("px_date") != px_date:
+                cached = _compute()
         except Exception:
-            extra_rows = _compute()
+            cached = _compute()
+        extra_rows = cached.get("rows", {})
 
     hud_groups = []
     for group_name, (tickers, rs_denom) in HUD_GROUPS.items():

@@ -14,11 +14,18 @@ function fmtPct(v: number | null): string {
   return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function asOfLabel(d: string): string {
+  return `${MONTHS[Number(d.slice(5, 7)) - 1]} ${Number(d.slice(8, 10))}`;
+}
+
 export function HudTable({
   group,
+  latest,
   onSelectSymbol,
 }: {
   group: HudGroup;
+  latest?: string;
   onSelectSymbol: (symbol: string) => void;
 }) {
   // Streamlit's render_hud_group returns early (renders nothing -- no
@@ -64,7 +71,14 @@ export function HudTable({
                 onClick={() => onSelectSymbol(t.symbol)}
                 className="cursor-pointer hover:bg-slate-800/50"
               >
-                <td className="px-1.5 py-0.5 font-medium text-slate-200">{t.symbol}</td>
+                <td className="px-1.5 py-0.5 font-medium text-slate-200">
+                  {t.symbol}
+                  {latest && t.as_of && t.as_of < latest && (
+                    <span className="ml-1.5 text-[0.62rem] font-normal text-[var(--cgi-gold)]" title={`Newest close we hold for ${t.symbol}; other rows are at ${latest}`}>
+                      as of {asOfLabel(t.as_of)}
+                    </span>
+                  )}
+                </td>
                 <td className="px-1.5 py-0.5 text-right text-slate-200">{fmtPrice(t.current)}</td>
                 {HUD_DISPLAY_COLUMNS.map((c) => {
                   const v = t[c.key as keyof typeof t] as number | null;

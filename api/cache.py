@@ -142,7 +142,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
-    "hud_extra": 1,
+    "hud_extra": 2,  # 2026-10-07: payload carries px_date; weekend bars dropped
     "hud_fallback": 1,
     "policy_watch": 1,
     "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
