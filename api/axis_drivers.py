@@ -49,7 +49,7 @@ MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 # Bump when the payload's shape or the way readings are taken changes. cache.py
 # reads this constant, so the bump cannot be forgotten in a second file.
 #   11: readings are taken at (date - publication lag), not at the stamped date
-SCHEMA_VERSION = 13  # 13: rebuild after the ISM services Sep print was cached stale (in-process history)
+SCHEMA_VERSION = 14  # 14: today's reading = newest stored print (lags only for past windows)
 
 # A monthly series is STAMPED at its period start but published weeks later: the
 # August CPI is dated 08-01 and released mid-September. Reading "the value stamped
@@ -399,6 +399,8 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
     lags = lags or {}
     # Every reading -- each window's and today's -- is taken as of what had been
     # PUBLISHED by then, not what is stamped on or before the date.
+    # TODAY's reading needs no lag: anything stored has, by construction, already been published.
+    # (Applying it there hid ISM services' September print for three days after its release.)
     rd = lambda label, date: _shift(date, lags.get(label, 0))
     slot = cal.SLOT_OF[axis]
     state_dates = [d for d, _ in rows]
@@ -448,7 +450,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 for v, f in pairs:
                     by[v][0] += 1
                     by[v][1] += int(f)
-                cur = _reading(spec, series[label], rd(label, today))
+                cur = _reading(spec, series[label], today)
                 p_cur = (by[cur][1] / by[cur][0]) if cur in by and by[cur][0] >= MIN_TERCILE_N else None
                 drv_out.append({
                     "name": label, "n": len(pairs), "categorical": True,
@@ -461,7 +463,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 continue
             if len(pairs) < 3 * MIN_TERCILE_N:
                 drv_out.append({"name": label, "n": len(pairs), "insufficient": True,
-                                "current_value": (lambda v: round(v, 3) if v is not None else None)(_reading(spec, series[label], rd(label, today)))})
+                                "current_value": (lambda v: round(v, 3) if v is not None else None)(_reading(spec, series[label], today))})
                 continue
             drv_base = sum(1 for _, f in pairs if f) / len(pairs)
             vals = [p[0] for p in pairs]
@@ -474,7 +476,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
             p_by_t = [(by_t[k][1] / by_t[k][0]) if by_t[k][0] else None for k in (0, 1, 2)]
             mean_f = [v for v, f in pairs if f]
             mean_nf = [v for v, f in pairs if not f]
-            cur = _reading(spec, series[label], rd(label, today))
+            cur = _reading(spec, series[label], today)
             cur_t = _tercile(cur, b) if cur is not None else None
             p_cur = p_by_t[cur_t] if cur_t is not None and by_t[cur_t][0] >= MIN_TERCILE_N else None
             drv_out.append({
@@ -487,7 +489,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 "n_by_tercile": [by_t[k][0] for k in (0, 1, 2)],
                 "current_value": round(cur, 3) if cur is not None else None,
                 # Which observation today's reading is (its stamp date), so a stale row is visible as one.
-                "reading_of": (lambda hit: series[label].dates[hit[0]] if hit else None)(series[label].at(rd(label, today))),
+                "reading_of": (lambda hit: series[label].dates[hit[0]] if hit else None)(series[label].at(today)),
                 "current_tercile": cur_t,
                 "p_current": round(p_cur, 3) if p_cur is not None else None,
                 "base_rate": round(drv_base, 3),
