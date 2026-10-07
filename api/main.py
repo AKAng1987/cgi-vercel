@@ -239,9 +239,15 @@ def freshness_heartbeat(body: dict = Body(default={})):
     summary = body.get("summary") if isinstance(body, dict) else None
     try:
         checked = body.get("checked") if isinstance(body, dict) else None
+        ref = body.get("referee") if isinstance(body, dict) else None
+        # Bound what an unauthenticated caller can store: known symbols, at most 10 [date, close] bars each.
+        if isinstance(ref, dict):
+            ref = {k: [b[:2] for b in v[:10] if isinstance(b, list) and len(b) >= 2]
+                   for k, v in ref.items() if k in freshness.REFEREE and isinstance(v, list)}
         written = freshness.write_heartbeat(
             summary if isinstance(summary, str) else None,
-            checked if isinstance(checked, dict) else None)
+            checked if isinstance(checked, dict) else None,
+            ref if isinstance(ref, dict) else None)
         cache.invalidate("freshness")
         return {"ok": True, **written}
     except Exception as exc:  # noqa: BLE001

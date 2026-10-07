@@ -140,3 +140,23 @@ if not ({p["check"] for p in _frozen["problems"]} == {"workbook_behind_prices"} 
     print(f"FAIL: pipeline-lag detector is wrong: frozen={_frozen} ok={_ok} dead={_dead}")
     sys.exit(1)
 print("OK: pipeline-lag detector flags a workbook behind prices and a stalled close, and passes an in-step pipeline")
+
+
+# Fifth guard: the referee. Replays Oct 2026: RUT stored to Oct 2 while TradingView had Oct 5 and Oct 6, and a
+# futures close stored two hours into the next session (90.79 vs a 91.11 settlement). Must flag both, and pass
+# agreeing feeds, a futures bar still in progress, and the 10y's few-bp Treasury-vs-traded gap.
+_t = __import__("datetime").date(2026, 10, 7)
+_tv = {"RUT": [["2026-10-02", 2832.89], ["2026-10-05", 2847.14], ["2026-10-06", 2830.30]],
+       "USOIL": [["2026-10-02", 91.11], ["2026-10-05", 89.43], ["2026-10-06", 89.44], ["2026-10-07", 90.15]],
+       "SPX": [["2026-10-05", 7773.95], ["2026-10-06", 7818.93]],
+       "US10Y": [["2026-10-06", 5.21]]}
+_ours = {"RUT": [("2026-10-01", 2806.63), ("2026-10-02", 2832.90)],
+         "USOIL": [("2026-10-02", 90.79), ("2026-10-04", 90.79), ("2026-10-05", 89.43)],
+         "SPX": [("2026-10-05", 7773.95), ("2026-10-06", 7818.93)],
+         "US10Y": [("2026-10-06", 5.27)]}
+_r = _fr.referee_problems(_tv, _ours, _t)
+_got = sorted((p["check"], p["symbol"]) for p in _r["problems"])
+if _got != [("referee_behind", "RUT"), ("referee_mismatch", "USOIL"), ("referee_weekend", "USOIL")]:
+    print(f"FAIL: referee is wrong: {_r}")
+    sys.exit(1)
+print("OK: referee flags a stalled series and a wrong close, a Sunday-dated row, and passes agreement, in-progress futures and the 10y basis gap")

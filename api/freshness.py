@@ -217,6 +217,7 @@ def read_heartbeat(today: Optional[dt.date] = None) -> dict:
         # planner uses it to re-check on each series' own cadence instead of
         # on the age of our copy -- see scripts/cgi_refresh.py.
         "ran_detail": payload.get("checked") or {},
+        "referee_bars": payload.get("referee") or {},
         "detail": (f"The refresh routine has not completed a run in "
                    f"{age_h:.0f}h. Manual series stop updating when it stops, "
                    f"and it is an LLM session -- the usual cause is the token "
@@ -227,13 +228,14 @@ def read_heartbeat(today: Optional[dt.date] = None) -> dict:
 
 
 def write_heartbeat(summary: Optional[str] = None,
-                    checked: Optional[dict] = None) -> dict:
+                    checked: Optional[dict] = None,
+                    referee_bars: Optional[dict] = None) -> dict:
     """Called by the routine when it finishes. Records only that it ran."""
     import json as _json
 
     import cache
     body = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-            "summary": summary, "checked": checked or {}}
+            "summary": summary, "checked": checked or {}, "referee": referee_bars or {}}
     cache._s3.put_object(Bucket=cache.BUCKET, Key=_heartbeat_path(),
                          Body=_json.dumps(body).encode("utf-8"),
                          ContentType="application/json")
@@ -501,6 +503,92 @@ def pipeline_lag(today: Optional[dt.date] = None) -> dict:
         return {"problems": [], "n_problems": 1, "error": f"{type(exc).__name__}: {exc}"}
 
 
+
+# The referee: an independent second source for a handful of benchmarks.
+#
+# Every check above asks whether a feed is BEHIND. None can see a feed that is current and WRONG: in Oct 2026
+# RUT sat on Oct 2 beside Oct 6 rows, and the futures were stored two hours into the next session with Sunday
+# dates, and nothing here noticed. TradingView is a different vendor, so agreement means something. It is only
+# reachable from the morning refresh session (an MCP), which sends its bars with the heartbeat; the comparison
+# runs here against what is stored. Kinds set the tolerance: two feeds' closes legitimately differ a little for
+# futures (settlement vs last) and FX (24h market, no single close), and our 10y is the Treasury's official
+# curve rather than the traded quote.
+REFEREE = {
+    "SPX": ("TVC:SPX", "eq"), "DJI": ("TVC:DJI", "eq"), "IXIC": ("NASDAQ:IXIC", "eq"), "RUT": ("TVC:RUT", "eq"),
+    "SPY": ("AMEX:SPY", "eq"), "QQQ": ("NASDAQ:QQQ", "eq"), "DBA": ("AMEX:DBA", "eq"), "UUP": ("AMEX:UUP", "eq"),
+    "MAGS": ("CBOE:MAGS", "eq"), "VIX": ("TVC:VIX", "vol"),
+    "USOIL": ("NYMEX:CL1!", "fut"), "XAUUSD": ("COMEX:GC1!", "fut"), "NATGAS": ("NYMEX:NG1!", "fut"),
+    "US10Y": ("TVC:US10Y", "yield"), "USDJPY": ("FX:USDJPY", "fx"),
+}
+REFEREE_TOL = {"eq": 0.0015, "vol": 0.01, "fut": 0.002, "fx": 0.005}   # relative; futures closes match TradingView exactly when right
+REFEREE_YIELD_TOL = 0.08                                                 # percentage points
+REFEREE_BEHIND = {"fut": 3}   # TradingView shows the session in progress; futures are final a day later
+REFEREE_BEHIND_DEFAULT = 2    # the price source publishes a day late, so one newer date is normal
+
+
+def referee_problems(tv_bars: dict, ours: dict, today: Optional[dt.date] = None) -> dict:
+    """Pure core. tv_bars {symbol: [[date, close], ...]} from TradingView; ours {symbol: [(date, close), ...]}."""
+    today_iso = (today or dt.date.today()).isoformat()
+    problems, checked = [], 0
+    for sym, (tv, kind) in REFEREE.items():
+        theirs = {d[:10]: float(c) for d, c in (tv_bars.get(sym) or []) if c is not None}
+        mine = dict(ours.get(sym) or [])
+        if not theirs:
+            continue
+        checked += 1
+        if not mine:
+            problems.append({"check": "referee_missing", "symbol": sym, "detail": f"nothing stored; {tv} has data"})
+            continue
+        worst = None
+        for d in sorted(set(theirs) & set(mine)):
+            a, b = mine[d], theirs[d]
+            off = abs(a - b) if kind == "yield" else (abs(a - b) / abs(b) if b else 0.0)
+            limit = REFEREE_YIELD_TOL if kind == "yield" else REFEREE_TOL[kind]
+            if off > limit and (worst is None or off > worst[0]):
+                worst = (off, d, a, b)
+        if worst:
+            off, d, a, b = worst
+            shown = f"{off:.2f}pt" if kind == "yield" else f"{off * 100:.2f}%"
+            problems.append({"check": "referee_mismatch", "symbol": sym,
+                             "detail": f"{d}: we hold {a:g}, {tv} has {b:g} ({shown} apart)"})
+        weekend = sorted(d for d in mine if dt.date.fromisoformat(d).weekday() >= 5)
+        if weekend:
+            # TradingView has no bar to compare these with, so they would pass silently: nothing but crypto closes
+            # on a Saturday or Sunday (2026-10: the Yahoo updater stored Sunday-evening futures sessions).
+            problems.append({"check": "referee_weekend", "symbol": sym,
+                             "detail": f"weekend-dated rows stored: {', '.join(weekend)}"})
+        newest = max(mine)
+        newer = [d for d in theirs if d > newest and d <= today_iso]
+        if len(newer) >= REFEREE_BEHIND.get(kind, REFEREE_BEHIND_DEFAULT):
+            problems.append({"check": "referee_behind", "symbol": sym,
+                             "detail": f"we hold {newest}; {tv} already has {max(newer)}"})
+    return {"problems": problems, "n_problems": len(problems), "checked": checked}
+
+
+def _recent_closes(symbol: str, n: int = 10) -> list[tuple[str, float]]:
+    resp = _ddb.query(TableName=PRICE_TABLE, KeyConditionExpression="#s = :s",
+                      ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
+                      ExpressionAttributeValues={":s": {"S": symbol}},
+                      ProjectionExpression="#d, #c", ScanIndexForward=False, Limit=n)
+    return [(i["date"]["S"], float(i["close"]["N"])) for i in resp.get("Items", []) if "close" in i]
+
+
+def referee(tv_bars: Optional[dict], today: Optional[dt.date] = None) -> dict:
+    """I/O wrapper. No bars means the morning run did not send any: say so, do not invent a problem."""
+    if not tv_bars:
+        return {"problems": [], "n_problems": 0, "checked": 0,
+                "detail": "no TradingView bars received with the last refresh"}
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+        syms = [s for s in REFEREE if tv_bars.get(s)]
+        with ThreadPoolExecutor(8) as ex:
+            ours = dict(zip(syms, ex.map(_recent_closes, syms)))
+        return referee_problems(tv_bars, ours, today)
+    except Exception as exc:  # noqa: BLE001
+        _logger.exception("[freshness] referee could not run")
+        return {"problems": [], "n_problems": 1, "checked": 0, "error": f"{type(exc).__name__}: {exc}"}
+
+
 def manual_worklist(today: Optional[dt.date] = None) -> dict:
     """What we hold for every hand-loaded symbol, and what to fetch.
 
@@ -576,6 +664,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     beat = read_heartbeat(today)
     integrity = feed_integrity(today)
     pipeline = pipeline_lag(today)
+    ref = referee(beat.pop("referee_bars", None), today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
@@ -583,9 +672,10 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "refresh_routine": beat,
         "feed_integrity": integrity,
         "pipeline_lag": pipeline,
+        "referee": ref,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"]),
+                       + pipeline["n_problems"] + ref["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "
