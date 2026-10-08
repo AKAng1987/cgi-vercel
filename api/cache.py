@@ -142,22 +142,22 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
-    "hud_extra": 2,  # 2026-10-07: payload carries px_date; weekend bars dropped
+    "hud_extra": 3,  # 2026-10-09: 27 new universe tickers.  # 2026-10-07: payload carries px_date; weekend bars dropped
     "hud_fallback": 1,
     "policy_watch": 1,
     "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
-    "themes": 5,  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
+    "themes": 6,  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
-    "watchlists": 8,  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
-    "etf_constituents": 2,  # 2026-09-25: MOO for agriculture + unreachable fall-through
+    "watchlists": 9,  # 2026-10-09: 27 theme-leg ETFs joined the universe.  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
+    "etf_constituents": 3,  # 2026-10-09: new theme legs.  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 4,  # 2026-10-04: feed-integrity problems in the freshness section; 3: markov market lagged + relabelled
     "liquidity": 1,
     "customer_links": 1,
     "brief_weekly": 4,  # 2026-10-04: same
     "countries": 1,
     "context_tables": 4,  # 2026-09-26: NameError fix; v3 never actually served.  # 2026-09-26: Warsh added + chair carries a confirmation date.  # fed_episodes -> derived rate_cycles + balance_sheet
-    "fundamentals": 10,  # 2026-09-26: traded data removed from the public response.  # 2026-09-26: proper median + n.  # 2026-09-26: traded universe unioned.  # 2026-09-26: cadence-aware reads.  # 2026-09-26: sector per company.  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
+    "fundamentals": 11,  # 2026-10-09: new theme legs change the active-theme set.  # 2026-09-26: traded data removed from the public response.  # 2026-09-26: proper median + n.  # 2026-09-26: traded universe unioned.  # 2026-09-26: cadence-aware reads.  # 2026-09-26: sector per company.  # 2026-09-26: seasonal QoQ + SPCX.  # 2026-09-25: bank concept, IFRS, annual mode, PLTR in models.  # 2026-09-25: constituents derived from real ETF holdings.  # 2026-09-25: merge XBRL concept chains + STALE_DAYS guard --
                         # v1 read dead concepts for 48 of 65 names (NVDA reported FY2020)
     "axis_drivers": 10,  # 2026-09-23: Empire prices paid, Philly future activity (free FRED; ISM frozen by TradingView MCP bug), ISM svc activity back as inverted context. v9 2026-09-19: inflation + growth lists from user framework + sweep. v8 2026-09-18: back to DFEDTARU (v7 tried DFF, user rejected). v6 2026-09-17: calendar-aware yoy (CPI 3.33 not 3.73); credit: 10-2 back, 10-5, HYG/LQD, curve regime categorical; SPY out; Challenger m/m out
 }

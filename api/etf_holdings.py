@@ -68,7 +68,9 @@ EDGAR_ATOM = ("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={s
               "&type=NPORT-P&dateb=&owner=include&count=4&output=atom")
 
 # Confirmed 2026-09-25: all eleven return a valid workbook with a Ticker column.
-SSGA_TICKERS = {"XLU", "XLV", "XLY", "XLRE", "XME", "XOP", "XHB", "KBE", "KRE", "XRT", "XAR"}
+# 2026-10-09: XBI, XPH, XSD (theme legs) and XLP, XLI, XLB, XLC (new broad themes) are State Street funds too.
+SSGA_TICKERS = {"XLU", "XLV", "XLY", "XLRE", "XME", "XOP", "XHB", "KBE", "KRE", "XRT", "XAR",
+                "XBI", "XPH", "XSD", "XLP", "XLI", "XLB", "XLC"}
 
 _logger = logging.getLogger("cgi_api.etf_holdings")
 _NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"

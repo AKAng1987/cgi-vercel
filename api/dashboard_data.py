@@ -74,7 +74,26 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
          "ESPO",                                   # gaming
          "IDRV", "KARS", "BATT",                  # EV and batteries
          "GRID", "FAN", "PBD", "NLR", "EVX",      # grid, wind, clean, nuclear, environmental
-         "SEA", "IGF"],                           # shipping; global infrastructure
+         "SEA", "IGF",                            # shipping; global infrastructure
+         # 2026-10-09: sub-sector legs for the themes (research/theme_legs/PLAN.md). Each joined only if
+         # its 20d relative strength correlated < 0.90 with the theme's existing legs (it adds information)
+         # and it has >= 400 days of history; none is leveraged. Near-duplicates (PSI, XSW, CLOU, BUG,
+         # IHAK, RING, SILJ, URNM, PPA, FCG, XES, PXE, ENFR, IYH, KBWB, IAT, ITB, LIT, BKCH, MCHI, VEGI,
+         # IAK) were left out.
+         "XBI", "IHF", "XPH",                     # biotech, providers, pharma (ARKG/IHE/XHE already here)
+         "IGV",                                   # software
+         "BOTZ", "CHAT", "THNQ",                  # robotics & AI, generative AI, AI
+         "XSD",                                   # equal-weight semis
+         "NUKZ",                                  # nuclear renaissance
+         "SHLD", "ARKX",                          # defense tech, space & defense
+         "REZ",                                   # residential REITs
+         "BOAT",                                  # global shipping
+         "PAVE", "IFRA",                          # US infrastructure build-out
+         "DRIV",                                  # autonomous & EV
+         "QCLN", "PBW",                           # clean energy
+         "WGMI",                                  # bitcoin miners
+         "CQQQ",                                  # China technology
+         "PHO", "CGW"],                           # water
         "SPX",
     )),
     ("US INTEREST RATES", (["US03MY", "US01Y", "US02Y", "US05Y", "US10Y", "US20Y", "US30Y", "MOVE"], None)),
@@ -90,7 +109,10 @@ HUD_GROUPS: "OrderedDict[str, tuple]" = OrderedDict([
          # integrated. Refiners matter separately: crack spreads widen when
          # crude falls, so CRAK trades opposite IEO in exactly the regimes
          # that matter.
-         "IEO", "OIH", "FCG", "MLPX", "CRAK"],
+         "IEO", "OIH", "FCG", "MLPX", "CRAK",
+         # 2026-10-09: theme legs (research/theme_legs/PLAN.md): diversified miners, rare earths,
+         # MLPs and energy infrastructure, agribusiness equities.
+         "PICK", "REMX", "AMLP", "EMLP", "MOO"],
         "USCI",
     )),
     ("COMMODITIES CONT.", (

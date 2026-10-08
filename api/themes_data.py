@@ -50,32 +50,35 @@ MEGATREND_DAYS = 365
 # Theme -> proxies, ordered so the leading indicator comes first where the
 # sequence matters (miners lead the metal: COPX turned 68 days before CPER,
 # GDX is running while GLD is not -- that gap is itself the signal).
+# 2026-10-09: sub-sector legs added to every theme (research/theme_legs/PLAN.md). A candidate joined only if its
+# 20-day relative strength (vs SPY) correlated < 0.90 with every existing leg -- i.e. it adds information -- and it
+# had >= 400 days of history; each leg sits in one theme only. URA -> URANIUM (URA was a starved duplicate).
 THEMES: dict[str, list[str]] = {
-    "AI": ["AIQ", "ROBO", "BOTZ"],
-    "semis / memory": ["SMH", "SOXX"],
-    "cloud / software": ["WCLD", "SKYY", "FDN"],
+    "AI": ["AIQ", "ROBO", "BOTZ", "ARKQ", "CHAT", "THNQ"],
+    "semis / memory": ["SMH", "SOXX", "XSD"],
+    "cloud / software": ["WCLD", "SKYY", "FDN", "IGV", "ARKW"],
     "cyber": ["CIBR", "HACK"],
     "copper": ["COPX", "CPER"],
     "gold": ["GDX", "GDXJ", "GLD"],
     "silver": ["SIL", "SLV"],
-    "steel / metals": ["SLX", "XME"],
-    "uranium / nuclear": ["URA", "NLR"],
+    "steel / metals": ["SLX", "XME", "PICK", "REMX"],
+    "uranium / nuclear": ["URANIUM", "NLR", "NUKZ"],
     "power / grid": ["GRID", "XLU"],
-    "defense": ["ITA", "XAR"],
+    "defense": ["ITA", "XAR", "SHLD", "ARKX"],
     "energy: upstream": ["XOP", "IEO", "OIH"],
     "energy: refiners": ["CRAK"],
-    "energy: midstream": ["MLPX"],
-    "biotech / healthcare": ["IBB", "IHI", "XLV"],
+    "energy: midstream": ["MLPX", "AMLP", "EMLP"],
+    "biotech / healthcare": ["IBB", "IHI", "XLV", "XBI", "ARKG", "IHE", "IHF", "XPH", "XHE"],
     "banks": ["KBE", "KRE"],
     "retail / consumer": ["XRT", "IBUY", "XLY"],
     "homebuilders": ["XHB"],
-    "real estate": ["VNQ", "XLRE"],
-    "shipping / logistics": ["SEA", "IYT"],
-    "infrastructure": ["IGF"],
-    "EV / battery": ["IDRV", "KARS", "BATT"],
-    "solar / clean": ["TAN", "ICLN", "FAN"],
-    "crypto equities": ["BLOK", "BITO"],
-    "China": ["KWEB", "FXI"],
+    "real estate": ["VNQ", "XLRE", "REZ"],
+    "shipping / logistics": ["SEA", "IYT", "BOAT"],
+    "infrastructure": ["IGF", "PAVE", "IFRA"],
+    "EV / battery": ["IDRV", "KARS", "BATT", "DRIV"],
+    "solar / clean": ["TAN", "ICLN", "FAN", "QCLN", "PBW", "PBD"],
+    "crypto equities": ["BLOK", "BITO", "ARKF", "WGMI"],
+    "China": ["KWEB", "FXI", "CQQQ"],
     # DXJ (yen-hedged) leads: EWJ is unhedged USD and hands the currency back,
     # which is why the detector read Japan as 33 days old when Japan in yen had
     # been strong for a year. Measured over the Takaichi window: Japan +13.8%
@@ -88,6 +91,40 @@ THEMES: dict[str, list[str]] = {
     # constituents to derive at all. MOO (VanEck Agribusiness) gives it an
     # equity leg for both fundamentals and RS, beside the commodity legs.
     "agriculture": ["MOO", "DBA", "CORN", "WEAT"],
+    # 2026-10-09: themes for sub-sectors that had none (research/theme_legs/PLAN.md). Discovery only;
+    # promotion stays the monthly decision. Same tests as the legs above: >= 400 days, 20d RS corr < 0.90.
+    # P&C and multi-line insurers (KIE); KBWP/IAK were near-duplicates (20d RS corr >= 0.90).
+    "insurance": ["KIE"],
+    # broker-dealers and exchanges (IAI) and the wider capital-markets group (KCE).
+    "capital markets / brokers": ["IAI", "KCE"],
+    # listed private-equity and alternative managers (PSP).
+    "private equity / alternatives": ["PSP"],
+    # consumer staples (XLP) and food & beverage (PBJ): the defensive rotation.
+    "staples / food": ["XLP", "PBJ"],
+    # leisure and entertainment (PEJ) and airlines (JETS); moved here from retail/shipping.
+    "leisure / travel": ["PEJ", "JETS"],
+    # social media (SOCL) and communication services (XLC).
+    "social / media": ["SOCL", "XLC"],
+    # video-game publishers and hardware (ESPO).
+    "gaming / esports": ["ESPO"],
+    # mortgage REITs (MORT): rate-spread sensitive, unlike equity REITs.
+    "mortgage REITs": ["MORT"],
+    # environmental services (EVX) and water utilities/equipment (PHO, CGW).
+    "environmental / water": ["EVX", "PHO", "CGW"],
+    # cannabis producers (MJ).
+    "cannabis": ["MJ"],
+    # Israeli technology (IZRL).
+    "Israel tech": ["IZRL"],
+    # ARKK; the sector ARK funds sit in their own themes (ARKW cloud, ARKQ AI, ARKG biotech, ARKF crypto).
+    "innovation / disruptive growth": ["ARKK"],
+    # industrials sector (XLI).
+    "industrials (broad)": ["XLI"],
+    # materials sector (XLB).
+    "materials (broad)": ["XLB"],
+    # the seven mega-caps equal-weight (MAGS).
+    "Magnificent 7": ["MAGS"],
+    # battery and energy metals beyond copper/uranium (CGI's commodity series).
+    "coal / lithium / nickel": ["COAL", "LITHIUM", "NICKEL"],
 }
 
 
