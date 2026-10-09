@@ -18,6 +18,10 @@ function daysUntil(asOf: string, date: string): number {
 function pct(p: number): string {
   return `${Math.round(p * 100)}%`;
 }
+// Out-of-sample verdict colour: a tested figure reads normally, an untested or failed one is dimmed.
+const OOS_TONE: Record<string, string> = {
+  better: "text-[color:var(--cgi-accent)]", unproven: "text-slate-500", no_better: "text-slate-600",
+};
 
 export function UpcomingReleases({
   current, upcoming, asOf,
@@ -61,14 +65,25 @@ export function UpcomingReleases({
                   <div className="text-[0.65rem] uppercase tracking-wide text-slate-500">
                     {u.market?.label ?? "Market"}{u.market?.experimental && <span className="ml-1 text-[var(--cgi-gold)]/70">exp.</span>}
                   </div>
-                  <div className={`text-2xl font-bold ${u.market ? (bigGap ? "text-[var(--cgi-gold)]" : "text-slate-100") : "text-slate-600"}`}>
+                  <div className={`text-2xl font-bold ${!u.market ? "text-slate-600" : u.market.oos?.verdict === "no_better" ? "text-slate-500" : bigGap ? "text-[var(--cgi-gold)]" : "text-slate-100"}`}>
                     {u.market ? pct(u.market.p_flip) : "—"}
                   </div>
                   <div className="truncate text-[0.65rem] text-slate-600">
                     {u.market ? u.market.detail : u.context?.gdpnow != null ? `GDPNow ${u.context.gdpnow.toFixed(1)}% (context)` : "no instrument tracked"}
                   </div>
+                  {u.market?.oos && (
+                    <div className={`text-[0.65rem] ${OOS_TONE[u.market.oos.verdict]}`} title={u.market.oos.detail}>{u.market.oos.label}</div>
+                  )}
                 </div>
               </div>
+
+              {u.drivers && (
+                <div className="mt-2 flex items-baseline justify-between border-t border-slate-800 pt-2" title={`${u.drivers.source} — ${u.drivers.oos?.detail ?? ""}`}>
+                  <div className="text-[0.65rem] uppercase tracking-wide text-slate-500">Drivers</div>
+                  <div className="text-sm font-bold text-slate-100">{pct(u.drivers.p_flip)}</div>
+                  {u.drivers.oos && <div className={`text-[0.65rem] ${OOS_TONE[u.drivers.oos.verdict]}`}>{u.drivers.oos.label}</div>}
+                </div>
+              )}
 
               {u.gap !== null && (
                 <div className={`mt-2 text-[0.68rem] ${bigGap ? "font-bold text-[var(--cgi-gold)]" : "text-slate-500"}`}>

@@ -178,6 +178,8 @@ export interface MarketRead {
   detail: string;
   label?: string;
   experimental: boolean;
+  /** out-of-sample verdict on a driver figure (research/probability_check) */
+  oos?: { verdict: "better" | "unproven" | "no_better"; label: string; detail: string } | null;
 }
 
 export interface UpcomingRelease {
@@ -191,6 +193,8 @@ export interface UpcomingRelease {
   if_flip_quadrant: number;
   basis: FlipBasis;
   market: MarketRead | null;
+  /** liquidity only: the driver figure that beat the base rate out of sample, shown beside futures */
+  drivers?: MarketRead | null;
   gap: number | null;
   context: { gdpnow: number | null; as_of: string | null } | null;
 }

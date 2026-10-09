@@ -160,6 +160,20 @@ def _market_from_classifier(latest_daily: Optional[dict], axis: str, state: int)
     }
 
 
+# Out-of-sample verdict on each axis's driver figure (research/probability_check, walk-forward Brier vs the
+# base rate, run 2026-10-05). Shown beside the number so nobody reads decoration as a signal.
+OOS_VERDICT = {
+    "liquidity": {"verdict": "better", "label": "tested: beats the base rate",
+                  "detail": "out-of-sample Brier 0.132 vs 0.149 (CI -0.026 to -0.008), about calibrated; drivers were chosen on the same history"},
+    "credit": {"verdict": "unproven", "label": "unproven (small sample)",
+               "detail": "better on 49 windows / 17 flips, but calibration is too uncertain to rely on"},
+    "growth": {"verdict": "no_better", "label": "no better than the base rate",
+               "detail": "out-of-sample Brier 0.2456 vs 0.2444: no improvement"},
+    "inflation": {"verdict": "no_better", "label": "no better than the base rate",
+                  "detail": "out-of-sample Brier 0.2211 vs 0.2241: no clear difference"},
+}
+
+
 def _market_from_drivers(drv: Optional[dict], axis: str) -> Optional[dict]:
     """Driver-conditioned flip rate from axis_drivers (see that module):
     mean of P(flip | current tercile) across the axis's leading drivers.
@@ -178,6 +192,7 @@ def _market_from_drivers(drv: Optional[dict], axis: str) -> Optional[dict]:
         # were chosen on (in-sample), with readings taken at what had been published.
         # Calling it "market" put a descriptive table beside real futures pricing.
         "label": "Drivers",
+        "oos": OOS_VERDICT.get(axis),
         "source": (f"driver table (in-sample, descriptive -- not a market price): flip rate "
                    f"given current driver terciles ({c['n_drivers_used']} drivers, "
                    f"{c['n_windows']} windows)"),
@@ -281,8 +296,11 @@ def build_markov_response() -> dict:
         q = current[model]
         s = _axis_state(q, axis)
         p = rates[axis][s]["p_flip"]
+        drivers_read = None
         if axis == "liquidity":
             market = _market_liquidity(r["date"], s)
+            # The one driver figure that beat the base rate out of sample; shown beside futures, not instead.
+            drivers_read = _market_from_drivers(drivers, axis)
         else:
             market = _market_from_drivers(drivers, axis) or _market_from_classifier(latest, axis, s)
         gap = round(market["p_flip"] - p, 3) if market else None
@@ -297,6 +315,7 @@ def build_markov_response() -> dict:
             "if_flip_quadrant": _quadrant_with(q, axis, 1 - s),
             "basis": rates[axis][s],
             "market": market,
+            "drivers": drivers_read,
             "gap": gap,
             "context": _gdpnow_context() if axis == "growth" else None,
         })
