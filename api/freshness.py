@@ -384,6 +384,24 @@ def fred_crosscheck(today: Optional[dt.date] = None) -> dict:
 # USDCAD is current, and they get a calendar-day allowance instead.
 METRICS_TABLE = "cmon-stage-backend-metrics-source"
 STALLED_SESSIONS = 5
+
+# Fixed-date market closures that otherwise read as a stalled feed. China's onshore FX market shuts for
+# Golden Week (Oct 1-7 every year): on 2026-10-08 USDCNY showed "6 sessions behind" when there was simply
+# nothing to quote. Only fixed dates belong here; moving holidays (Spring Festival) stay unmodelled.
+CLOSED_MMDD = {"USDCNY": [(10, d) for d in range(1, 8)]}
+
+
+def _closed_sessions(symbol: str, date_iso: str, today: Optional[dt.date] = None) -> int:
+    """Weekdays after `date_iso` (up to today) on which `symbol`'s market was known to be closed."""
+    days = CLOSED_MMDD.get(symbol)
+    if not days:
+        return 0
+    t, d = today or dt.date.today(), dt.date.fromisoformat(date_iso) + dt.timedelta(days=1)
+    n = 0
+    while d <= t:
+        n += d.weekday() < 5 and (d.month, d.day) in days
+        d += dt.timedelta(days=1)
+    return n
 STALLED_FRED_DAYS = 14
 
 
@@ -411,7 +429,7 @@ def integrity_problems(registry: list[dict], allowed: set[str], universe: list[s
             behind_n, bad = _age_days(row["date"], today), _age_days(row["date"], today) > STALLED_FRED_DAYS
             unit = "days"
         else:
-            behind_n = _sessions_since(row["date"], today)
+            behind_n = _sessions_since(row["date"], today) - _closed_sessions(t, row["date"], today)
             bad, unit = behind_n > STALLED_SESSIONS, "sessions"
         if bad:
             stalled.append({"symbol": t, "newest": row["date"], "behind": f"{behind_n} {unit}",

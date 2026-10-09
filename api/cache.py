@@ -39,7 +39,7 @@ TTL_HOURS: dict[str, float] = {
     "lending_standards": 48.0,
     "challenger": 24.0,  # macro: Challenger job cuts from price-history (manual monthly load)
     "gdp": 48.0,
-    "gdp_nowcast": 24.0,
+    "gdp_nowcast": 6.0,   # 2026-10-09: was 24h; GDPNow revises several times a week and a 24h copy showed 3.68 after FRED had 3.59
     "gdp_nowcast_freshness": 6.0,
     "freshness": 1.0,
     "inflation": 24.0,
