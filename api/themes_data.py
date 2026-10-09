@@ -56,7 +56,7 @@ MEGATREND_DAYS = 365
 THEMES: dict[str, list[str]] = {
     "AI": ["AIQ", "ROBO", "BOTZ", "ARKQ", "CHAT", "THNQ"],
     "semis / memory": ["SMH", "SOXX", "XSD"],
-    "cloud / software": ["WCLD", "SKYY", "FDN", "IGV", "ARKW"],
+    "cloud / software": ["WCLD", "SKYY", "FDN", "IGV"],   # ARKW moved to innovation 2026-10-09 (0.93 RS corr with ARKK)
     "cyber": ["CIBR", "HACK"],
     "copper": ["COPX", "CPER"],
     "gold": ["GDX", "GDXJ", "GLD"],
@@ -115,8 +115,8 @@ THEMES: dict[str, list[str]] = {
     "cannabis": ["MJ"],
     # Israeli technology (IZRL).
     "Israel tech": ["IZRL"],
-    # ARKK; the sector ARK funds sit in their own themes (ARKW cloud, ARKQ AI, ARKG biotech, ARKF crypto).
-    "innovation / disruptive growth": ["ARKK"],
+    # ARKK + ARKW (near-identical, 0.93); the other sector ARK funds sit in their own themes (ARKQ AI, ARKG biotech, ARKF crypto).
+    "innovation / disruptive growth": ["ARKK", "ARKW"],
     # industrials sector (XLI).
     "industrials (broad)": ["XLI"],
     # materials sector (XLB).
