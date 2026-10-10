@@ -28,6 +28,23 @@ REGION = "ap-southeast-1"
 PRICE_TABLE = "cmon-stage-backend-price-history"
 MAX_ROWS = 24
 
+# Series loaded from a source that is NOT TradingView, by a script rather than the refresh routine.
+# Kept apart from ALLOWED on purpose: the /api/freshness worklist is built from ALLOWED and tells the
+# routine to fetch each entry's TradingView ticker, and these have none. Same append-only guards.
+# symbol -> (source, frequency, min, max)   values in percent.
+ALLOWED_EXTERNAL = {
+    # Damodaran's monthly implied equity risk premium (pages.stern.nyu.edu/~adamodar/, ERPbymonth.xlsx),
+    # start-of-month dates since 2008-09. Headline = ERP_T12M; the others are his alternative versions.
+    "ERP_T12M":           ("damodaran", "1M", 0.0, 25.0),   # ERP, trailing-12-month cash yield (complete series)
+    "ERP_SUSTAINABLE":    ("damodaran", "1M", 0.0, 25.0),   # ... with sustainable payout
+    "ERP_ADJ_RF":         ("damodaran", "1M", 0.0, 25.0),   # ... with adjusted risk-free rate
+    "ERP_NORMALIZED":     ("damodaran", "1M", 0.0, 25.0),
+    "ERP_NET_CASH":       ("damodaran", "1M", 0.0, 25.0),
+    "ERP_EXPECTED_RET":   ("damodaran", "1M", 0.0, 30.0),   # expected return on stocks
+    "ERP_TBOND":          ("damodaran", "1M", 0.0, 20.0),   # the 10y T-bond rate he subtracts
+    "ERP_GROWTH":         ("damodaran", "1M", -10.0, 40.0), # expected earnings growth used
+}
+
 # symbol -> (source, frequency, min, max, TradingView symbol for the routine)
 ALLOWED = {
     "ISM_MFG_PRICES":   ("tradingview", "1M", 0.0, 100.0, "ECONOMICS:USMPR"),
@@ -208,7 +225,10 @@ def describe() -> dict:
     for sym, (src, freq, lo, hi, tv) in ALLOWED.items():
         out.append({"symbol": sym, "tradingview": tv, "frequency": freq, "source": src,
                     "last_date": _last_date(sym), "min": lo, "max": hi})
-    return {"as_of": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d"), "series": out, "max_rows_per_call": MAX_ROWS}
+    external = [{"symbol": sym, "source": src, "frequency": freq, "last_date": _last_date(sym), "min": lo, "max": hi}
+                for sym, (src, freq, lo, hi) in ALLOWED_EXTERNAL.items()]
+    return {"as_of": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d"), "series": out, "external": external,
+            "max_rows_per_call": MAX_ROWS}
 
 
 # Cached payloads that read these symbols out of price-history.
@@ -265,13 +285,13 @@ def _invalidate(symbol: str) -> list[str]:
 
 
 def append(symbol: str, rows: list[dict]) -> dict:
-    if symbol not in ALLOWED:
+    if symbol not in ALLOWED and symbol not in ALLOWED_EXTERNAL:
         raise HTTPException(status_code=404, detail=f"unknown series {symbol}")
     if not isinstance(rows, list) or not rows:
         raise HTTPException(status_code=400, detail="rows must be a non-empty list")
     if len(rows) > MAX_ROWS:
         raise HTTPException(status_code=400, detail=f"at most {MAX_ROWS} rows per call")
-    src, freq, lo, hi, _ = ALLOWED[symbol]
+    src, freq, lo, hi = (ALLOWED_EXTERNAL[symbol] if symbol in ALLOWED_EXTERNAL else ALLOWED[symbol][:4])
     today = dt.datetime.now(dt.timezone.utc).date()
     last = _last_date(symbol)
 
