@@ -1088,6 +1088,7 @@ export interface ErpBlock {
   history: {
     annual: { d: string; erp: number; tbond: number | null }[];
     monthly: { d: string; erp: number; tbond: number }[];
+    spx?: { d: string; c: number }[];
   };
   freshness: { newest_month: string | null; expected_month: string; behind: boolean };
   caveats: string[];

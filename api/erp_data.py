@@ -39,11 +39,16 @@ RETRY_AFTER_FAIL_S = 1800
 
 # ── storage reads ─────────────────────────────────────────────────────────
 
-def _series(symbol: str) -> list[tuple[str, float]]:
+def _series(symbol: str, since: str | None = None) -> list[tuple[str, float]]:
     out, key = [], None
     while True:
-        kw = dict(TableName=PRICE_TABLE, KeyConditionExpression="symbol = :s",
-                  ExpressionAttributeValues={":s": {"S": symbol}}, ProjectionExpression="#d, #c",
+        vals = {":s": {"S": symbol}}
+        cond = "symbol = :s"
+        if since:
+            vals[":since"] = {"S": since}
+            cond += " AND #d >= :since"
+        kw = dict(TableName=PRICE_TABLE, KeyConditionExpression=cond,
+                  ExpressionAttributeValues=vals, ProjectionExpression="#d, #c",
                   ExpressionAttributeNames={"#d": "date", "#c": "close"})
         if key:
             kw["ExclusiveStartKey"] = key
@@ -141,6 +146,14 @@ def _hy_by_month(months: list[str]) -> dict[str, float]:
     return out
 
 
+def _spx_monthly(since: str = "1960-01-01") -> list[dict]:
+    """S&P 500, last close of each month, for the chart's optional overlay."""
+    last: dict[str, tuple[str, float]] = {}
+    for d, c in _series("SPX", since):
+        last[d[:7]] = (d, c)
+    return [{"d": d, "c": round(c, 2)} for _k, (d, c) in sorted(last.items())]
+
+
 def build_erp_block() -> dict:
     erp = _series("ERP_T12M")
     tb = dict(_series("ERP_TBOND"))
@@ -199,7 +212,8 @@ def build_erp_block() -> dict:
                         if dot else None),
         "hy_spread": hy_now,
         "history": {"annual": [{"d": d, "erp": v, "tbond": ann_tb.get(d)} for d, v in ann_erp if d < months[0][0]],
-                    "monthly": [{"d": d, "erp": round(e, 2), "tbond": round(b, 2)} for d, e, b in months]},
+                    "monthly": [{"d": d, "erp": round(e, 2), "tbond": round(b, 2)} for d, e, b in months],
+                    "spx": _spx_monthly()},
         "freshness": status(),
         "caveats": [
             "Descriptive: it says how stocks are priced against the T-bond, not what they will earn.",
