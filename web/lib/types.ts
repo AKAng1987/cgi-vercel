@@ -879,6 +879,7 @@ export interface ContextResponse {
   };
   balance_sheet: { regimes: BalanceSheetRegime[]; window_days: number; threshold_pct: number; min_days: number; method: string };
   regime_durations: RegimeDurationsResponse;
+  erp?: ErpBlock;
   joins: {
     inversion_to_drawdown: Record<string, {
       window: string; n_cycles: number; n_matched_to_a_decline: number; n_led_the_peak: number;
@@ -1065,4 +1066,29 @@ export interface RegimeDurationsResponse {
   grid: RegimeDurationLevel;
   combined: RegimeDurationLevel;
   caveat: string;
+}
+
+
+/** Damodaran's implied equity risk premium gauge (api/erp_data.build_erp_block). Descriptive, not a forecast. */
+export interface ErpBlock {
+  available: boolean;
+  why?: string;
+  label: string;
+  source: string;
+  as_of: string;
+  current: { date: string; erp: number; tbond: number; gap: number; expected_return?: number | null; expected_growth?: number | null };
+  since_2008: {
+    n_months: number; first: string; erp_rank_lowest: number; erp_pct_le: number; erp_pct_ge: number; gap_pct_le: number;
+    band: "bottom10" | "top10" | "middle"; median_erp: number;
+    low: { date: string; erp: number }; high: { date: string; erp: number };
+  };
+  last_this_low: { date: string; erp: number; basis: string } | null;
+  dotcom_1999: { erp: number; tbond: number | null; gap: number | null } | null;
+  hy_spread: { bp: number; as_of: string; percentile_since_2008: number; n: number } | null;
+  history: {
+    annual: { d: string; erp: number; tbond: number | null }[];
+    monthly: { d: string; erp: number; tbond: number }[];
+  };
+  freshness: { newest_month: string | null; expected_month: string; behind: boolean };
+  caveats: string[];
 }

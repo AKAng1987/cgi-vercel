@@ -1,4 +1,5 @@
 import { RegimeDurations } from "./RegimeDurations";
+import { ErpGauge } from "./ErpGauge";
 import { BalanceSheetRegime, ContextResponse, DrawdownWindow, InversionRow, RateCycle } from "@/lib/types";
 
 /**
@@ -225,6 +226,8 @@ export function ContextTables({ ctx }: { ctx: ContextResponse }) {
           Computed from held history, not typed in, so these stay current. Every figure carries its n.
         </p>
       </div>
+
+      <ErpGauge e={ctx.erp} />
 
       <RegimeDurations d={ctx.regime_durations} />
 

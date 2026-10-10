@@ -45,10 +45,11 @@ from typing import Optional
 
 import axis_drivers
 import regime_durations
+import erp_data
 
 # See cache.py SCHEMA_FROM_MODULE: bumping this invalidates the cached payload,
 # so a shape change and its version bump are the same edit.
-SCHEMA_VERSION = 2  # 2: regime_durations block
+SCHEMA_VERSION = 3  # 3: erp block (Damodaran implied ERP).  # 2: regime_durations block
 
 # How far either side of an inversion to look for the market top it belongs to.
 # Module-level because joins() needs them too -- they previously lived inside
@@ -581,4 +582,14 @@ def build_context() -> dict:
         "balance_sheet": balance_sheet_regimes(),
         "joins": joins(),
         "regime_durations": regime_durations.build_regime_durations_response(),
+        "erp": _erp_block(),
     }
+
+
+def _erp_block() -> dict:
+    """Additive: the ERP gauge must never take the rest of the Context section down with it."""
+    try:
+        return erp_data.build_erp_block()
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "label": erp_data.LABEL, "source": erp_data.SOURCE,
+                "why": f"could not build: {type(exc).__name__}: {str(exc)[:160]}"}

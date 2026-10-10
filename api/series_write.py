@@ -43,6 +43,9 @@ ALLOWED_EXTERNAL = {
     "ERP_EXPECTED_RET":   ("damodaran", "1M", 0.0, 30.0),   # expected return on stocks
     "ERP_TBOND":          ("damodaran", "1M", 0.0, 20.0),   # the 10y T-bond rate he subtracts
     "ERP_GROWTH":         ("damodaran", "1M", -10.0, 40.0), # expected earnings growth used
+    # His ANNUAL year-end series (histimpl.xlsx), 1961 on: the long view, back through the dot-com years.
+    "ERP_ANNUAL":         ("damodaran", "1Y", 0.0, 25.0),   # implied ERP (FCFE), dated Dec 31
+    "ERP_ANNUAL_TBOND":   ("damodaran", "1Y", 0.0, 20.0),
 }
 
 # symbol -> (source, frequency, min, max, TradingView symbol for the routine)
@@ -256,6 +259,8 @@ def _dependent_cache_keys(symbol: str) -> list[str]:
         keys += ["countries", "liquidity"]
     if symbol.startswith("ISM_") or symbol == "CHALLENGER":
         keys += ["axis_drivers", "brief_daily"]
+    if symbol.startswith("ERP_"):
+        keys += ["context_tables", "brief_daily", "brief_weekly"]
     return sorted(set(keys))
 
 

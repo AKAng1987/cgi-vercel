@@ -676,7 +676,22 @@ def manual_worklist(today: Optional[dt.date] = None) -> dict:
     }
 
 
+def erp_check(today: Optional[dt.date] = None) -> dict:
+    """Damodaran's implied ERP. Triggers its once-a-day sync (the refresh routine reads this page each morning),
+    then reports whether the newest month we hold is the one we should hold by now."""
+    import erp_data
+    try:
+        sync = erp_data.sync_if_due()
+        st = erp_data.status(today)
+    except Exception as exc:  # noqa: BLE001 -- additive; never break the page
+        return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
+    return {**st, "sync": sync, "n_problems": 1 if st["behind"] and not sync.get("ok") else 0,
+            "note": ("behind: he has not posted this month's row yet, or the sync failed"
+                     if st["behind"] else "current")}
+
+
 def build_freshness(today: Optional[dt.date] = None) -> dict:
+    erp = erp_check(today)
     fred = fred_crosscheck(today)
     manual = manual_worklist(today)
     beat = read_heartbeat(today)
@@ -691,9 +706,10 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "feed_integrity": integrity,
         "pipeline_lag": pipeline,
         "referee": ref,
+        "erp": erp,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + ref["n_problems"]),
+                       + pipeline["n_problems"] + ref["n_problems"] + erp["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "
