@@ -49,7 +49,7 @@ import erp_data
 
 # See cache.py SCHEMA_FROM_MODULE: bumping this invalidates the cached payload,
 # so a shape change and its version bump are the same edit.
-SCHEMA_VERSION = 3  # 3: erp block (Damodaran implied ERP).  # 2: regime_durations block
+SCHEMA_VERSION = 4  # 4: erp.history.spx (S&P 500 overlay).  # 3: erp block (Damodaran implied ERP).  # 2: regime_durations block
 
 # How far either side of an inversion to look for the market top it belongs to.
 # Module-level because joins() needs them too -- they previously lived inside
