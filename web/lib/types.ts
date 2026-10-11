@@ -737,6 +737,16 @@ export type RegimeRankRow = {
   edge: number | null;
 };
 
+export type RiskPremiumRow = {
+  code: string;
+  name: string;
+  erp_pct: number;
+  country_premium_pct: number | null;
+  default_spread_pct: number | null;
+  as_of: string;
+  source: string;
+};
+
 export type RegimeCountry = {
   macro?: CountryMacro | null;
   curve?: CountryCurve | null;
@@ -783,6 +793,11 @@ export type RegimeMatrixResponse = {
   countries: RegimeCountry[];
   tide?: { avg_return_pct: number | null; n_countries: number; explanation: string };
   edge_caveat?: string;
+  risk_premium_table?: {
+    rows: RiskPremiumRow[];
+    us: RiskPremiumRow | null;
+    note: string;
+  } | null;
   extra_pairs: RegimeFxCell[];
   fx_convention: string;
   caveat: string;

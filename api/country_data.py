@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 15  # 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
+SCHEMA_VERSION = 16  # 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
 
 BENCH = "SPY"
 
@@ -372,6 +372,9 @@ _BLOCKS_TTL_SECONDS = 6 * 3600.0
 _blocks_cache: dict[str, object] = {"at": 0.0, "data": None}
 
 
+_premiums: dict[str, Optional[dict]] = {}
+
+
 def _risk_premium(code: str) -> Optional[dict]:
     """Damodaran's rating-based country equity risk premium (ctryprem.xlsx), refreshed about twice a year.
     It prices the country's sovereign rating, not its dividends or buybacks. Descriptive; not a forecast."""
@@ -423,7 +426,7 @@ def _country_block(code: str, equity_symbol: Optional[str], currency: Optional[d
             "conditioned on -- that is the US Compass/Grid above." if macro else None
         ),
         "curve": _curve(code, pr),
-        "risk_premium": _risk_premium(code),
+        "risk_premium": _premiums.get(code),
         "market": {
             "etf": _returns(equity_symbol) if equity_symbol else None,
             "fx": _fx(currency["symbol"]) if currency and currency.get("symbol") else None,
@@ -437,6 +440,11 @@ def build_country_blocks(countries: list[dict]) -> dict[str, dict]:
     hit = _blocks_cache["data"]
     if hit is not None and (time.monotonic() - float(_blocks_cache["at"])) < _BLOCKS_TTL_SECONDS:
         return hit  # type: ignore[return-value]
+    # The premium reads are one-row DynamoDB queries; done one after another they add seconds to a cold build.
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        codes = [c["code"] for c in countries] + ["US"]
+        _premiums.update(zip(codes, pool.map(_risk_premium, codes)))
     blocks = {
         c["code"]: _country_block(
             c["code"], (c.get("equity") or {}).get("symbol"), c.get("currency")
@@ -472,6 +480,7 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
         c["macro"] = block.get("macro")
         c["macro_note"] = block.get("macro_note")
         c["curve"] = block.get("curve")
+        c["risk_premium"] = block.get("risk_premium")
         c["market"] = block.get("market")
 
     # The tide: the average across all countries in this regime, so a country's
@@ -500,6 +509,17 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
         "strongest cell in the matrix (+3.55pp over the tide, t=3.05, n=16) and still "
         "does not survive having looked at 250 of them. Treat this tab as monitoring."
     )
+    # Damodaran's premiums side by side, highest first, with the US as the reference row.
+    table = [{"code": c["code"], "name": c["name"], **c["risk_premium"]}
+             for c in matrix["countries"] if c.get("risk_premium")]
+    table.sort(key=lambda r: -r["erp_pct"])
+    us = _premiums.get("US")
+    matrix["risk_premium_table"] = {
+        "rows": table,
+        "us": ({"code": "US", "name": "United States", **us} if us else None),
+        "note": ("Damodaran's rating-based country equity risk premium: it prices each sovereign's credit rating, "
+                 "not its dividends or buybacks. Refreshed about twice a year. Descriptive; not a forecast."),
+    } if table else None
     matrix["schema_version"] = SCHEMA_VERSION
     return matrix
 

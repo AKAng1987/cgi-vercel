@@ -542,6 +542,41 @@ export default async function ForeignPage({
       <Table rows={focus} caption="in the order you asked for" regime={m.regime} />
       <Table rows={rest} caption="the rest of what the backtest already covers" regime={m.regime} />
 
+      {m.risk_premium_table && (
+        <section className="space-y-1">
+          <div className="text-[0.7rem] uppercase tracking-wide text-slate-500">equity risk premium by country</div>
+          <table className="w-full max-w-xl text-left text-[0.72rem]">
+            <thead>
+              <tr className="border-b border-slate-800 text-slate-500">
+                <th className="py-1 pr-3 font-normal">Country</th>
+                <th className="py-1 pr-3 text-right font-normal">Total</th>
+                <th className="py-1 pr-3 text-right font-normal">Country part</th>
+                <th className="py-1 pr-3 text-right font-normal">Default spread</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...m.risk_premium_table.rows, ...(m.risk_premium_table.us ? [m.risk_premium_table.us] : [])]
+                .sort((a, b) => b.erp_pct - a.erp_pct)
+                .map((r) => (
+                  <tr key={r.code} className="border-b border-slate-900">
+                    <td className="py-1 pr-3 text-slate-300">{r.name}</td>
+                    <td className="py-1 pr-3 text-right tabular-nums text-slate-200">{r.erp_pct.toFixed(1)}%</td>
+                    <td className="py-1 pr-3 text-right tabular-nums text-slate-400">
+                      {r.country_premium_pct === null ? "n/a" : `${r.country_premium_pct.toFixed(1)}pp`}
+                    </td>
+                    <td className="py-1 pr-3 text-right tabular-nums text-slate-400">
+                      {r.default_spread_pct === null ? "n/a" : `${r.default_spread_pct.toFixed(1)}%`}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          <p className="text-[0.66rem] text-slate-600">
+            {m.risk_premium_table.note} Source: Damodaran (NYU Stern), as of {m.risk_premium_table.rows[0]?.as_of.slice(0, 7)}.
+          </p>
+        </section>
+      )}
+
       {m.extra_pairs.length > 0 && (
         <section className="space-y-1">
           <div className="text-[0.7rem] uppercase tracking-wide text-slate-500">other currencies</div>
