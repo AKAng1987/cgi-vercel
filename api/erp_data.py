@@ -81,8 +81,33 @@ def sync() -> dict:
             series_write.append(sym, [{"date": d, "value": v} for d, v in new[i:i + series_write.MAX_ROWS]])
         if new:
             written[sym] = len(new)
+    country = sync_country()
+    written.update(country)
     return {"ok": True, "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "written": written,
             "monthly_through": monthly["ERP_T12M"][-1][0]}
+
+
+def sync_country() -> dict[str, int]:
+    """Damodaran's country risk premiums change about twice a year. Dated by the file's Last-Modified header (the
+    sheet's own update cell is stale). Appends only when the file is newer than what we hold; never raises."""
+    try:
+        req = urllib.request.Request(erp_parse.COUNTRY_URL, method="HEAD", headers={"User-Agent": "Mozilla/5.0 (cgi erp sync)"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            lm = r.headers.get("Last-Modified", "")
+        asof = dt.datetime.strptime(lm, "%a, %d %b %Y %H:%M:%S %Z").date().isoformat()
+        have = series_write._last_date("CRP_ERP_PH")
+        if have and have >= asof:
+            return {}
+        rows = erp_parse.parse_country(_download(erp_parse.COUNTRY_URL), asof)
+        out = {}
+        for sym, pts in rows.items():
+            if sym in series_write.ALLOWED_EXTERNAL:
+                series_write.append(sym, [{"date": d, "value": v} for d, v in pts if have is None or d > have])
+                out[sym] = len(pts)
+        return out
+    except Exception:  # noqa: BLE001 -- additive; the ERP sync must not fail because of this
+        _logger.exception("[erp] country sync failed")
+        return {}
 
 
 def sync_if_due() -> dict:

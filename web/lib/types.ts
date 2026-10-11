@@ -740,6 +740,13 @@ export type RegimeRankRow = {
 export type RegimeCountry = {
   macro?: CountryMacro | null;
   curve?: CountryCurve | null;
+  risk_premium?: {
+    erp_pct: number;
+    country_premium_pct: number | null;
+    default_spread_pct: number | null;
+    as_of: string;
+    source: string;
+  } | null;
   macro_note?: string | null;
   market?: {
     etf: TenorReturns | null;

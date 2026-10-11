@@ -146,3 +146,75 @@ def parse_annual(data: bytes, today: dt.date | None = None) -> dict[str, list[tu
     for s in out:
         out[s].sort()
     return out
+
+
+# ── country risk premiums (ctryprem.xlsx, sheet "ERPs by country") ────────────────────────────────────────────────
+COUNTRY_URL = "https://pages.stern.nyu.edu/~adamodar/pc/datasets/ctryprem.xlsx"
+COUNTRY_SHEET = "ERPs by country"
+# CGI country code -> Damodaran's name. The euro area has no single row (it is a bloc), so it is left out on purpose.
+COUNTRY_MAP = {
+    "PH": "Philippines", "CN": "China", "JP": "Japan", "KR": "Korea", "GB": "United Kingdom", "IN": "India",
+    "ID": "Indonesia", "TW": "Taiwan", "HK": "Hong Kong", "SG": "Singapore", "MY": "Malaysia", "VN": "Vietnam",
+    "AU": "Australia", "CA": "Canada", "CH": "Switzerland", "BR": "Brazil", "MX": "Mexico", "ZA": "South Africa",
+    "US": "United States",
+}
+# series prefix -> (exact header text, min, max); fractions are converted to percent
+COUNTRY_COLS = {
+    "CRP_ERP":    ("Total Equity Risk Premium", 0.0, 40.0),
+    "CRP_PREM":   ("Country Risk Premium", 0.0, 40.0),
+    "CRP_SPREAD": ("Rating-based Default Spread", 0.0, 40.0),
+}
+
+
+def _sheet_by_name(z: zipfile.ZipFile, name: str) -> list[dict]:
+    wb = ET.fromstring(z.read("xl/workbook.xml"))
+    sh = next((s for s in wb.iter("{%s}sheet" % _NS["m"]) if (s.get("name") or "").strip() == name), None)
+    if sh is None:
+        raise ValueError(f"layout changed: sheet {name!r} not found")
+    rels = ET.fromstring(z.read("xl/_rels/workbook.xml.rels"))
+    target = next(r.get("Target") for r in rels if r.get("Id") == sh.get("{%s}id" % _NS["r"]))
+    path = target.lstrip("/") if target.startswith("/") else "xl/" + target
+    ss = ["".join(t.itertext()) for t in ET.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", _NS)]
+    rows = []
+    for r in ET.fromstring(z.read(path)).iter("{%s}row" % _NS["m"]):
+        cells = {}
+        for c in r.findall("m:c", _NS):
+            v = c.find("m:v", _NS)
+            if v is not None:
+                cells[re.match(r"[A-Z]+", c.get("r")).group(0)] = ss[int(v.text)] if c.get("t") == "s" else v.text
+        rows.append(cells)
+    return rows
+
+
+def parse_country(data: bytes, asof: str) -> dict[str, list[tuple[str, float]]]:
+    """{'CRP_ERP_PH': [(asof, 6.69)], ...} for CGI's countries. `asof` (ISO date) is the file's last-modified date:
+    the sheet's own "date of update" cell is stale (it still reads 2021)."""
+    rows = _sheet_by_name(_open(data), COUNTRY_SHEET)
+    hi = next((i for i, r in enumerate(rows) if (r.get("A") or "").strip() == "Country"), None)
+    if hi is None:
+        raise ValueError("layout changed: header row 'Country' not found")
+    header = rows[hi]
+    by_text: dict[str, str] = {}
+    for col, text in header.items():
+        by_text.setdefault((text or "").strip(), col)     # first match: the later "...2" columns are the CDS version
+    cols = {}
+    for pre, (text, _lo, _hi) in COUNTRY_COLS.items():
+        if text not in by_text:
+            raise ValueError(f"layout changed: column {text!r} not found in the header row")
+        cols[pre] = by_text[text]
+    byname = {(r.get("A") or "").strip(): r for r in rows[hi + 1:]}
+    out: dict[str, list[tuple[str, float]]] = {}
+    for code, name in COUNTRY_MAP.items():
+        row = byname.get(name)
+        if row is None:
+            raise ValueError(f"layout changed: country {name!r} not found")
+        for pre, col in cols.items():
+            v = _num(row.get(col))
+            if v is None:
+                continue
+            v *= 100.0
+            _t, lo, hi_ = COUNTRY_COLS[pre]
+            if not (lo <= v <= hi_):
+                raise ValueError(f"{pre}_{code}: {v} outside {lo}..{hi_}")
+            out[f"{pre}_{code}"] = [(asof, round(v, 4))]
+    return out

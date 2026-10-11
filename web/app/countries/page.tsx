@@ -222,6 +222,16 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
               </div>
             )}
             <Curve cv={c.curve} />
+            {c.risk_premium && (
+              <div className="text-[0.66rem]" title={c.risk_premium.source}>
+                <span className="text-slate-500">Equity risk premium </span>
+                <span className="tabular-nums text-slate-300">{c.risk_premium.erp_pct.toFixed(1)}%</span>
+                {c.risk_premium.country_premium_pct !== null && (
+                  <span className="text-slate-500"> (country part {c.risk_premium.country_premium_pct.toFixed(1)}pp)</span>
+                )}
+                <span className="text-slate-600"> · Damodaran, {c.risk_premium.as_of.slice(0, 7)}</span>
+              </div>
+            )}
           </div>
         ) : (
           <span className="text-slate-600">not onboarded</span>

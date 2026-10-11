@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 14  # 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
+SCHEMA_VERSION = 15  # 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
 
 BENCH = "SPY"
 
@@ -372,6 +372,19 @@ _BLOCKS_TTL_SECONDS = 6 * 3600.0
 _blocks_cache: dict[str, object] = {"at": 0.0, "data": None}
 
 
+def _risk_premium(code: str) -> Optional[dict]:
+    """Damodaran's rating-based country equity risk premium (ctryprem.xlsx), refreshed about twice a year.
+    It prices the country's sovereign rating, not its dividends or buybacks. Descriptive; not a forecast."""
+    d, v = _load(f"CRP_ERP_{code}")
+    if not d:
+        return None
+    _pd, pv = _load(f"CRP_PREM_{code}")
+    _sd, sv = _load(f"CRP_SPREAD_{code}")
+    return {"erp_pct": round(v[-1], 2), "country_premium_pct": round(pv[-1], 2) if pv else None,
+            "default_spread_pct": round(sv[-1], 2) if sv else None, "as_of": d[-1],
+            "source": "Damodaran (NYU Stern), rating-based; not a forecast"}
+
+
 def _country_block(code: str, equity_symbol: Optional[str], currency: Optional[dict]) -> dict:
     """The regime-independent half: this country's own conditions and its
     instruments' live returns."""
@@ -410,6 +423,7 @@ def _country_block(code: str, equity_symbol: Optional[str], currency: Optional[d
             "conditioned on -- that is the US Compass/Grid above." if macro else None
         ),
         "curve": _curve(code, pr),
+        "risk_premium": _risk_premium(code),
         "market": {
             "etf": _returns(equity_symbol) if equity_symbol else None,
             "fx": _fx(currency["symbol"]) if currency and currency.get("symbol") else None,

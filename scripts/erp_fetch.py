@@ -83,8 +83,11 @@ def main() -> int:
             print(f"{k}: file last-modified {lm}; stored {seen.get(k)} -> {'CHANGED' if lm != seen.get(k) else 'unchanged'}")
         return 0
     mod = {k: fetch(u, "HEAD").headers.get("Last-Modified", "") for k, u in urls.items()}
+    lm = fetch(erp_parse.COUNTRY_URL, "HEAD").headers.get("Last-Modified", "")
+    asof = dt.datetime.strptime(lm, "%a, %d %b %Y %H:%M:%S %Z").date().isoformat()   # the sheet's own date cell is stale
     series = {**erp_parse.parse_monthly(fetch(urls["monthly"]).read(erp_parse.MAX_BYTES + 1)),
-              **erp_parse.parse_annual(fetch(urls["annual"]).read(erp_parse.MAX_BYTES + 1))}
+              **erp_parse.parse_annual(fetch(urls["annual"]).read(erp_parse.MAX_BYTES + 1)),
+              **erp_parse.parse_country(fetch(erp_parse.COUNTRY_URL).read(erp_parse.MAX_BYTES + 1), asof)}
     for sym, rows in series.items():
         print(f"  {sym:18} {len(rows):4} rows  {rows[0][0]} -> {rows[-1][0]}  latest {rows[-1][1]}")
     if a.dry_run:

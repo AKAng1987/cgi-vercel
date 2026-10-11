@@ -48,6 +48,15 @@ ALLOWED_EXTERNAL = {
     "ERP_ANNUAL_TBOND":   ("damodaran", "1Y", 0.0, 20.0),
 }
 
+# Damodaran's country risk premiums (ctryprem.xlsx): three figures per CGI country, one dated point per file update
+# (January and July). CRP_ERP total equity risk premium, CRP_PREM the country part of it, CRP_SPREAD the rating-based
+# default spread, all in percent.
+import erp_parse as _erp_parse  # noqa: E402  (stdlib only)
+for _pre in _erp_parse.COUNTRY_COLS:
+    for _cc in _erp_parse.COUNTRY_MAP:
+        ALLOWED_EXTERNAL[f"{_pre}_{_cc}"] = ("damodaran", "6M", 0.0, 40.0)
+
+
 # symbol -> (source, frequency, min, max, TradingView symbol for the routine)
 ALLOWED = {
     "ISM_MFG_PRICES":   ("tradingview", "1M", 0.0, 100.0, "ECONOMICS:USMPR"),
@@ -261,6 +270,8 @@ def _dependent_cache_keys(symbol: str) -> list[str]:
         keys += ["axis_drivers", "brief_daily"]
     if symbol.startswith("ERP_"):
         keys += ["context_tables", "brief_daily", "brief_weekly"]
+    if symbol.startswith("CRP_"):
+        keys += ["countries"]
     return sorted(set(keys))
 
 
