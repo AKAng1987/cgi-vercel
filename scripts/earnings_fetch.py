@@ -25,7 +25,9 @@ OUT = pathlib.Path("~/.cgi/earnings").expanduser()
 UNIVERSE = pathlib.Path("~/.cgi/earnings_universe.json").expanduser()
 STATE = OUT / "state.json"
 UA = "CGI macro-regime research (ang.arvin@ymail.com)"          # same contact line as api/sec_xbrl.py
-MEGA = ["AAPL", "TSLA", "ORCL", "ADBE", "NFLX", "QCOM", "TXN", "AMAT", "LRCX", "KLAC", "TSM", "ASML", "V", "MA", "GS", "MS"]
+BANKS = ["JPM", "BAC", "WFC", "C", "GS", "MS", "USB", "PNC", "TFC", "SCHW", "COF", "AXP", "BK", "STT", "ALLY"]
+NEO_CLOUD = ["CRWV", "NBIS", "IREN", "ORCL", "SNOW", "MDB", "NET", "DOCN", "TEAM", "WDAY", "ADBE", "INTU", "SHOP", "NOW", "CRM"]
+MEGA = BANKS + NEO_CLOUD + ["AAPL", "TSLA", "ORCL", "ADBE", "NFLX", "QCOM", "TXN", "AMAT", "LRCX", "KLAC", "TSM", "ASML", "V", "MA", "GS", "MS"]
 MAX_TEXT = 120_000          # characters kept per document
 
 
@@ -46,6 +48,29 @@ def seed_universe() -> list[str]:
             for v in ast.literal_eval(re.sub(r"#[^\n]*", "", m.group(1))).values():
                 tickers += v
     return sorted(set(tickers + MEGA))
+
+
+# Names that companies use for each other in their releases, for the "who mentions whom" read (zero tokens).
+ALIASES = {"CoreWeave": "CRWV", "Nebius": "NBIS", "Oracle": "ORCL", "OpenAI": "private", "Anthropic": "private",
+           "Microsoft": "MSFT", "Azure": "MSFT", "AWS": "AMZN", "Amazon": "AMZN", "Google": "GOOGL", "Meta": "META",
+           "NVIDIA": "NVDA", "TSMC": "TSM", "Micron": "MU", "Snowflake": "SNOW", "Salesforce": "CRM", "Databricks": "private",
+           "ServiceNow": "NOW", "Broadcom": "AVGO", "AMD": "AMD", "Intel": "INTC"}
+
+
+def mentions() -> int:
+    """Which saved release mentions which other company, with the sentence. Run after a fetch."""
+    rows = []
+    for f in sorted(OUT.glob("*.txt")):
+        me = f.name.split("-")[0]
+        body = f.read_text().split("\n\n", 1)[-1]
+        for sent in re.split(r"(?<=[.!?])\s+|\n+", body):
+            if not 40 < len(sent) < 450:
+                continue
+            for name, tk in ALIASES.items():
+                if tk != me and re.search(rf"\b{name}\b", sent):
+                    rows.append({"filer": me, "mentions": name, "ticker": tk, "file": f.name, "sentence": sent.strip()})
+    print(json.dumps(rows, indent=1))
+    return 0
 
 
 def universe() -> list[str]:
@@ -101,7 +126,10 @@ def main() -> int:
     ap.add_argument("--since")
     ap.add_argument("--tickers")
     ap.add_argument("--universe", action="store_true")
+    ap.add_argument("--mentions", action="store_true", help="read the saved releases and list who mentions whom")
     a = ap.parse_args()
+    if a.mentions:
+        return mentions()
     tickers = [t.strip().upper() for t in a.tickers.split(",")] if a.tickers else universe()
     ciks = cik_map()
     if a.universe:
