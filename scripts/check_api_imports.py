@@ -142,6 +142,26 @@ if not ({p["check"] for p in _frozen["problems"]} == {"workbook_behind_prices"} 
 print("OK: pipeline-lag detector flags a workbook behind prices and a stalled close, and passes an in-step pipeline")
 
 
+# Peer-lag guard. Replays 2026-10-13: SPY and most ETFs on the 12 Oct close, MAGS and UUP (Yahoo ETFs) still on 9 Oct,
+# the Yahoo futures also on 9 Oct. The two ETFs must be flagged; the futures (a session behind by design), a retired
+# ticker and a source we do not judge here must not be; agreement must pass.
+_rows = {
+    "SPY": {"date": "2026-10-12", "source": "marketstack", "source_symbol": "SPY"},
+    "XLE": {"date": "2026-10-12", "source": "marketstack", "source_symbol": "XLE"},
+    "MAGS": {"date": "2026-10-09", "source": "yahoo_finance", "source_symbol": "MAGS"},
+    "UUP": {"date": "2026-10-09", "source": "yahoo_finance", "source_symbol": "UUP"},
+    "COPPER": {"date": "2026-10-09", "source": "yahoo_finance", "source_symbol": "HG=F"},
+    "PBS": {"date": "2023-09-13", "source": "marketstack", "source_symbol": "PBS"},
+    "ISM": {"date": "2026-09-01", "source": "tradingview", "source_symbol": "ISM"},
+}
+_peer = _fr.peer_problems(_rows, "2026-10-12", frozenset({"PBS"}))
+_peer_ok = _fr.peer_problems({k: {**v, "date": "2026-10-12"} for k, v in _rows.items()}, "2026-10-12", frozenset({"PBS"}))
+if not ([p["symbol"] for p in _peer["problems"]] == ["MAGS", "UUP"] and _peer_ok["n_problems"] == 0):
+    print(f"FAIL: peer-lag guard is wrong: {_peer} {_peer_ok}")
+    sys.exit(1)
+print("OK: peer-lag guard flags a Yahoo ETF a bar behind SPY and passes futures, retired names and agreement")
+
+
 # Fifth guard: the referee. Replays Oct 2026: RUT stored to Oct 2 while TradingView had Oct 5 and Oct 6, and a
 # futures close stored two hours into the next session (90.79 vs a 91.11 settlement). Must flag both, and pass
 # agreeing feeds, a futures bar still in progress, and the 10y's few-bp Treasury-vs-traded gap.

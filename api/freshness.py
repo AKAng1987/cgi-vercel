@@ -439,12 +439,13 @@ def integrity_problems(registry: list[dict], allowed: set[str], universe: list[s
 
 
 def _registry() -> list[dict]:
-    rows, kw = [], dict(TableName=METRICS_TABLE, ProjectionExpression="#src, #sym, source_symbol",
+    rows, kw = [], dict(TableName=METRICS_TABLE, ProjectionExpression="#src, #sym, source_symbol, frequency",
                         ExpressionAttributeNames={"#src": "source", "#sym": "symbol"})
     while True:
         page = _ddb.scan(**kw)
         rows += [{"source": i["source"]["S"], "symbol": i["symbol"]["S"],
-                  "source_symbol": i.get("source_symbol", {}).get("S")} for i in page["Items"]]
+                  "source_symbol": i.get("source_symbol", {}).get("S"),
+                  "frequency": i.get("frequency", {}).get("S")} for i in page["Items"]]
         if "LastEvaluatedKey" not in page:
             return rows
         kw["ExclusiveStartKey"] = page["LastEvaluatedKey"]
@@ -520,6 +521,54 @@ def pipeline_lag(today: Optional[dt.date] = None) -> dict:
         _logger.exception("[freshness] pipeline_lag could not run")
         return {"problems": [], "n_problems": 1, "error": f"{type(exc).__name__}: {exc}"}
 
+
+
+# Peer lag: one series a bar behind the rest.
+#
+# 2026-10-13: MAGS, UUP and the Yahoo futures sat on the 9 Oct close while the other 167 daily series held 12 Oct.
+# Every check above compares against a calendar or a benchmark trio, so a single series one bar behind passed, and
+# the Themes table aged MAGS at 43 days beside legs at 46. This compares each daily series with SPY's newest bar.
+# Futures (Yahoo "=F") are one session behind BY DESIGN -- the updater only stores a futures bar once its ET day
+# has ended -- so they are exempt. Names behind by more than STALLED_SESSIONS belong to the stalled check.
+PEER_SOURCES = ("marketstack", "yahoo_finance", "alpha_vantage")
+
+
+def peer_problems(rows: dict[str, dict], benchmark_date: Optional[str], retired: frozenset = frozenset()) -> dict:
+    """Pure core: {symbol: {date, source, source_symbol}} for the daily series -> those a session or more behind SPY."""
+    if not benchmark_date:
+        return {"problems": [{"symbol": "SPY", "detail": "no benchmark close to compare against"}], "n_problems": 1,
+                "checked": 0, "benchmark_date": None}
+    bench = dt.date.fromisoformat(benchmark_date)
+    problems, checked = [], 0
+    for sym, r in sorted(rows.items()):
+        if sym in retired or r.get("source") not in PEER_SOURCES or (r.get("source_symbol") or "").endswith("=F"):
+            continue
+        checked += 1
+        if r["date"] >= benchmark_date:
+            continue
+        behind = _sessions_since(r["date"], bench)
+        if 1 <= behind <= STALLED_SESSIONS:
+            problems.append({"symbol": sym, "detail": f"newest {r['date']} is {behind} session(s) behind SPY ({benchmark_date})",
+                             "source": r["source"]})
+    return {"problems": problems, "n_problems": len(problems), "checked": checked, "benchmark_date": benchmark_date}
+
+
+def peer_lag(today: Optional[dt.date] = None) -> dict:
+    """I/O wrapper; a check that cannot run reports itself as a problem."""
+    try:
+        import dashboard_data as dd
+        from concurrent.futures import ThreadPoolExecutor
+        reg = [r for r in _registry() if r.get("frequency") == "1D" and r["source"] in PEER_SOURCES]
+        syms = [r["symbol"] for r in reg]
+        with ThreadPoolExecutor(16) as ex:
+            last = dict(zip(syms, ex.map(_last_row, syms)))
+        rows = {r["symbol"]: {**last[r["symbol"]], "source_symbol": r.get("source_symbol")}
+                for r in reg if last.get(r["symbol"])}
+        spy = (_last_row("SPY") or {}).get("date")
+        return peer_problems(rows, spy, frozenset(dd.RETIRED_TICKERS))
+    except Exception as exc:  # noqa: BLE001
+        _logger.exception("[freshness] peer_lag could not run")
+        return {"problems": [], "n_problems": 1, "checked": 0, "error": f"{type(exc).__name__}: {exc}"}
 
 
 # The referee: an independent second source for a handful of benchmarks.
@@ -697,6 +746,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     beat = read_heartbeat(today)
     integrity = feed_integrity(today)
     pipeline = pipeline_lag(today)
+    peers = peer_lag(today)
     ref = referee(beat.pop("referee_bars", None), today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
@@ -705,11 +755,12 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "refresh_routine": beat,
         "feed_integrity": integrity,
         "pipeline_lag": pipeline,
+        "peer_lag": peers,
         "referee": ref,
         "erp": erp,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + ref["n_problems"] + erp["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + ref["n_problems"] + erp["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "
