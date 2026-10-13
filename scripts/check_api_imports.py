@@ -159,7 +159,14 @@ _peer_ok = _fr.peer_problems({k: {**v, "date": "2026-10-12"} for k, v in _rows.i
 if not ([p["symbol"] for p in _peer["problems"]] == ["MAGS", "UUP"] and _peer_ok["n_problems"] == 0):
     print(f"FAIL: peer-lag guard is wrong: {_peer} {_peer_ok}")
     sys.exit(1)
-print("OK: peer-lag guard flags a Yahoo ETF a bar behind SPY and passes futures, retired names and agreement")
+_bond = _fr.peer_problems({"SPY": {"date": "2026-10-12", "source": "marketstack", "source_symbol": "SPY"},
+                           "MOVE": {"date": "2026-10-09", "source": "yahoo_finance", "source_symbol": "^MOVE"}}, "2026-10-12")
+_bond_late = _fr.peer_problems({"SPY": {"date": "2026-10-14", "source": "marketstack", "source_symbol": "SPY"},
+                                "MOVE": {"date": "2026-10-09", "source": "yahoo_finance", "source_symbol": "^MOVE"}}, "2026-10-14")
+if _bond["n_problems"] != 0 or [p["symbol"] for p in _bond_late["problems"]] != ["MOVE"]:
+    print(f"FAIL: peer-lag guard mishandles the bond-market holiday: {_bond} {_bond_late}")
+    sys.exit(1)
+print("OK: peer-lag guard flags a Yahoo ETF a bar behind SPY and passes futures, retired names, agreement and the bond-market holiday")
 
 
 # Fifth guard: the referee. Replays Oct 2026: RUT stored to Oct 2 while TradingView had Oct 5 and Oct 6, and a

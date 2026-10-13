@@ -531,6 +531,13 @@ def pipeline_lag(today: Optional[dt.date] = None) -> dict:
 # Futures (Yahoo "=F") are one session behind BY DESIGN -- the updater only stores a futures bar once its ET day
 # has ended -- so they are exempt. Names behind by more than STALLED_SESSIONS belong to the stalled check.
 PEER_SOURCES = ("marketstack", "yahoo_finance", "alpha_vantage")
+# Series that follow the US BOND market. It is shut on Columbus Day (2nd Monday of October) and Veterans Day (11 Nov)
+# while stocks trade, so MOVE has no bar on those days and must not be called behind SPY (2026-10-12 was the first case).
+BOND_ONLY = frozenset({"MOVE"})
+
+
+def _bond_holiday(d: dt.date) -> bool:
+    return (d.month == 10 and d.weekday() == 0 and 8 <= d.day <= 14) or (d.month == 11 and d.day == 11)
 
 
 def peer_problems(rows: dict[str, dict], benchmark_date: Optional[str], retired: frozenset = frozenset()) -> dict:
@@ -544,9 +551,12 @@ def peer_problems(rows: dict[str, dict], benchmark_date: Optional[str], retired:
         if sym in retired or r.get("source") not in PEER_SOURCES or (r.get("source_symbol") or "").endswith("=F"):
             continue
         checked += 1
-        if r["date"] >= benchmark_date:
+        ref = bench
+        while sym in BOND_ONLY and (_bond_holiday(ref) or ref.weekday() >= 5):
+            ref -= dt.timedelta(days=1)          # compare with the last day the bond market was open
+        if r["date"] >= ref.isoformat():
             continue
-        behind = _sessions_since(r["date"], bench)
+        behind = _sessions_since(r["date"], ref)
         if 1 <= behind <= STALLED_SESSIONS:
             problems.append({"symbol": sym, "detail": f"newest {r['date']} is {behind} session(s) behind SPY ({benchmark_date})",
                              "source": r["source"]})
