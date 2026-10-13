@@ -229,6 +229,13 @@ export function ThemesHistory() {
         <span>blank = no active run</span>
       </div>
 
+      <details className="mt-4">
+        <summary className="cursor-pointer text-[0.7rem] text-slate-500 hover:text-slate-300">
+          Show the full month-by-theme history (all {snaps.length} months)
+        </summary>
+        <FullGrid />
+      </details>
+
       <p className="mt-3 max-w-3xl text-[0.65rem] leading-relaxed text-slate-600">
         Reconstructed with today&rsquo;s theme legs (extended 2026-10-09), so this is not a stored copy of what CGI
         showed then. A run starts where the current stretch above its 200-day relative-strength trend began, with
@@ -240,5 +247,60 @@ export function ThemesHistory() {
         edge. Generated {history.generated_at.slice(0, 10)} by scripts/themes_history_report.py.
       </p>
     </section>
+  );
+}
+
+/** The original full grid, kept behind a disclosure until the per-month view is trusted enough to delete it. */
+function FullGrid() {
+  const by = new Map<string, Map<string, Row>>();
+  for (const s of snaps) {
+    for (const r of s.t) {
+      if (!by.has(r[0])) by.set(r[0], new Map());
+      by.get(r[0])!.set(s.d, r);
+    }
+  }
+  const names = [...by.keys()].sort((a, b) => by.get(b)!.size - by.get(a)!.size || a.localeCompare(b));
+  return (
+    <div className="mt-2 overflow-x-auto rounded border border-slate-800">
+      <table className="border-collapse text-[0.65rem]">
+        <thead>
+          <tr className="bg-slate-900 text-slate-500">
+            <th className="sticky left-0 z-10 bg-slate-900 px-2 py-1 text-left font-medium">Theme</th>
+            {snaps.map((s, i) => {
+              const y = s.d.slice(0, 4);
+              const showYear = i === 0 || y !== snaps[i - 1].d.slice(0, 4);
+              return (
+                <th key={s.d} className="px-0 py-1 text-center font-normal" title={s.d}>
+                  <div className="h-3 whitespace-nowrap text-left text-[0.6rem] text-slate-400">{showYear ? y : ""}</div>
+                  <div className="text-[0.55rem] text-slate-600">{MONTHS[monthOf(s.d)][0]}</div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {names.map((n) => (
+            <tr key={n} className="border-t border-slate-800">
+              <td className="sticky left-0 z-10 whitespace-nowrap bg-slate-950 px-2 py-0.5 text-slate-300">{n}</td>
+              {snaps.map((s) => {
+                const r = by.get(n)!.get(s.d);
+                return (
+                  <td key={s.d} className="p-px">
+                    {r ? (
+                      <div
+                        className={`h-4 w-[18px] rounded-sm ${STAGE_BG[r[1]] ?? "bg-slate-700"}`}
+                        title={`${n}: ${r[1]} ${r[2]}, ${r[3]}d, lead ${r[4]} (as of ${s.d})`}
+                      />
+                    ) : (
+                      <div className="h-4 w-[18px]" />
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
