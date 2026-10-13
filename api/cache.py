@@ -51,7 +51,7 @@ TTL_HOURS: dict[str, float] = {
     "policy_watch": 6.0,  # central bank feeds; 6h so an announcement lands same-day
     "cot": 12.0,  # COT publishes Friday 15:30 ET; 12h keeps it fresh without hammering CFTC
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
-    "themes": 24.0,  # LIVE brief: theme onset/age from RS persistence
+    "themes": 6.0,  # LIVE brief: theme onset/age from RS persistence
     "sec_exchanges": 168.0,  # SEC ticker -> exchange, for TradingView symbols; listings change slowly
     "watchlists": 34.0,  # TradingView list contents for the cloud routine
     "mixture": 6.0,  # probability-weighted returns across now / if-next-flips; moves with p_flip
@@ -148,7 +148,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "policy_watch": 1,
     "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
-    "themes": 7,  # 2026-10-09b: ARKW cloud -> innovation (cross-theme duplicate).  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
+    "themes": 8,  # 2026-10-13: TTL 24h -> 6h so the table follows the daily price load.  # 2026-10-09b: ARKW cloud -> innovation (cross-theme duplicate).  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
     "watchlists": 9,  # 2026-10-09: 27 theme-leg ETFs joined the universe.  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 3,  # 2026-10-09: new theme legs.  # 2026-09-25: MOO for agriculture + unreachable fall-through
