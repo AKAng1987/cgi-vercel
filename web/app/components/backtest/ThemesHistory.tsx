@@ -104,7 +104,9 @@ export function ThemesHistory() {
         Reconstructed with today&rsquo;s theme legs (extended 2026-10-09), so this is not a stored copy of what CGI
         showed then. Stage cut-offs (51 and 137 days) and the megatrend rule (over 365 days) were measured on the
         full history, so older columns are slightly flattered by hindsight. Prices are loaded from{" "}
-        {history.load_from}, so a run&rsquo;s age is capped by how far back that goes. Discovery only, not an edge.
+        {history.load_from}, so a run&rsquo;s age is capped by how far back that goes. A theme can only appear once
+        one of its ETFs has 400 days of history, so the earliest columns can include only themes whose ETFs already
+        existed. Discovery only, not an edge.
         Generated {history.generated_at.slice(0, 10)} by scripts/themes_history_report.py.
       </p>
     </section>
