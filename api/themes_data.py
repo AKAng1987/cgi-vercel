@@ -10,11 +10,16 @@ This module does the *discovery* half mechanically. For each theme proxy:
 
   RS          = ticker / SPY
   trend       = 200-day EMA of RS
-  onset       = the start of the current run -- the earliest day from which
-                RS has stayed above its trend on at least 80% of days since
-                (a strict "every day above" test would restart the clock on
-                every one-day dip, which is how you end up calling a mature
-                theme "new")
+  onset       = the start of the current MERGED run: walk back from today, and
+                a stretch below trend shorter than MERGE_DAYS (15 calendar
+                days) is merged into the run; a longer one ends it. The first
+                200 bars are never used (EMA warm-up). This is the definition
+                the stage cut-offs and the survival curve are measured on.
+                (Until 2026-10-14 the onset was "the earliest day from which RS
+                stayed above trend on >= 80% of days since", which broke at
+                the first violation: with a 2-3 day window beside a dip the
+                share fell under 80% and a 500-day run read "1 day old" for a
+                month, then snapped back. EWY: 503, 1, 578.)
   age         = days since onset, which is what tells you whether a theme
                 has runway left or is already consensus
 
@@ -33,7 +38,7 @@ import axis_drivers as ad
 
 BENCH = "SPY"
 TREND_DAYS = 200
-PERSISTENCE = 0.80     # share of days since onset that RS must be above trend
+MERGE_DAYS = 15        # a dip below trend shorter than this (calendar days) does not end a run
 MIN_HISTORY = 400
 
 # Megatrends are structurally different from rotations: multi-year secular
@@ -249,10 +254,18 @@ def _standing() -> list[dict]:
 # Stages are terciles of the real distribution; survival answers the question
 # that actually matters -- not how old a run is, but how much runway runs of
 # that age have historically had left.
-STAGE_EARLY, STAGE_MID = 51, 137          # tercile boundaries, days
-SURVIVAL = [(6, 1.00), (33, 0.83), (43, 0.73), (50, 0.67), (68, 0.55), (89, 0.46),
-            (100, 0.42), (117, 0.39), (162, 0.28), (328, 0.10), (433, 0.04),
-            (506, 0.03), (644, 0.02), (1333, 0.00)]
+#
+# RE-MEASURED 2026-10-14 on the detector's current run definition (RS above its 200d trend, dips under 15 calendar days
+# merged, runs under 20 days dropped, first 200 bars skipped), over the same 59 proxies and prices to 2026-09-24:
+# 898 completed runs (23 still running, 2.5%, so censoring barely moves it; the Kaplan-Meier curve agrees with the
+# simple share), median 89.5d, mean 157d, p75 205d, p90 371d; terciles 55 / 152. In-sample, like the first
+# measurement. The first measurement (727 runs, median 82, mean 138, terciles 51 / 137) could not be reproduced from
+# its description -- its harness was not kept -- so the cut-offs now come from a harness that is kept
+# (research/theme_runs/measure.py) and from the SAME definition the live onset uses.
+STAGE_EARLY, STAGE_MID = 55, 152          # tercile boundaries, days
+SURVIVAL = [(6, 1.00), (33, 0.84), (43, 0.76), (55, 0.67), (68, 0.60), (89, 0.51),
+            (117, 0.42), (152, 0.34), (200, 0.27), (262, 0.19), (328, 0.13), (433, 0.09),
+            (520, 0.04), (650, 0.02), (1000, 0.00)]
 
 
 def _stage(age: int) -> str:
@@ -303,13 +316,23 @@ def _run(px: dict[str, float], bench: dict[str, float]) -> dict:
         return {"status": "no active run", "last_above": since, "as_of": d[-1],
                 "rs_vs_trend_pct": round((rs[-1] / trend[-1] - 1) * 100, 1)}
 
+    # Walk back over merged stretches. `i` is the first bar of the current stretch above trend; look for the previous
+    # above-trend bar before the dip; merge when the dip is shorter than MERGE_DAYS, otherwise the run starts at `i`.
     start = len(d) - 1
+    while start > TREND_DAYS and above[start - 1]:
+        start -= 1
     while start > TREND_DAYS:
-        seg = above[start - 1:]
-        if sum(seg) / len(seg) >= PERSISTENCE:
-            start -= 1
-        else:
+        k = start - 1
+        while k >= TREND_DAYS and not above[k]:
+            k -= 1
+        if k < TREND_DAYS:
+            break                                    # nothing above trend after the EMA warm-up: the run starts here
+        dip = (dt.date.fromisoformat(d[start]) - dt.date.fromisoformat(d[k])).days
+        if dip >= MERGE_DAYS:
             break
+        start = k
+        while start > TREND_DAYS and above[start - 1]:
+            start -= 1
     age = (dt.date.fromisoformat(d[-1]) - dt.date.fromisoformat(d[start])).days
     seg = above[start:]
     return {
@@ -357,10 +380,10 @@ def build_themes_response() -> dict:
         "as_of": max(bench) if bench else None,
         "benchmark": BENCH,
         "method": (f"RS = ticker/{BENCH}; trend = {TREND_DAYS}d EMA of RS; onset = earliest day "
-                   f"from which RS stayed above trend on >= {int(PERSISTENCE * 100)}% of days since."),
+                   f"of the current run, where a dip below trend shorter than {MERGE_DAYS} calendar days is merged into the run."),
         "megatrend_days": MEGATREND_DAYS,
-        "run_stats": {"n_runs": 727, "median_days": 82, "mean_days": 138,
-                      "p75_days": 182, "p90_days": 328, "measured_on": "2026-09-24"},
+        "run_stats": {"n_runs": 898, "median_days": 90, "mean_days": 157,
+                      "p75_days": 205, "p90_days": 371, "measured_on": "2026-10-14"},
         "note": ("Discovery only. Promotion to a standing theme is a monthly human decision; "
                  "once promoted a theme is held for its horizon rather than re-decided daily."),
         "standing": _standing(),

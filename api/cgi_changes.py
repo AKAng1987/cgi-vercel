@@ -8,7 +8,7 @@ not a judgement made here. Every event below is a rule that already exists
 somewhere in CGI, written down before today:
 
   compass / grid flip      the pre-registered Markov event log
-  theme onset / end        themes_data's 80%-persistence run definition
+  theme onset / end        themes_data's merged-run definition (dips under 15 days merged)
   standing exit rule       the exit conditions the USER wrote, in STANDING
   breadth colour / cross   the user's own CONSEC=3 and 8/20 rules
   COT extreme              cot_data's 10 / 90 bands
@@ -54,7 +54,7 @@ RATES: dict[str, tuple[Optional[float], bool]] = {
     "regime_flip_compass": (2.5, True),
     "standing_exit_touched": (3.0, True),      # by construction, rare
     "regime_flip_grid": (8.9, True),
-    "theme_onset": (36.0, True),               # ~727 runs / 20y across all proxies
+    "theme_onset": (36.0, True),               # ~898 runs / ~25y across 59 proxies (re-measured 2026-10-14; was 727)
     "fundamentals_surprise": (26.0, True),     # p95 of 4,545 company-quarters
     "cot_extreme": (40.0, True),
     "theme_end": (36.0, False),

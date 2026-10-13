@@ -36,7 +36,7 @@ export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats
             <th className="px-2 py-1 text-left font-normal">stage</th>
             <th className="px-2 py-1 text-left font-normal">started</th>
             <th className="px-2 py-1 text-right font-normal">age</th>
-            <th className="px-2 py-1 text-right font-normal" title="share of 727 historical runs that lasted longer than this one has">runway</th>
+            <th className="px-2 py-1 text-right font-normal" title={`share of ${runStats?.n_runs ?? ""} historical runs that lasted longer than this one has`}>runway</th>
             <th className="px-2 py-1 text-right font-normal">RS</th>
             <th className="px-2 py-1 text-right font-normal">price</th>
             <th className="px-2 py-1 text-left font-normal">legs running</th>

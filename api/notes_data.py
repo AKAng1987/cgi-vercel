@@ -176,6 +176,15 @@ FINDINGS: list[dict] = [
         "source": "30/70 threshold run",
     },
     {
+        "date": "2026-10-14", "scope": "global",
+        "title": "Theme onset fixed; runs re-measured: median 90 days",
+        "body": ("A theme's age no longer snaps back to 1 day after a one-day dip: a run now starts at the current stretch "
+                 "above its 200-day relative-strength trend, with dips under 15 calendar days merged. Re-measured on that "
+                 "definition: 898 completed runs, median 90d, mean 157d, p75 205d, p90 371d; stage cut-offs are now 55 and "
+                 "152 days. The 2026-09-24 figures (727 runs) could not be reproduced, so the old and new numbers differ."),
+        "source": "research/theme_runs",
+    },
+    {
         "date": "2026-09-24", "scope": "global",
         "title": "Theme runs: median 82 days",
         "body": ("727 completed sustained runs. Median 82d, mean 138d, p75 182d, p90 328d. "
