@@ -40,6 +40,7 @@ RETIRED_TICKERS: dict[str, str] = {
     "JJN": "iPath nickel ETN -- price history ends 2023-07-14",
     "PIN": "price history ends 2023-09-01",
     "BJK": "VanEck Gaming ETF -- price history ends 2026-06-10, not found on TradingView",
+    "VPN": "Global X Data Center REITs ETF -- price history ends 2026-10-09 at implausible prices (~860); Yahoo reports no data (delisted or renamed). 2026-10-13, approved by the user.",
     "VICE": "AdvisorShares Vice ETF -- price history ends 2026-08-28, not found on TradingView",
     "CNCR": "Range Cancer Therapeutics ETF -- not found on TradingView",
     # Duplicate, not dead: the same Global X Uranium ETF is also the universe's "URANIUM".
