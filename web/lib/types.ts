@@ -373,6 +373,7 @@ export interface ThemeLeg {
   rs_vs_trend_pct?: number;
   last_above?: string | null;
   n_days?: number;
+  as_of?: string;
 }
 
 export interface ThemeRow {
@@ -383,6 +384,7 @@ export interface ThemeRow {
   n_legs: number;
   onset: string | null;
   age_days: number | null;
+  lead_as_of_behind?: string | null;
   lead_symbol: string | null;
   stage: "early" | "mid" | "late" | null;
   survival_pct: number | null;

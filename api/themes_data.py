@@ -300,7 +300,7 @@ def _run(px: dict[str, float], bench: dict[str, float]) -> dict:
         while i >= 0 and not above[i]:
             i -= 1
         since = d[i] if i >= 0 else None
-        return {"status": "no active run", "last_above": since,
+        return {"status": "no active run", "last_above": since, "as_of": d[-1],
                 "rs_vs_trend_pct": round((rs[-1] / trend[-1] - 1) * 100, 1)}
 
     start = len(d) - 1
@@ -314,6 +314,7 @@ def _run(px: dict[str, float], bench: dict[str, float]) -> dict:
     seg = above[start:]
     return {
         "status": "running",
+        "as_of": d[-1],            # this leg's own newest bar; a leg a session behind the table says so
         "onset": d[start],
         "age_days": age,
         "rs_gain_pct": round((rs[-1] / rs[start] - 1) * 100, 1),
@@ -326,6 +327,7 @@ def _run(px: dict[str, float], bench: dict[str, float]) -> dict:
 def build_themes_response() -> dict:
     bench = _load(BENCH)
     out = []
+    table_as_of = max(bench) if bench else None
     for theme, syms in THEMES.items():
         legs = []
         for s in syms:
@@ -343,6 +345,8 @@ def build_themes_response() -> dict:
             "n_legs": len([l for l in legs if l.get("status") in ("running", "no active run")]),
             "onset": lead["onset"] if lead else None,
             "age_days": lead["age_days"] if lead else None,
+            # set only when the lead leg's newest bar is behind the table's date, so its age is understated
+            "lead_as_of_behind": (lead["as_of"] if lead and table_as_of and lead["as_of"] < table_as_of else None),
             "lead_symbol": lead["symbol"] if lead else None,
             "class": ("megatrend" if lead and lead["age_days"] > MEGATREND_DAYS else "rotation"),
             "stage": None if not lead else _stage(lead["age_days"]),

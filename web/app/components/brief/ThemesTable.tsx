@@ -75,7 +75,14 @@ export function ThemesTable({ themes, runStats }: { themes: ThemeRow[]; runStats
                   </span>
                 </td>
                 <td className="px-2 py-1 text-slate-400">{t.onset}</td>
-                <td className="px-2 py-1 text-right text-slate-300">{t.age_days}d</td>
+                <td className="px-2 py-1 text-right text-slate-300">
+                  {t.age_days}d
+                  {t.lead_as_of_behind && (
+                    <span className="ml-1 text-[0.6rem] text-amber-300" title="the lead leg's newest price is older than the table's date, so this age is a few days short">
+                      as of {t.lead_as_of_behind.slice(5)}
+                    </span>
+                  )}
+                </td>
                 <td className={`px-2 py-1 text-right ${isMega ? "text-slate-600" : (t.survival_pct ?? 0) >= 0.5 ? "text-slate-200" : (t.survival_pct ?? 0) >= 0.2 ? "text-slate-400" : "text-slate-600"}`}
                     title={isMega ? "measured over rotational runs; a secular trend is not drawn from that distribution" : undefined}>
                   {t.survival_pct === null ? "—" : `${Math.round(t.survival_pct * 100)}%`}
