@@ -9,12 +9,12 @@ and nothing is written to AWS. Zero tokens:
     python3 scripts/themes_history_report.py --from 2020-01     # back to 2020
 
 What this is, and is not:
-  * The detector is deterministic (RS vs SPY, 200d EMA trend, onset = earliest
-    day RS stayed above trend on >= 80% of days since), so each date can be
+  * The detector is deterministic (RS vs SPY, 200d EMA trend, onset = start of the
+    current run, with dips under 15 calendar days merged into it), so each date can be
     recomputed exactly with the data available on that date.
   * It uses TODAY's theme legs (extended 2026-10-09), so it is a reconstruction,
     not a stored copy of what CGI showed on those dates.
-  * The stage cut-offs (51 / 137 days) and the megatrend rule (> 365 days) were
+  * The stage cut-offs (55 / 152 days) and the megatrend rule (> 365 days) were
     measured on the full history, so older snapshots are slightly flattered by
     hindsight.
   * Prices are loaded from LOAD_FROM, not from 1993, so a run's age is capped by
