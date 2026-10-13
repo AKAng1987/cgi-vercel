@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api";
 import { BacktestTableResponse, SignalsResponse } from "@/lib/types";
 import { BacktestClient } from "../components/backtest/BacktestClient";
 import { BacktestTable } from "../components/backtest/BacktestTable";
+import { ThemesHistory } from "../components/backtest/ThemesHistory";
 import { TvListLink } from "../components/TvListLink";
 import { WatchlistsResponse, findList, LIST_NOW, LIST_FLIP } from "@/lib/tvLists";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
@@ -181,6 +182,8 @@ export default async function BacktestPage({
           gridQ={gridQ}
         />
       )}
+
+      <ThemesHistory />
     </main>
   );
 }
