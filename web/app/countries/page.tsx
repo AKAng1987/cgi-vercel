@@ -1,3 +1,4 @@
+import { CountriesHistory } from "../components/countries/CountriesHistory";
 import { apiFetch } from "@/lib/api";
 import { COMPASS_Q_MAP, GRID_Q_MAP } from "@/lib/regimeConstants";
 import { CountryCurve, MacroPoint, RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse, TenorReturns } from "@/lib/types";
@@ -578,6 +579,8 @@ export default async function ForeignPage({
           </p>
         </section>
       )}
+
+      <CountriesHistory />
 
       {m.tide && m.tide.avg_return_pct !== null && (
         <div className="rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-[0.78rem]">

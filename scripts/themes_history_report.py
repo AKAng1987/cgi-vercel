@@ -35,10 +35,12 @@ import boto3
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "api"))
 import axis_drivers as ad  # noqa: E402
+import regime_matrix as rm  # noqa: E402
 import themes_data as td  # noqa: E402
 
 LOAD_FROM = "2016-01-01"
 OUT = ROOT / "web" / "app" / "components" / "backtest" / "themes_history.json"
+OUT_COUNTRIES = ROOT / "web" / "app" / "components" / "countries" / "countries_history.json"
 
 
 def load_since(sym: str, since: str) -> dict[str, float]:
@@ -67,13 +69,15 @@ def snapshot(T: str, bench_all: dict[str, float], px_all: dict[str, dict[str, fl
     bench = {d: v for d, v in bench_all.items() if d <= T}
     rows = []
     for theme, syms in td.THEMES.items():
-        running = []
+        running, n_legs = [], 0
         for s in syms:
             p = px_all.get(s) or {}
             p = {d: v for d, v in p.items() if d <= T}
             if not p:
                 continue
             r = td._run(p, bench)
+            if r.get("status") in ("running", "no active run"):
+                n_legs += 1                      # same rule as n_legs in themes_data.build_themes_response
             if r.get("status") == "running":
                 running.append({"symbol": s, **r})
         if not running:
@@ -81,7 +85,33 @@ def snapshot(T: str, bench_all: dict[str, float], px_all: dict[str, dict[str, fl
         lead = min(running, key=lambda l: l["onset"])
         age = lead["age_days"]
         rows.append([theme, td._stage(age), "megatrend" if age > td.MEGATREND_DAYS else "rotation",
-                     age, lead["symbol"], lead["onset"], len(running)])
+                     age, lead["symbol"], lead["onset"], len(running), n_legs])
+    rows.sort(key=lambda t: (t[2] != "megatrend", t[3]))
+    return rows
+
+
+def snapshot_countries(T: str, bench_all: dict[str, float], px_all: dict[str, dict[str, float]]) -> list[list]:
+    """Same rule as api/country_data._countries_in_force, replayed as of T: a country is in force while any of its ETFs is in
+    a run; its age is the oldest running ETF's."""
+    bench = {d: v for d, v in bench_all.items() if d <= T}
+    rows = []
+    for c in rm.COUNTRIES:
+        running, n_etfs = [], 0
+        for s in c["etfs"]:
+            p = {d: v for d, v in (px_all.get(s) or {}).items() if d <= T}
+            if not p:
+                continue
+            r = td._run(p, bench)
+            if r.get("status") in ("running", "no active run"):
+                n_etfs += 1
+            if r.get("status") == "running":
+                running.append({"symbol": s, **r})
+        if not running:
+            continue
+        lead = min(running, key=lambda x: x["onset"])
+        age = lead["age_days"]
+        rows.append([c["name"], td._stage(age), "megatrend" if age > td.MEGATREND_DAYS else "rotation",
+                     age, lead["symbol"], lead["onset"], len(running), n_etfs])
     rows.sort(key=lambda t: (t[2] != "megatrend", t[3]))
     return rows
 
@@ -91,7 +121,7 @@ def main() -> None:
     ap.add_argument("--from", dest="start", required=True, help="first month, YYYY-MM")
     a = ap.parse_args()
 
-    syms = sorted({td.BENCH, *[s for ss in td.THEMES.values() for s in ss]})
+    syms = sorted({td.BENCH, *[s for ss in td.THEMES.values() for s in ss], *[e for c in rm.COUNTRIES for e in c["etfs"]]})
     print(f"loading {len(syms)} symbols from {LOAD_FROM} ...", flush=True)
     with cf.ThreadPoolExecutor(max_workers=8) as ex:
         loaded = dict(zip(syms, ex.map(lambda s: load_since(s, LOAD_FROM), syms)))
@@ -108,20 +138,26 @@ def main() -> None:
     if dates[-1] not in ends:
         ends.append(dates[-1])
 
-    snaps = []
+    snaps, csnaps = [], []
     for T in ends:
         snaps.append({"d": T, "t": snapshot(T, bench, loaded)})
-        print(T, len(snaps[-1]["t"]), "in force", flush=True)
+        csnaps.append({"d": T, "t": snapshot_countries(T, bench, loaded)})
+        print(T, len(snaps[-1]["t"]), "themes in force;", len(csnaps[-1]["t"]), "countries in force", flush=True)
 
     out = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "load_from": LOAD_FROM,
         "first_snapshot": ends[0],
         "latest_bar": dates[-1],
-        "cols": ["theme", "stage", "class", "age_days", "lead", "onset", "n_running"],
+        "cols": ["theme", "stage", "class", "age_days", "lead", "onset", "n_running", "n_legs"],
         "snapshots": snaps,
     }
     OUT.write_text(json.dumps(out, separators=(",", ":")))
+    cout = {**{k: v for k, v in out.items() if k not in ("cols", "snapshots")},
+            "cols": ["country", "stage", "class", "age_days", "lead", "onset", "n_running", "n_etfs"], "snapshots": csnaps}
+    OUT_COUNTRIES.parent.mkdir(parents=True, exist_ok=True)
+    OUT_COUNTRIES.write_text(json.dumps(cout, separators=(",", ":")))
+    print(f"wrote {OUT_COUNTRIES.relative_to(ROOT)} ({OUT_COUNTRIES.stat().st_size // 1024} KB)")
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size // 1024} KB, {len(snaps)} snapshots)")
 
 
