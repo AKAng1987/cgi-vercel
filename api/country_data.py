@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 16  # 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
+SCHEMA_VERSION = 17  # 17: countries_in_force (themes detector on each country's ETFs). 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
 
 BENCH = "SPY"
 
@@ -435,6 +435,33 @@ def _country_block(code: str, equity_symbol: Optional[str], currency: Optional[d
     }
 
 
+def _countries_in_force() -> dict:
+    """Which countries' equity ETFs are in a run (RS vs SPY above its 200d trend, short dips merged), by themes_data's
+    own rule and stage cut-offs. A country is in force while any of its ETFs is; its age is its OLDEST running ETF's."""
+    from concurrent.futures import ThreadPoolExecutor
+    syms = [s for c in regime_matrix.COUNTRIES for s in c["etfs"]]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        runs = dict(zip(syms, pool.map(_rs, syms)))
+    rows, idle = [], []
+    for c in regime_matrix.COUNTRIES:
+        running = [(s, runs.get(s)) for s in c["etfs"] if (runs.get(s) or {}).get("status") == "running"]
+        if not running:
+            idle.append(c["code"])
+            continue
+        lead_sym, lead = min(running, key=lambda x: x[1]["onset"])
+        age = lead["age_days"]
+        rows.append({"code": c["code"], "name": c["name"], "lead_symbol": lead_sym, "onset": lead["onset"],
+                     "age_days": age, "stage": td._stage(age),
+                     "class": "megatrend" if age > td.MEGATREND_DAYS else "rotation",
+                     "survival_pct": td._survival(age), "n_running": len(running), "n_etfs": len(c["etfs"]),
+                     "rs_gain_pct": lead.get("rs_gain_pct"), "price_gain_pct": lead.get("price_gain_pct")})
+    rows.sort(key=lambda r: (r["class"] != "megatrend", r["age_days"]))
+    as_of = max((r.get("as_of") for r in runs.values() if r and r.get("as_of")), default=None)
+    return {"rows": rows, "no_active_run": idle, "as_of": as_of,
+            "note": ("Same detector as Themes in force, applied to each country's equity ETFs against SPY. "
+                     "Descriptive, not a signal. Age is the oldest running ETF's.")}
+
+
 def build_country_blocks(countries: list[dict]) -> dict[str, dict]:
     """{code: block} for every country, memoised across regimes."""
     hit = _blocks_cache["data"]
@@ -509,6 +536,8 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
         "strongest cell in the matrix (+3.55pp over the tide, t=3.05, n=16) and still "
         "does not survive having looked at 250 of them. Treat this tab as monitoring."
     )
+    # Countries "in force": the themes detector run on each country's ETFs, with the same stage cut-offs as the themes.
+    matrix["countries_in_force"] = _countries_in_force()
     # Damodaran's premiums side by side, highest first, with the US as the reference row.
     table = [{"code": c["code"], "name": c["name"], **c["risk_premium"]}
              for c in matrix["countries"] if c.get("risk_premium")]

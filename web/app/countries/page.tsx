@@ -526,6 +526,59 @@ export default async function ForeignPage({
         )}
       </section>
 
+      {m.countries_in_force && (
+        <section className="space-y-1">
+          <div className="text-[0.7rem] uppercase tracking-wide text-slate-500">
+            countries in force
+            <span className="ml-2 normal-case text-slate-600">
+              relative strength vs SPY above its 200-day trend{m.countries_in_force.as_of ? ` · as of ${m.countries_in_force.as_of}` : ""}
+            </span>
+          </div>
+          <table className="w-full max-w-3xl text-left text-[0.72rem]">
+            <thead>
+              <tr className="border-b border-slate-800 text-slate-500">
+                <th className="py-1 pr-3 font-normal">Country</th>
+                <th className="py-1 pr-3 font-normal">Stage</th>
+                <th className="py-1 pr-3 text-right font-normal">Age</th>
+                <th className="py-1 pr-3 font-normal">Started</th>
+                <th className="py-1 pr-3 font-normal">Lead ETF</th>
+                <th className="py-1 pr-3 text-right font-normal">ETFs running</th>
+                <th className="py-1 pr-3 text-right font-normal">RS</th>
+                <th className="py-1 pr-3 text-right font-normal">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {m.countries_in_force.rows.map((r) => (
+                <tr key={r.code} className="border-b border-slate-900">
+                  <td className="py-1 pr-3 text-slate-200">{r.name}</td>
+                  <td
+                    className={`py-1 pr-3 ${r.stage === "early" ? "text-emerald-300" : r.stage === "mid" ? "text-amber-300" : "text-slate-400"}`}
+                  >
+                    {r.stage}
+                    <span className="text-slate-600"> · {r.class}</span>
+                  </td>
+                  <td className="py-1 pr-3 text-right tabular-nums text-slate-300">{r.age_days}d</td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-500">{r.onset}</td>
+                  <td className="py-1 pr-3 text-slate-300">{r.lead_symbol}</td>
+                  <td className="py-1 pr-3 text-right tabular-nums text-slate-400">
+                    {r.n_running}/{r.n_etfs}
+                  </td>
+                  <td className="py-1 pr-3 text-right tabular-nums text-slate-300">
+                    {r.rs_gain_pct === null ? "n/a" : `${r.rs_gain_pct > 0 ? "+" : ""}${r.rs_gain_pct.toFixed(0)}%`}
+                  </td>
+                  <td className="py-1 pr-3 text-right tabular-nums text-slate-300">
+                    {r.price_gain_pct === null ? "n/a" : `${r.price_gain_pct > 0 ? "+" : ""}${r.price_gain_pct.toFixed(0)}%`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-[0.66rem] leading-relaxed text-slate-600">
+            No active run: {m.countries_in_force.no_active_run.join(" · ") || "none"}. {m.countries_in_force.note}
+          </p>
+        </section>
+      )}
+
       {m.tide && m.tide.avg_return_pct !== null && (
         <div className="rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-[0.78rem]">
           <span className="text-slate-400">In {m.regime}, the average country returns </span>

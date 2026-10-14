@@ -795,6 +795,25 @@ export type RegimeMatrixResponse = {
   countries: RegimeCountry[];
   tide?: { avg_return_pct: number | null; n_countries: number; explanation: string };
   edge_caveat?: string;
+  countries_in_force?: {
+    rows: {
+      code: string;
+      name: string;
+      lead_symbol: string;
+      onset: string;
+      age_days: number;
+      stage: "early" | "mid" | "late";
+      class: "megatrend" | "rotation";
+      survival_pct: number;
+      n_running: number;
+      n_etfs: number;
+      rs_gain_pct: number | null;
+      price_gain_pct: number | null;
+    }[];
+    no_active_run: string[];
+    as_of: string | null;
+    note: string;
+  } | null;
   risk_premium_table?: {
     rows: RiskPremiumRow[];
     us: RiskPremiumRow | null;
