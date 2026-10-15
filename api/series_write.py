@@ -90,6 +90,16 @@ ALLOWED = {
     # routine fills the gap through this append-only path; the nightly Yahoo run overwrites the same dates later.
     "MAGS":             ("tradingview", "1D", 5.0, 1000.0, "CBOE:MAGS"),
     "UUP":              ("tradingview", "1D", 5.0, 200.0, "AMEX:UUP"),
+    # Yahoo futures. Yahoo only stores a futures day once its New York date has ended, so they sat a session behind by
+    # design. The routine reads TradingView's raw bars and dates them itself (cgi_refresh.futures_rows: trading date =
+    # stamp + 8h in New York, forming session dropped), so by 08:45 Manila the finished day is in.
+    "COPPER":           ("tradingview", "1D", 1.0, 15.0, "COMEX:HG1!"),
+    "COTTON":           ("tradingview", "1D", 20.0, 300.0, "ICEUS:CT1!"),
+    "NATGAS":           ("tradingview", "1D", 0.5, 30.0, "NYMEX:NG1!"),
+    "RICE":             ("tradingview", "1D", 4.0, 40.0, "CBOT:ZR1!"),
+    "SILVER":           ("tradingview", "1D", 5.0, 300.0, "COMEX:SI1!"),
+    "USOIL":            ("tradingview", "1D", 1.0, 300.0, "NYMEX:CL1!"),
+    "XAUUSD":           ("tradingview", "1D", 500.0, 20000.0, "COMEX:GC1!"),
     "NCFD":             ("tradingview", "1D", 0.0, 100.0, "INDEX:NCFD"),
     "NCTH":             ("tradingview", "1D", 0.0, 100.0, "INDEX:NCTH"),
     "MMFD":             ("tradingview", "1D", 0.0, 100.0, "INDEX:MMFD"),
