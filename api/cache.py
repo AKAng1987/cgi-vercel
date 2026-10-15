@@ -53,7 +53,7 @@ TTL_HOURS: dict[str, float] = {
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 6.0,  # LIVE brief: theme onset/age from RS persistence
     "sec_exchanges": 168.0,  # SEC ticker -> exchange, for TradingView symbols; listings change slowly
-    "watchlists": 34.0,  # TradingView list contents for the cloud routine
+    "watchlists": 6.0,  # TradingView list contents for the cloud routine. Was 34h: a list built the morning of a release kept pointing at that release for a day after it printed (CPI 2026-10-14). 6h means the next morning run always rebuilds, so "if next flips" moves to the next release on its own.
     "mixture": 6.0,  # probability-weighted returns across now / if-next-flips; moves with p_flip
     "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
     "etf_constituents": 168.0,  # ETF books move slowly; 7d, and the pull is ~90s
@@ -150,7 +150,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 11,  # 2026-10-14: onset = merged run (15d dips), stage cut-offs 55/152, survival re-measured.  2026-10-13c: rebuild after the Yahoo backfill (MAGS 12 Oct).  2026-10-13b: legs carry as_of, lead_as_of_behind.  2026-10-13: TTL 24h -> 6h so the table follows the daily price load.  # 2026-10-09b: ARKW cloud -> innovation (cross-theme duplicate).  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
-    "watchlists": 9,  # 2026-10-09: 27 theme-leg ETFs joined the universe.  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
+    "watchlists": 10,  # 2026-10-15: TTL 34h -> 6h, rebuilt after CPI so the list moves on to FOMC.  2026-10-09: 27 theme-leg ETFs joined the universe.  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 3,  # 2026-10-09: new theme legs.  # 2026-09-25: MOO for agriculture + unreachable fall-through
     "brief_daily": 5,  # 2026-10-09: P(flip) rows carry out-of-sample verdicts + liquidity drivers.  # 2026-10-04: feed-integrity problems in the freshness section; 3: markov market lagged + relabelled
     "liquidity": 1,

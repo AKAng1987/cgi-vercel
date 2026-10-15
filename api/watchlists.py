@@ -4,7 +4,7 @@ watchlists.py -- The two TradingView watchlists CGI maintains, as data:
   CGI · now            best 20 / worst 20 of the BACKTEST leaderboard, current regime
   CGI · if next flips  same for the regime we land in if the next release flips its axis
 
-Served at /api/watchlists (24h cache) so a scheduled cloud routine with the
+Served at /api/watchlists (6h cache, so it follows the release calendar by the next morning run) so a scheduled cloud routine with the
 TradingView connector can rewrite the lists without AWS access. Symbols
 are EXCHANGE:TICKER as TradingView wants them; "###..." entries are
 section headers. Mirror of market-dashboard/scripts/cgi_watchlists.py.
