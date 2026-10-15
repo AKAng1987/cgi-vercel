@@ -572,7 +572,9 @@ def peer_lag(today: Optional[dt.date] = None) -> dict:
         syms = [r["symbol"] for r in reg]
         with ThreadPoolExecutor(16) as ex:
             last = dict(zip(syms, ex.map(_last_row, syms)))
-        rows = {r["symbol"]: {**last[r["symbol"]], "source_symbol": r.get("source_symbol")}
+        # judge by the REGISTERED source, not the newest row's: a Yahoo series the routine topped up from TradingView
+        # still has to be held to the same standard
+        rows = {r["symbol"]: {**last[r["symbol"]], "source": r["source"], "source_symbol": r.get("source_symbol")}
                 for r in reg if last.get(r["symbol"])}
         spy = (_last_row("SPY") or {}).get("date")
         return peer_problems(rows, spy, frozenset(dd.RETIRED_TICKERS))

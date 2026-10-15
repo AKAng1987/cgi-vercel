@@ -83,6 +83,13 @@ ALLOWED = {
     "LOWQ":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:LOWQ"),
     "HIGN":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:HIGN"),
     "LOWN":             ("tradingview", "1D", 0.0, 10_000.0, "INDEX:LOWN"),
+    # ── Yahoo-sourced ETFs that land a session late (added 2026-10-15) ─────────────────────────────────────────────
+    # The Yahoo loader runs at 00:10 UTC and has stored MAGS and UUP a session behind SPY on most mornings (their daily
+    # bar is not final at that hour), which left the Themes table's lead leg a day short ("as of 13 Oct") and tripped
+    # the peer-lag guard every morning. TradingView has the finished bar when the 08:45 Manila routine runs, so the
+    # routine fills the gap through this append-only path; the nightly Yahoo run overwrites the same dates later.
+    "MAGS":             ("tradingview", "1D", 5.0, 1000.0, "CBOE:MAGS"),
+    "UUP":              ("tradingview", "1D", 5.0, 200.0, "AMEX:UUP"),
     "NCFD":             ("tradingview", "1D", 0.0, 100.0, "INDEX:NCFD"),
     "NCTH":             ("tradingview", "1D", 0.0, 100.0, "INDEX:NCTH"),
     "MMFD":             ("tradingview", "1D", 0.0, 100.0, "INDEX:MMFD"),

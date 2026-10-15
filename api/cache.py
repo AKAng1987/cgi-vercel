@@ -36,14 +36,14 @@ TTL_HOURS: dict[str, float] = {
     "fomc_meeting_calendar": 168.0,  # 7d
     "treasury_curve": 6.0,
     "spreads": 12.0,
-    "lending_standards": 48.0,
+    "lending_standards": 6.0,
     "challenger": 24.0,  # macro: Challenger job cuts from price-history (manual monthly load)
-    "gdp": 48.0,
+    "gdp": 6.0,
     "gdp_nowcast": 6.0,   # 2026-10-09: was 24h; GDPNow revises several times a week and a 24h copy showed 3.68 after FRED had 3.59
     "gdp_nowcast_freshness": 6.0,
     "freshness": 1.0,
-    "inflation": 24.0,
-    "pce": 24.0,
+    "inflation": 6.0,  # 2026-10-15: release-driven caches 24-48h -> 6h so a print shows by the next morning run
+    "pce": 6.0,
     "dot_plot": 168.0,  # 7d
     "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
     "hud_extra": 6.0,  # HUD rows computed from price-history for tickers the workbook lacks
@@ -63,7 +63,7 @@ TTL_HOURS: dict[str, float] = {
     "brief_weekly": 24.0,
     "countries": 6.0,        # FX and ETF legs move daily; macro prints monthly
     "erp_sync": 24.0,  # Damodaran ERP: one download + append-only sync per day
-    "context_tables": 24.0,  # decades of history; only the tail ever changes
+    "context_tables": 12.0,  # decades of history; only the tail ever changes
 }
 
 # Bump a key's entry whenever the fetch/compute logic feeding that
@@ -148,7 +148,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "policy_watch": 1,
     "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
-    "themes": 11,  # 2026-10-14: onset = merged run (15d dips), stage cut-offs 55/152, survival re-measured.  2026-10-13c: rebuild after the Yahoo backfill (MAGS 12 Oct).  2026-10-13b: legs carry as_of, lead_as_of_behind.  2026-10-13: TTL 24h -> 6h so the table follows the daily price load.  # 2026-10-09b: ARKW cloud -> innovation (cross-theme duplicate).  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
+    "themes": 12,  # 2026-10-15: rebuild after MAGS/UUP are filled in from TradingView.  2026-10-14: onset = merged run (15d dips), stage cut-offs 55/152, survival re-measured.  2026-10-13c: rebuild after the Yahoo backfill (MAGS 12 Oct).  2026-10-13b: legs carry as_of, lead_as_of_behind.  2026-10-13: TTL 24h -> 6h so the table follows the daily price load.  # 2026-10-09b: ARKW cloud -> innovation (cross-theme duplicate).  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
     "watchlists": 10,  # 2026-10-15: TTL 34h -> 6h, rebuilt after CPI so the list moves on to FOMC.  2026-10-09: 27 theme-leg ETFs joined the universe.  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 3,  # 2026-10-09: new theme legs.  # 2026-09-25: MOO for agriculture + unreachable fall-through
