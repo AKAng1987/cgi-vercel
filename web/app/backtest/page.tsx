@@ -7,6 +7,9 @@ import { TvListLink } from "../components/TvListLink";
 import { WatchlistsResponse, findList, LIST_NOW, LIST_FLIP } from "@/lib/tvLists";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 /**
  * BACKTEST tab, ported from app.py:1096-1310. Controls (compass_q,
  * grid_q, min_occ, lookback) live in URL search params so the page is

@@ -8,6 +8,9 @@ import { AxisDriversPanel } from "../components/markov/AxisDriversPanel";
 import { Timeline } from "../components/markov/Timeline";
 import { ContextTables } from "../components/context/ContextTables";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 /**
  * CGI tab -- event-driven regime state (Phase 1.5). Renamed from MARKOV
  * 2026-09-26: the tab is not a Markov model, it is CGI's own compass/grid

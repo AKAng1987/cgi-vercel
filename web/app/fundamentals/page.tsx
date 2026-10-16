@@ -5,6 +5,9 @@ import { PricedIn } from "../components/fundamentals/PricedIn";
 import { FundamentalsResponse, FundRollup } from "@/lib/types";
 import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 const VERDICT_COLOR: Record<string, string> = {
   capturing: "text-emerald-400",
   accelerating: "text-emerald-300",

@@ -3,6 +3,9 @@ import { apiFetch } from "@/lib/api";
 import { COMPASS_Q_MAP, GRID_Q_MAP } from "@/lib/regimeConstants";
 import { CountryCurve, MacroPoint, RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse, TenorReturns } from "@/lib/types";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 /**
  * COUNTRIES — what a regime means for each country and currency.
  *

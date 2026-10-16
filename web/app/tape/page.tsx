@@ -4,6 +4,9 @@ import { DateHeader } from "../components/DateHeader";
 import { RegimeCard } from "../components/RegimeCard";
 import { LiveDashboardClient } from "../components/LiveDashboardClient";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 export default async function Tape() {
   const data = await apiFetch<LiveResponse>("/api/live");
 

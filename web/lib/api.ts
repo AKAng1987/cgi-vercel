@@ -3,6 +3,8 @@
  * token never reaches the browser. Only call this from Server Components,
  * Route Handlers, or other server-side code.
  */
+const TIMEOUT_MS = 50_000; // below the pages' 60 s maxDuration
+
 export async function apiFetch<T = unknown>(
   path: string,
   init?: RequestInit
@@ -19,6 +21,8 @@ export async function apiFetch<T = unknown>(
 
   const url = `${apiUrl.replace(/\/$/, "")}${path}`;
 
+  // A time budget: a stuck call (sleeping or rebuilding API) fails after TIMEOUT_MS instead of letting the whole
+  // function run into Vercel's execution limit, so the page shows its error state, not a platform timeout.
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -26,6 +30,7 @@ export async function apiFetch<T = unknown>(
       Authorization: `Bearer ${apiToken}`,
     },
     cache: "no-store",
+    signal: init?.signal ?? AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (!res.ok) {

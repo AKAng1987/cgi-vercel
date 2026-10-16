@@ -20,3 +20,13 @@ jobs:
           code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 100 --retry 1 "$RENDER_API_URL/") || code="no response"
           echo "API root answered: $code"
           case "$code" in 2*|3*) ;; *) exit 1 ;; esac
+      # Warm the pages and public endpoints whose first request rebuilds a heavy cache on the API (themes, countries,
+      # watchlists, freshness), so a rebuild lands here and not on a visitor, whose page would otherwise time out.
+      # Only public URLs; a slow or failed warm-up never fails the run (the API keeps computing after a client gives up).
+      - name: Warm the heavy caches
+        timeout-minutes: 8
+        run: |
+          for path in / /countries /backtest /api/themes /api/watchlists /api/freshness; do
+            out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 110 "https://cgi-vercel.vercel.app$path" || echo "timeout")
+            echo "$path -> $out"
+          done

@@ -2,6 +2,9 @@ import { apiFetch } from "@/lib/api";
 import { CotResponse } from "@/lib/types";
 import { CotCard } from "../components/cot/CotCard";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 /**
  * POSITIONING. Cards per contract grouped by sector, after the layout the
  * user's officemate built -- price sparkline of net spec positioning, the

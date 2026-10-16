@@ -3,6 +3,9 @@ import { NotesResponse, PolicyWatchResponse } from "@/lib/types";
 import { PolicyNotes } from "../components/brief/PolicyNotes";
 import { Notes } from "../components/brief/Notes";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 export default async function NotesPage() {
   const [data, watch] = await Promise.all([
     apiFetch<NotesResponse>("/api/notes"),

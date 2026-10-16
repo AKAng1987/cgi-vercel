@@ -11,6 +11,9 @@ import { ThemesTable } from "./components/brief/ThemesTable";
 import { Timeline } from "./components/markov/Timeline";
 import { COMPASS_Q_LABELS, GRID_Q_LABELS } from "@/lib/regimeConstants";
 
+// The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
+export const maxDuration = 60;
+
 /**
  * LIVE -- the brief. Layered by clock speed, slowest on top:
  *   1 standing theme   ~1y, changed only on a deliberate monthly review
