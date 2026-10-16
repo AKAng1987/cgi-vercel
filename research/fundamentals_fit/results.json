@@ -1,0 +1,8419 @@
+{
+ "measured_on": "2026-10-17",
+ "forward_trading_days": 63,
+ "by_label": {
+  "confirms": {
+   "n": 359,
+   "mean_pct": 0.1,
+   "median_pct": -0.01,
+   "beat_spy_pct": 49.9
+  },
+  "contradicts": {
+   "n": 569,
+   "mean_pct": -0.62,
+   "median_pct": -1.25,
+   "beat_spy_pct": 45.2
+  },
+  "mixed": {
+   "n": 319,
+   "mean_pct": -0.23,
+   "median_pct": -1.13,
+   "beat_spy_pct": 45.5
+  },
+  "thin": {
+   "n": 116,
+   "mean_pct": -2.59,
+   "median_pct": -1.75,
+   "beat_spy_pct": 37.9
+  }
+ },
+ "confirms_minus_contradicts_per_quarter": {
+  "quarters": 33,
+  "mean_spread_pct": 0.62,
+  "t_stat": 0.93,
+  "quarters_confirms_won": 17
+ },
+ "rows": [
+  {
+   "asof": "2018-05-20",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": -0.06120802933059377
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": -0.0740383899826611
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": 0.009051851611387404
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": -0.022946208478138663
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "copper",
+   "fit": "thin",
+   "excess": -0.22898186942783744
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "gold",
+   "fit": "thin",
+   "excess": -0.17792350701736215
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "silver",
+   "fit": "thin",
+   "excess": -0.19515248511453948
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.21217876490458185
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "thin",
+   "excess": -0.07445219391304958
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.02832632498541171
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.021687516601964774
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.12677961115015507
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": -0.03278067855258082
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": 0.03026789239191996
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": 0.059154917274525154
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "banks",
+   "fit": "mixed",
+   "excess": -0.05921961671011561
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": 0.05619203907619297
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": -0.04847069279418048
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "real estate",
+   "fit": "confirms",
+   "excess": 0.0706809758141258
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.07428941117137494
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.03053405976879059
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "EV / battery",
+   "fit": "thin",
+   "excess": -0.1258967578829871
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.16136604518345626
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.08896629624012142
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.20232316497981306
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "Japan",
+   "fit": "thin",
+   "excess": -0.11645766039184396
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.16444370543923914
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.10685497603955789
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": -0.013037863514175907
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "mixed",
+   "excess": -0.09625176796461954
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "thin",
+   "excess": -0.049013249499054834
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": 0.020471806720863905
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "leisure / travel",
+   "fit": "mixed",
+   "excess": -0.028424716828465757
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "social / media",
+   "fit": "mixed",
+   "excess": -0.10749396422431134
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.00528431435240706
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.006207419280294631
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.019589728729232148
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.027194979602877534
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.040809316650099126
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": -0.06726049795644817
+  },
+  {
+   "asof": "2018-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "confirms",
+   "excess": -0.1369215895243996
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.05035580224858455
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": -0.03808050046745276
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": -0.03409538255111536
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": -0.015393009844202887
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "copper",
+   "fit": "thin",
+   "excess": 0.03879446082876192
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "gold",
+   "fit": "thin",
+   "excess": 0.057334053987387966
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "silver",
+   "fit": "thin",
+   "excess": 0.01104324799957257
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "steel / metals",
+   "fit": "confirms",
+   "excess": 0.00556846500850286
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "thin",
+   "excess": 0.04504535782982838
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.02285486763107636
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.01758456603326708
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.08716779275020148
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": -0.0665525503863339
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.061866826276542684
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": 0.004748797346002827
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.0859439384053372
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.06309863518243324
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": -0.09234505551589756
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": 0.02613228597283468
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.020766098452638937
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.01696500231858883
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "EV / battery",
+   "fit": "thin",
+   "excess": -0.052000972476233365
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.010297956476519127
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.07551618304454777
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.04075043917971218
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "Japan",
+   "fit": "thin",
+   "excess": 0.0021865981078685315
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.017136236163009078
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": 0.030264398251228803
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": -0.0023073689027367505
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.030793527132263132
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "thin",
+   "excess": -0.07361917468202261
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": 0.05218756796611013
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.012689648066309178
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": -0.05034772315539049
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.0058421252419381675
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": -0.004824603702587564
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.03325897543716583
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": -0.017594951169902562
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.020711660626449246
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.01938639034257661
+  },
+  {
+   "asof": "2018-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.04401095784272757
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.05774103752040777
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.119165785379166
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.13364191626262864
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.111340587821804
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "copper",
+   "fit": "contradicts",
+   "excess": 0.047556238912133564
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "gold",
+   "fit": "thin",
+   "excess": 0.12971296862726392
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "silver",
+   "fit": "thin",
+   "excess": 0.09280284909732583
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.07205528606725303
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "thin",
+   "excess": -0.03676212517290156
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.024312922228986733
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": 0.06884307705653048
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.12171549274474458
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.047705257931834666
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.0022108530372990653
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.0022218779345438886
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "banks",
+   "fit": "mixed",
+   "excess": 0.006008399989067215
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": 0.02841175534610803
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.11780677990491006
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": 0.022507337386380666
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.04546046440014817
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "infrastructure",
+   "fit": "confirms",
+   "excess": 0.024787444050776264
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.0027761890798579936
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": 0.1070120613285554
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.006246535565825662
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": 0.06566512379142504
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "Japan",
+   "fit": "thin",
+   "excess": -0.04005069868583122
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.03825341878792221
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.04120084568355479
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": -5.4648392244338595e-05
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.014438087897289509
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": 0.019224277952465174
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.05603730281893732
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.007585860736164518
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.0591428616560401
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "gaming / esports",
+   "fit": "confirms",
+   "excess": 0.040439401056680424
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.03040108748601633
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.03525250768349878
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.03422343863439958
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.03287424500664626
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.03834323722636457
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.012883471381494926
+  },
+  {
+   "asof": "2018-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.09071064529000594
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": -0.05551445500254351
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": -0.028144940366033433
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.011882042396017681
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.012528849427155486
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "copper",
+   "fit": "contradicts",
+   "excess": -0.09833955667265304
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "gold",
+   "fit": "thin",
+   "excess": -0.13041023423696171
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "silver",
+   "fit": "thin",
+   "excess": -0.16629923708908184
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.09716559071995268
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "thin",
+   "excess": -0.0840514281635018
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.004226482087607009
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.032865130624797456
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.06484825728339039
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.10667893929848205
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.011518787125337862
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.0586662073403361
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.07273258793014803
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.032222341998596936
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.0006387399328375842
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": 0.004568617665095198
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.03990956130943579
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.008479942310485655
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.10361874881747031
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": -0.02450357917883325
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.0017470036041691284
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.08238536672402563
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "Japan",
+   "fit": "thin",
+   "excess": -0.05938493747850798
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.15675397766572818
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.045665471649871114
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": 0.024910812612406907
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.013364974835247234
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.021179509723627143
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": 0.015528206497597341
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.058619732659346946
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "social / media",
+   "fit": "mixed",
+   "excess": 0.007698193817266996
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "gaming / esports",
+   "fit": "confirms",
+   "excess": 0.04986701395781434
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.03660946429790313
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.009009374944346504
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.061990896780014904
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": -0.06033028551083425
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.03556782611620102
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.039283733693668665
+  },
+  {
+   "asof": "2019-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": -0.14570126339954304
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.03904158015019335
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.09296256484352683
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": -0.04298693184492904
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.048085837337130566
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.12071334981607068
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.2625533657883497
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.17552064923958532
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.12292852786368141
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": -0.08613532938781715
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.03232040195100594
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.016847952424620338
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.21471438970631607
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.07360382588821324
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.08837370956236394
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": 0.01733940441593616
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.08032124517174272
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.03478100576989751
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.01319104229583723
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": 0.05578667398516879
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.08447935160376124
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.021704952018570034
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.03232063313778519
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.08473452723132346
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.014493961148716372
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.021609529881548222
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "Japan",
+   "fit": "thin",
+   "excess": -0.0482920679102985
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.08308042401524351
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.04341504747853808
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": 0.004365559873050984
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.032803647351602405
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.05482868137176
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": 0.025815969821880613
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.037140239340697934
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.003148407253046326
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.046473654844312984
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.03301180062476328
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.04292927868598562
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.06049412558199896
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.000902513434991703
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.02455444629733705
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": 0.029890026641259393
+  },
+  {
+   "asof": "2019-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.08592250566996329
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": 0.04711482048374738
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": 0.10024137873696026
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": -0.04141483875874874
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.0031444312158460663
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -4.268484887992585e-05
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": -0.10014605743522409
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "silver",
+   "fit": "contradicts",
+   "excess": -0.03327290124949045
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.002410802786840527
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.03145787530861849
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.019335084623407606
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.01874627620337921
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "energy: upstream",
+   "fit": "mixed",
+   "excess": -0.04155030679756255
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": 0.08061563250849235
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.12290616074534429
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.02405185908267295
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": 0.04534844789045955
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": -0.014707584725347314
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.043778158063272565
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "real estate",
+   "fit": "confirms",
+   "excess": -0.06790492629910061
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": 0.05532813855408991
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.018266650460992406
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.04423425830091665
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": -0.0603890893691815
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.010078784036850807
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.007848166530160702
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.07983034268453582
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.1141681573450708
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": -0.042586336863530194
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": -0.039652278638505845
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.0030951148071572954
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.002695459365581021
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.08018569198882652
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.015062799790545756
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.04613399840587218
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.01293332387960855
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.03583989458075454
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": -0.04215555376844604
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.00819775116522714
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": -0.003235433930232734
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.030898062691706585
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.008920102135114183
+  },
+  {
+   "asof": "2019-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.009936409313885619
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.045738471471365005
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": 0.020267032264697837
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": 0.05625660551808492
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.018110308469614034
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.09277738124249996
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.07829927690069168
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.02042261478752061
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.0973889776895884
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.05072881300639742
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": 0.08047600213020045
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.063495817230659
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.1361547133097214
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.19241934622084012
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.029379866762649476
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": 0.014236752321722243
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.07727829376383782
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": 0.03414817047611315
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": 0.012426350039517198
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": -0.0032796251733906434
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.06457390090607529
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.02183678359933172
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": 0.021980091662453516
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.24616086653584818
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.03493145776250961
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.031345311054053804
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": -0.11356701316691442
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.10794654310321572
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.08126258272197706
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": -0.017366774467501234
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.0037719204138575435
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.01827956032481537
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.044589596404915
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.08608665665527421
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "social / media",
+   "fit": "mixed",
+   "excess": 0.025566916087785718
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": 0.09004296533694878
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.023019250270388092
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.026755144783187374
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.00943612331532595
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.1750036973679323
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.04882481430334962
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.06475844963850541
+  },
+  {
+   "asof": "2019-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": 0.21752320529673908
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": 0.09083156334152928
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.033257427655561
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.14433779574177819
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.06762816555087459
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.010103457493610746
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.2789022629356716
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": 0.17083691751097685
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": 0.3230085942411156
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.030492650486488748
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.05355104345285999
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.23094580123554154
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.1810204763825623
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.059142614186113995
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": 0.7279153042890011
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "mixed",
+   "excess": 0.15222846635269696
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.2535138028328444
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": 0.09449687286351642
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": -0.07259415030540473
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.13908809719037912
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.12048958698874424
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.12494622658677962
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.05197390311447628
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.04181575458677658
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.09842681116169849
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.10238842427222827
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.021069435896277522
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.012285339922221583
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": -0.02533797037883064
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": -0.18672998092485915
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.06727920280550737
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.14675803626832695
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": 0.0387888949827121
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.3350696883986131
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.09290415947933772
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.2165942904957323
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.42860507898635236
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.0684349851420829
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.08433095905273591
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.13610886036794395
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.11921857157298177
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": 0.007507534257787607
+  },
+  {
+   "asof": "2020-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.06740382823205215
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": 0.06482199044989578
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": 0.0688035342811475
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.03119987384506656
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.0024619076671917872
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "copper",
+   "fit": "contradicts",
+   "excess": 0.18227501646751776
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.00889692574003346
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.2560860862502542
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.11816466986224089
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "mixed",
+   "excess": -0.053387831105186745
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.017418856524274884
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.025240448921634018
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.1013804373590993
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.10831549908170546
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.1441678203869654
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "mixed",
+   "excess": -0.018257001887604003
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.041184250374377895
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": 0.2488697775103017
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.27267843521497426
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": 0.02067005521126264
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": 0.1461551974805897
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.021418158351282024
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": 0.14125760899299744
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.32628019102797473
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.20769190956011885
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.06590107038983868
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": -0.061116868273003
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.08770428284726228
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.044001932059518335
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": 0.001327717834770148
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "mixed",
+   "excess": -0.015233299938408273
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.03669156828939002
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": 0.0016025861274761022
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.04338830794089643
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.07598312792255857
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.14154760367628794
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.0725393938069514
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": 0.017307578847024867
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.011469448687584816
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.2783771989433248
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.06525047750703017
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": 0.03150498069003782
+  },
+  {
+   "asof": "2020-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": 0.28066504737746856
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": 0.06763892333016952
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": 0.10220658325198569
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.013407486711404348
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.03659793029451808
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "copper",
+   "fit": "contradicts",
+   "excess": 0.033186557603849365
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": -0.14069811000772728
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": -0.15640542713327
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": 0.10510660543858946
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": -0.042904708981661155
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.04984870100451777
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "defense",
+   "fit": "confirms",
+   "excess": 0.0676591490473043
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.08619210844749885
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.02095748740265968
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.06507032622276059
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": 0.024103373877669573
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": 0.1747464552958784
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.003102781650944945
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.004624242678390678
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": 0.027341435869830955
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": 0.06911191202168387
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": 0.06460071022501428
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": 0.14094147522464046
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.2870568042027796
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.0662244732181515
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.046471905066139664
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.02825910667873066
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.0944580299568174
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": 0.04357937558198394
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "insurance",
+   "fit": "thin",
+   "excess": 0.057641149426937544
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.05920310325048084
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.03759268184073283
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.037405908063636084
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.11710940127165081
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.024961285917763476
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.04655246556961701
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.06169493999758213
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.06959096669201499
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.07429652489627547
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.08453178010461682
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.07525217406428708
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": 0.0529395123210723
+  },
+  {
+   "asof": "2020-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": 0.25249203353854943
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": 0.13594802994178912
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.1390683927925259
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": 0.07675156021003016
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": 0.10181934964729844
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.38970642669740074
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": -0.12837191243535995
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": 0.03619673827361736
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.3921969408910309
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": 0.22835400172294829
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.026163881024626467
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.23618947275260604
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": 0.3946518136769022
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "energy: refiners",
+   "fit": "mixed",
+   "excess": 0.15381310941718995
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.03129415540221429
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": 0.04535552524652927
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "banks",
+   "fit": "mixed",
+   "excess": 0.2521786783829928
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": 0.16640549679368752
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": 0.02441209509986697
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.02296695487002376
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": -0.00014164497851987257
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "infrastructure",
+   "fit": "confirms",
+   "excess": 0.022086834313071197
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.17460414271053915
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": 0.1615970360421648
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.5099047872456609
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.13675474040872468
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.03415598616346771
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.13663728680152554
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": 0.07338058031879058
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.0032870518556407102
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": 0.16029549394910314
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": 0.07197405019141012
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.04784357727133559
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": 0.20724621586572622
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": 0.16642104693060633
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.10823929956673006
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.05018092393221241
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": -0.0011670927365236377
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.20103591337360793
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.2755946350268045
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "industrials (broad)",
+   "fit": "confirms",
+   "excess": -0.036183873355868146
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": -0.00028350454013192916
+  },
+  {
+   "asof": "2020-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "confirms",
+   "excess": 0.2110615565293381
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": -0.17637410601521705
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": -0.14475777769826628
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": -0.15280309873563433
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": -0.11994198402412415
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.007297253904621548
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.0674167971610126
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": 0.006093087832507615
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.04508554108658719
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": 0.0677689476447838
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.01733084513601868
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.04073194579700906
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": 0.07866353338459338
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "energy: refiners",
+   "fit": "mixed",
+   "excess": -0.02843265285369667
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.1135423424029008
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.11480977384673327
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.028537519085478857
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": -0.06977126393412807
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": 0.06988871934202212
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": 0.04437856350254665
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": 0.08990276715380752
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": 0.049171968355471295
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.1523912954266184
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": -0.30198056900458276
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.32218103902032563
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.30056081568629683
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.08181829952053188
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.09159145625224285
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": 0.03411183707310994
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": 0.06876698877135334
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": 0.0406316676072237
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "mixed",
+   "excess": -0.00211097495894097
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": 0.03299393688875785
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.0679255523915136
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.10620368325159113
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": -0.1977273908917444
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.01878156952167287
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": 0.026118147429396183
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.227453245991162
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": -0.36074611758397096
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "industrials (broad)",
+   "fit": "confirms",
+   "excess": 0.062322282653322736
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": 0.08662714631203405
+  },
+  {
+   "asof": "2021-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "confirms",
+   "excess": -0.15067037886939594
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": -0.021159893933646857
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.017709689999382865
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": 0.038942542206169994
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": 0.025695122905944445
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "copper",
+   "fit": "confirms",
+   "excess": -0.2073108047568758
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "gold",
+   "fit": "mixed",
+   "excess": -0.23667306856329204
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "silver",
+   "fit": "contradicts",
+   "excess": -0.2512066627172295
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.026909610695682262
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.17484995578404672
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": 0.014539111609413569
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.08308277346109605
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": -0.21876386439921128
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": -0.17347469521424452
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.1233980505898737
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.03143338522234265
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "banks",
+   "fit": "mixed",
+   "excess": -0.14285970205363807
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": -0.053057233117084324
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": -0.032639097255339866
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": 0.04008114703991006
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.1319256734234262
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "infrastructure",
+   "fit": "confirms",
+   "excess": -0.06397580055864172
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "EV / battery",
+   "fit": "confirms",
+   "excess": 0.013447022439738998
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": -0.07365375803978443
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.019393187317831462
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "China",
+   "fit": "mixed",
+   "excess": -0.2975672567008635
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.07196306786065981
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.14307419064155447
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": -0.033489934354632184
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.07438654931758781
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": -0.002354406171288237
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.048298530615580315
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.048496808788352
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.10714286171470683
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.06686187113399855
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "gaming / esports",
+   "fit": "confirms",
+   "excess": -0.11400142640686683
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.10161008801595894
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": 0.019593143362491777
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.12331658509519683
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": 0.017479084782541898
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.06094439345047287
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": -0.0952959129965778
+  },
+  {
+   "asof": "2021-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.24846642140443453
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": 0.053020528635933276
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.1557507138914512
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": 0.03270082392865296
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "cyber",
+   "fit": "mixed",
+   "excess": 0.06001598772705774
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "copper",
+   "fit": "confirms",
+   "excess": -0.0016203182133405214
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "gold",
+   "fit": "mixed",
+   "excess": 0.05363628202969902
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.02743683346231418
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.05177390876721885
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "mixed",
+   "excess": 0.2731135386910414
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.0367801216812218
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.02079246330619311
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": 0.25495730882197726
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": 0.036705279706718885
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.029213470952781446
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.06880364474022133
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.09219795656008545
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": 0.028926228241213343
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": 0.05049151117897921
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": -0.02092157958822664
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": -0.004704790718892515
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "infrastructure",
+   "fit": "confirms",
+   "excess": -0.007400360029660676
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.10338671821444512
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": 0.10633089355321713
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.0900037428539896
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": 0.03822283116842059
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.00824279633329128
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.11634137696605529
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": 0.006246508398621953
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": -0.019540097775218035
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": 0.03739624627905591
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.012328662931348822
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.04418156210589569
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.0012665240005272915
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.059985905625851266
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": 0.09922012145031434
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.03025752779302615
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": 0.001797205650499049
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": 0.009445946239811764
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "thin",
+   "excess": -0.010107014892256516
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.024043086500558974
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": 0.002461528255503165
+  },
+  {
+   "asof": "2021-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "confirms",
+   "excess": 0.07728669752652317
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.1505833444206877
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": -0.07872304876744977
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": -0.17983289012782025
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": -0.08826930894316115
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.16364412556933638
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "gold",
+   "fit": "mixed",
+   "excess": 0.07019854337665132
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "silver",
+   "fit": "contradicts",
+   "excess": 0.015026033407310624
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.1286049985664554
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.05758275695745951
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.008546822457560221
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.013520857162079403
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": 0.26960802746058454
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": 0.10051221930777743
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": 0.1259668039854076
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.06566692448578479
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.07944119390146598
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.18581799848060765
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": -0.1066242348476013
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "real estate",
+   "fit": "confirms",
+   "excess": 0.022474197536211604
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": 0.17347549996162098
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": 0.04438388029388052
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.10847244048276622
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.23248384605591457
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.3384282986084373
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.12034586351115317
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.026772456498204478
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.01169135828087009
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": 0.13223082111090811
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": 0.0783521156849657
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": -0.016754666093847792
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.12186362023318553
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": 0.12704325794226157
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.07767643246116185
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": -0.12888884930477584
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.14569348468572307
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.052529951216058635
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.07729466568850607
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.1439238139642358
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.36702447596057663
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.004977454728728903
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": 0.019991694341869648
+  },
+  {
+   "asof": "2021-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.13464949703191165
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.10185139360007323
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": -0.05663683065927542
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": -0.12060828048415458
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "cyber",
+   "fit": "mixed",
+   "excess": -0.03062556188585569
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.033794063741588776
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "gold",
+   "fit": "mixed",
+   "excess": 0.027799805449526094
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": -0.04005766157124113
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.0963117932459375
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.12352871221832573
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": 0.09775351329582788
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.004305788994451516
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": 0.34267721711887017
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": 0.21453900232970002
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.1780473080698534
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": 0.0032422730491669847
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.08439857586510452
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.1556687281106084
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": -0.05479916978624999
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": 0.02462621389179905
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": 0.07033818621426502
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": 0.09405825149701315
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.042154538748102016
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.11051900306107947
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.26040724821984823
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.11615289752203632
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.04720829207771671
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.0014982273292144521
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": 0.26404058308575656
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": 0.04807468368873313
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.07507865868187252
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.08108187317740834
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": 0.04743925969414403
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.06463113421417827
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": -0.0744739867787006
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.06328372213392808
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.0016159948944974856
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.04719597908881875
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "Israel tech",
+   "fit": "thin",
+   "excess": -0.09978660007774387
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.25672524495617327
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.01255003179416403
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": 0.09124755971141574
+  },
+  {
+   "asof": "2022-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": 0.06251669155612849
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": -0.04206997189813819
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": -0.05351607179750092
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.005720594359011362
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.015784629037607023
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.24065459765867153
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": -0.21897312202609673
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": -0.23113368664123107
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.12258536432671666
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": -0.09568398515260101
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": 0.00014014046692523152
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.001904386394363226
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "energy: upstream",
+   "fit": "mixed",
+   "excess": -0.07381810680433824
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.07995617055796311
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.021347850000545215
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "mixed",
+   "excess": 0.00562147290277183
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.024403824032852572
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": 0.037064346105315726
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.004074369573826786
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": -0.027619181453240122
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.09977843037965288
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.025507080965857076
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.029183006347237195
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.08603783676802042
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.1735432782045557
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "China",
+   "fit": "mixed",
+   "excess": -0.059213303812504926
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.061293363033735615
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.18671009005876016
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.19454784822867713
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.024768622316366562
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": 0.032754472964317216
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.11004338865347574
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": 0.02028506949482689
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.10335095234313141
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": -0.13473760116772499
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": -0.09820207297861938
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.07292646189820484
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.009484280197928982
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.03750252256778519
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "confirms",
+   "excess": -0.04783400924927006
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.019576377630178277
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.11559799734842613
+  },
+  {
+   "asof": "2022-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.028757604669874093
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.03539959993168207
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.0019788406478818965
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": -0.07831110766533811
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.03956360271902398
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.1188952386534401
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.11419617351133719
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.17573878619781247
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.09233366286891773
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "mixed",
+   "excess": 0.07639091543802884
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.00738842843096682
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.021627028286210364
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": 0.2461507804752522
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": 0.11578927523468519
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.04284098052819629
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": 0.015437281182095494
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.0028974301956823934
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.05841039726348015
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.0030022864128739224
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": -0.1031361505660281
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.05436548855982689
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": 0.026067770827341685
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.040131932651647745
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": -0.03811938422168735
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": -0.20618317139274678
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.0033892545635843354
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.06349885259960814
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.04504633247638645
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": 0.08355659762335457
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": 0.08328165345580985
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.06577151455174085
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.013710866043736392
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": 0.03552722101594774
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.027304818881185355
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": -0.04991006715537061
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": -0.04120951330160416
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.11650541349739507
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.022644652174277653
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.037243337942529986
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.1192097791197641
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.06477656089934458
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": 0.06975482154332768
+  },
+  {
+   "asof": "2022-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "confirms",
+   "excess": -0.04036615341344507
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": 0.11646511470855274
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.11042967180834122
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.10272060035946673
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.02309548809485784
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "copper",
+   "fit": "contradicts",
+   "excess": 0.12317559170131753
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.0013478437217513406
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": -0.014097033436563267
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": 0.03301025149198644
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": 0.020550624404579776
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.011280931352509738
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "defense",
+   "fit": "confirms",
+   "excess": 0.05772136321141871
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "energy: upstream",
+   "fit": "mixed",
+   "excess": -0.09219083582201242
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.02624924645413207
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.03115587282019387
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.01116314791953383
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.029007732479240544
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": 0.05098096605562937
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": 0.09703028190512386
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": 0.006862417955803594
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": 0.013464188264644314
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": 0.0162570106427767
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.006797214373420762
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": -0.05150568566653607
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.3505853922950805
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.14390117253051496
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.027337543616390403
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.056526260500042946
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": -0.029762789161885267
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": 0.024287964972993903
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": 0.024519677796039918
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": 0.05712448931008929
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.04497284673450841
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.06966369573109088
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.14875801945704492
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.10297951726931309
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.0034971604259816935
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.005165198032194211
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "Israel tech",
+   "fit": "contradicts",
+   "excess": 0.015957444824477918
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "mixed",
+   "excess": 0.15012868533570856
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "industrials (broad)",
+   "fit": "confirms",
+   "excess": -0.004055870585515375
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.010523848254722301
+  },
+  {
+   "asof": "2022-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.06294543701770239
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": 0.040519362304129516
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": -0.15608581677594988
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.03283716765507083
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.021934240083146928
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.13661707146577884
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.05927919880397833
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.0027872572920729644
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.13715457120586394
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": -0.05197187001729303
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.03323555175147552
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "defense",
+   "fit": "confirms",
+   "excess": -0.05504448340469629
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.11603693003929431
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.10740151491702465
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.053494777995524344
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.03251471566315318
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.35605676761390004
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.10357862705853076
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.020784027515365233
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.11426035202940503
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.06453160204055601
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.05693035222053444
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.06913693947033248
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": -0.10330369482560825
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "crypto equities",
+   "fit": "thin",
+   "excess": 0.06941743658858995
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.12213713445012205
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.04315799949023291
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.0005462018506008359
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": -0.15771419860563293
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": -0.11916220616420747
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "mixed",
+   "excess": -0.1649215462433355
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.0645425674785548
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.036127858121008716
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.07620462599835559
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.04234763178866974
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.07081480386855432
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.19765730319585706
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.03695023995925917
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.04351343304098809
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.01622751668466027
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.05840173501102219
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.07112317967097015
+  },
+  {
+   "asof": "2023-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.055293328884647996
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.020152209183176634
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.04514806846880585
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": 0.031062812972268594
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.01005588135104829
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "copper",
+   "fit": "contradicts",
+   "excess": -0.034095266872292085
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": -0.1343928318283286
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "silver",
+   "fit": "contradicts",
+   "excess": -0.10102012267772792
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.038378434154311886
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "mixed",
+   "excess": 0.07151113342521653
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.07216458792170966
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.028574659698254123
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": 0.147552766439449
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": 0.06884235438288089
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.0034065041765980464
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "mixed",
+   "excess": -0.07080975496490918
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.02242048639923555
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": 0.036410455491101036
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.07063089776147247
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.06121226582886145
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.016255025388772364
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.016471983621976105
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.062183072759670194
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": -0.16523933014462502
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "crypto equities",
+   "fit": "confirms",
+   "excess": -0.0651390116073049
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.09533578562915627
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": -0.017728766472169977
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.0831480840504164
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.048534041677604084
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.009960285904789812
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.012055091891075564
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "mixed",
+   "excess": -0.049138223464397224
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.09223508390109758
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.028855817239390957
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "social / media",
+   "fit": "mixed",
+   "excess": -0.010712495836178948
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.05206316493700325
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.004328978631041425
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": -0.021691032792153637
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": 0.013638542334163395
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.013557980756504051
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.014918332233469167
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.013628062007108532
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "Magnificent 7",
+   "fit": "confirms",
+   "excess": 0.027885436096919847
+  },
+  {
+   "asof": "2023-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": -0.1153873551729358
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.002903606209293271
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.0018871594351304033
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": 0.012800326326562528
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.04779610504988763
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.05526431935878162
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.0062008552219684114
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "silver",
+   "fit": "contradicts",
+   "excess": -0.006054282587272697
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.04772166282832532
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.1797652034107492
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.045143755916711714
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.013281657482144937
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.07608160104229071
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": 0.01135238370910674
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.00453986799009561
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.10769116251975223
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.0012254015457313638
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": -0.021539075746552488
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": 0.017366896127934517
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.04098093259927841
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.04060859508161611
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.03161547071730001
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.13513022687962192
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.18523069724715233
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "crypto equities",
+   "fit": "mixed",
+   "excess": 0.06181034750458314
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.023781149282010323
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.05068020321242317
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.006906613715894405
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.06088564312603714
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": 0.0292542719512916
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.0031893348858460513
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": 0.022952294772882853
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.05879402776483683
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.10523420375762332
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": 0.03456348532621234
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.012544583010451138
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.04033479056472966
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": -0.047207091591121575
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.10420331947474826
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "mixed",
+   "excess": 0.0689957842621769
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.030773911228817563
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.03311278487160829
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "Magnificent 7",
+   "fit": "confirms",
+   "excess": 0.055271513330601874
+  },
+  {
+   "asof": "2023-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.1498750131155246
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": -0.003105449024066953
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.05166528729023456
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": 0.022055726345775573
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.021858729736912608
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.06404938116636516
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": -0.12992531590732811
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": -0.14830395475824665
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.12712870736232265
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.1253494436474606
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.04140371889415928
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.022292178535551488
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "energy: upstream",
+   "fit": "mixed",
+   "excess": -0.11055083051004537
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": -0.06915300506189692
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.04453402694140274
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "mixed",
+   "excess": 0.05658237357134342
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.012117711041362944
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": 0.005166020545664211
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.10310110137321749
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.03523034631231248
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.003509042354983505
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.015555115328611832
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.1914059690452375
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.13987678331729372
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "crypto equities",
+   "fit": "contradicts",
+   "excess": 0.29264463873786833
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.23334125805967457
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": 0.009328215500457704
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.08211039102230266
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.14418996884932198
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": 0.007985706739540799
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.040156641801881165
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.061070742838705394
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.03744014036438115
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.03671700329050076
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.032947290934115414
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.028825881306755896
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.1062505471257732
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": 0.00201327524314839
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": 0.002637577334508423
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.020621018535465607
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.03174624307019669
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "Magnificent 7",
+   "fit": "confirms",
+   "excess": 0.00781282771564773
+  },
+  {
+   "asof": "2023-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": -0.33296432997914155
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": -0.024382838267012596
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.047171662137566996
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": -0.25421670501060445
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.08831572441450314
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.3019410733118013
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "gold",
+   "fit": "contradicts",
+   "excess": 0.26378649636251367
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.35565731375925913
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.07087517044295966
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.1551635653438085
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.0932220337893166
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.014099664017219293
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": 0.053562787660260534
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": -0.03336272255223016
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.02194909687423559
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.180048513203105
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": 0.006590428848724739
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": -0.026458356448676595
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.021551528907319373
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.02990419829583842
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": 0.03807251124440577
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": 0.04083961280456768
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": -0.017466473380146896
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.06910078379075542
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "crypto equities",
+   "fit": "contradicts",
+   "excess": -0.06193697973938708
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.19403254922840296
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": -0.023348272306171203
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.04776599017934835
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": 0.0039003382113159124
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.0037162617037089785
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "mixed",
+   "excess": 0.03785538433935032
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.024351572950324307
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.011994351994121688
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.022173714305020353
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": 0.02497083758549823
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.04701323005298974
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.021301430179461178
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": 0.028122863921485886
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.08884458258557948
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.07781147801028548
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.0006185962993625616
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": 0.01843877968013774
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "Magnificent 7",
+   "fit": "confirms",
+   "excess": 0.053633442566148215
+  },
+  {
+   "asof": "2024-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": 0.07156948228262612
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.06607028453207187
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": -0.04957750446926364
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": -0.06864572412444081
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": 0.004030815420687617
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.2330325875084152
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": -0.0162528024807278
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": -0.12119028026523382
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": -0.22264436616706654
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.18980847581092467
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.04140047778650191
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.02143751078678044
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.15509315516914993
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "energy: refiners",
+   "fit": "mixed",
+   "excess": -0.10645498890509986
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "energy: midstream",
+   "fit": "mixed",
+   "excess": -0.03134345594855
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.009996363269488273
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": 0.023887519016786762
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.041739217620977175
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": -0.01423294257769836
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": 0.045710931909252274
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": -0.10294599804901665
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.061736570394174906
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": -0.18738870711050704
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": -0.09871201742834275
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "crypto equities",
+   "fit": "confirms",
+   "excess": -0.0991266918187777
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.1899057051241343
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "Japan",
+   "fit": "confirms",
+   "excess": -0.07593507358591267
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.03747735787253892
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.14506131079700849
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": 0.000645201871418255
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": -0.01301016836344937
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.08971415874453292
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.04299093691941791
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.1321562301377115
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.08732261642593409
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": -0.015397967510680788
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.039971865107687465
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.04535799761635858
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "Israel tech",
+   "fit": "contradicts",
+   "excess": -0.08125084417234141
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.06825067734600104
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.03953771128147232
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.07147851979888087
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "Magnificent 7",
+   "fit": "contradicts",
+   "excess": 0.05944355824297132
+  },
+  {
+   "asof": "2024-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.2326019586621645
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.028166100376232017
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": -0.10309881418060148
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.11001519843830837
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "cyber",
+   "fit": "mixed",
+   "excess": -0.0007780880514328681
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.06808179092886257
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": -0.05773585378556245
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": 0.020251041874474462
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "steel / metals",
+   "fit": "contradicts",
+   "excess": 0.03508796266260844
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.22943537642621536
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.0024904955574743814
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.03286651447020855
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": -0.04510189231803463
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "energy: refiners",
+   "fit": "mixed",
+   "excess": -0.1742225522497005
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.053175249881975604
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.10152707703283152
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": 0.11975001849255373
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": 0.057484115542184654
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": -0.022860889810313978
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.018525211355188365
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": -0.05082095015888166
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": 0.05458322961993489
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.04204575159592783
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": -0.14681846720495476
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "crypto equities",
+   "fit": "contradicts",
+   "excess": 0.284148817045885
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": 0.11673254073046824
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.050683693061825574
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.17909274248100426
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.03519317507986805
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": 0.04513990244781829
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.15188178035775912
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": 0.022768210899032137
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": -0.04723867947029614
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.1846499689982667
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.019352249847011338
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": 0.09960433925821555
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.09227237437176605
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.034575561587724124
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.00868687826446668
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "confirms",
+   "excess": 0.2198492769383551
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.03652172466942649
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.0401206825554139
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "Magnificent 7",
+   "fit": "contradicts",
+   "excess": 0.06767766536336328
+  },
+  {
+   "asof": "2024-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.026643740948814165
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.032089594420814715
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": 0.007728813512504355
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": 0.005484797741221209
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "cyber",
+   "fit": "mixed",
+   "excess": 0.07079908852518979
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.012041523099872942
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.07308895638473893
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": -0.008599005401543514
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.11159091729581344
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": -0.13280399906534512
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.031383790689991364
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": 0.008958260395514395
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.07150439377884328
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": -0.09215492704436479
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": 0.00837525207068642
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": 0.02361051732148198
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.07367465406312607
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": 0.003053066894765366
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": -0.14012878919774974
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "real estate",
+   "fit": "confirms",
+   "excess": -0.03847732970124348
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": -0.1502860382348301
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.07220288587513062
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "EV / battery",
+   "fit": "confirms",
+   "excess": -0.013420413368318562
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": -0.043485544809166575
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "crypto equities",
+   "fit": "mixed",
+   "excess": -0.12899749044194686
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": 0.1329669880580686
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.01328132928392095
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.012748846369337707
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": 0.02538710612801595
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": -0.03633063817143689
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": -0.026851966142400374
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.02187940927953891
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": 0.002052777075401413
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.040017754368420366
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": 0.08737242876581519
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.145637606726855
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.01329408775199048
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": -0.0580447938836102
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": 0.13635292546600053
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "confirms",
+   "excess": 0.04498988053822506
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.04463098429411927
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.052277403141236856
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "Magnificent 7",
+   "fit": "confirms",
+   "excess": 0.0032883207393028524
+  },
+  {
+   "asof": "2024-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": -0.1658522522608669
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": -0.021087351654406283
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": -0.03904635711810012
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": -0.028938002402912666
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": 0.03144239786235997
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.038105244583534315
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.20487920579112706
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "silver",
+   "fit": "contradicts",
+   "excess": 0.10504097262489431
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": 0.006643977547331231
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.03021779851456315
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": 0.07446504227532458
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": 0.1669691858820429
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.10481015541982601
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": 0.05669135767631173
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.0025656227033593235
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": -0.07057336666457822
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.043685147074013
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": -0.018599951817964738
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": -0.019491751180402028
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "real estate",
+   "fit": "confirms",
+   "excess": 0.0223251561084505
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": 0.07098370752269482
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": 0.06672349055648685
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": 0.004657562179208735
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.05575731092076538
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "crypto equities",
+   "fit": "mixed",
+   "excess": -0.021388367940986253
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": 0.005779474747682811
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.06625818597743116
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.034819699533618076
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.010900383069073538
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": 0.05545278347368021
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.0037040209521232437
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.010992842225263977
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": 0.04623941564054246
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "leisure / travel",
+   "fit": "mixed",
+   "excess": -0.07240160411622715
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "social / media",
+   "fit": "mixed",
+   "excess": -0.010495029593596827
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "gaming / esports",
+   "fit": "confirms",
+   "excess": 0.07878795727965682
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.062230690282444545
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "environmental / water",
+   "fit": "mixed",
+   "excess": 0.0835211231246733
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "Israel tech",
+   "fit": "contradicts",
+   "excess": -0.003504072847924866
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "confirms",
+   "excess": -0.03854744227371126
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": 0.06864739317046253
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": 0.0016218841033844855
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "Magnificent 7",
+   "fit": "contradicts",
+   "excess": -0.02658435933307468
+  },
+  {
+   "asof": "2025-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "confirms",
+   "excess": -0.017232885572534367
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.05566042000903482
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.09247878297037422
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": -0.06631247407905502
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.06808754345171852
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.024406918374720643
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.05278798638134067
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": 0.1348888496611763
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "steel / metals",
+   "fit": "confirms",
+   "excess": 0.15816467622568586
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.17301884187988428
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.011115573152542746
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "defense",
+   "fit": "confirms",
+   "excess": 0.06552735334453552
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": -0.05411290003206529
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "energy: refiners",
+   "fit": "mixed",
+   "excess": 0.07718276780843647
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.0809252529071021
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.026280759175769344
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "banks",
+   "fit": "contradicts",
+   "excess": -0.017044465277150755
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.0014747111485506892
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": 0.06199683247767096
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.0775987441026168
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.03670527147352994
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "infrastructure",
+   "fit": "confirms",
+   "excess": -0.01433881119603638
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": 0.07918375974740138
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.09668280447301865
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "crypto equities",
+   "fit": "mixed",
+   "excess": 0.14174719988279152
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.023591277168965846
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.03187883723789031
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.14557471974823266
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "agriculture",
+   "fit": "contradicts",
+   "excess": -0.11445346056565223
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.0854202442954538
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": 0.028216704386615166
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.02932768410637543
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "staples / food",
+   "fit": "contradicts",
+   "excess": -0.07594472240384675
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": 0.03727480610931233
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "social / media",
+   "fit": "contradicts",
+   "excess": 0.07538770263890071
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": 0.04600633910496277
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.04580873732590729
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": -0.01879584524852181
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": 0.023039257786981793
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "mixed",
+   "excess": 0.20676715165777892
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": -0.024377871079641178
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "materials (broad)",
+   "fit": "contradicts",
+   "excess": -0.04190782676295646
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "Magnificent 7",
+   "fit": "contradicts",
+   "excess": 0.05233550356598471
+  },
+  {
+   "asof": "2025-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.09918231244377133
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "AI",
+   "fit": "contradicts",
+   "excess": 0.0476805262212564
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "semis / memory",
+   "fit": "contradicts",
+   "excess": 0.0996458501265937
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "cloud / software",
+   "fit": "confirms",
+   "excess": -0.029645167688080537
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "cyber",
+   "fit": "contradicts",
+   "excess": -0.02398997302055328
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "copper",
+   "fit": "confirms",
+   "excess": 0.17076247640959674
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.25629822095085547
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": 0.2720747387271706
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "steel / metals",
+   "fit": "confirms",
+   "excess": 0.12475424609195401
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "uranium / nuclear",
+   "fit": "contradicts",
+   "excess": 0.11298155371508334
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": 0.006788962670959298
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": 0.02168009859562675
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": 0.06495691096531082
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "energy: refiners",
+   "fit": "contradicts",
+   "excess": 0.1561077763002674
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "energy: midstream",
+   "fit": "contradicts",
+   "excess": -0.04391436789008655
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "biotech / healthcare",
+   "fit": "mixed",
+   "excess": 0.072837972968183
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.0915071081676439
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": -0.0763416568017589
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": -0.16525490741321347
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "real estate",
+   "fit": "contradicts",
+   "excess": -0.04746425499914564
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": -0.02308336652183181
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "infrastructure",
+   "fit": "contradicts",
+   "excess": -0.035268337559479924
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.12475626097733422
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.11551089987895839
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "crypto equities",
+   "fit": "confirms",
+   "excess": 0.0013935562798161327
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": 0.0043623596460032514
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.019164144557464957
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.26165341936531306
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": -0.03465193497050978
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": -0.045877136919342254
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "capital markets / brokers",
+   "fit": "contradicts",
+   "excess": -0.09171502526401115
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "private equity / alternatives",
+   "fit": "confirms",
+   "excess": -0.14624054613951865
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": -0.12173727074635787
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "leisure / travel",
+   "fit": "contradicts",
+   "excess": -0.08976523125459518
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.06677887200537985
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "gaming / esports",
+   "fit": "mixed",
+   "excess": -0.08308456430964972
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.08146302528712468
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": -0.08324703577094994
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": 0.024439583948799415
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": -0.044122644494728136
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "industrials (broad)",
+   "fit": "confirms",
+   "excess": -0.04596793204298588
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": -0.09150098098337955
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "Magnificent 7",
+   "fit": "mixed",
+   "excess": 0.05075128234559134
+  },
+  {
+   "asof": "2025-08-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": 0.16903471341476814
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": 0.06497899056269273
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": 0.1910409781131286
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": -0.22940271462974032
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": -0.18411961311349445
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.3022408514022412
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.37908347371941203
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "silver",
+   "fit": "mixed",
+   "excess": 0.6425569257433373
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "steel / metals",
+   "fit": "confirms",
+   "excess": 0.2676483242909666
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": 0.10691751061426931
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "power / grid",
+   "fit": "contradicts",
+   "excess": -0.18318783252547566
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": 0.1724527487538977
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": 0.1921029941884027
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": 0.07629275656745715
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": 0.10616804409488416
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": 0.021947712184367
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.10268623394873921
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "retail / consumer",
+   "fit": "mixed",
+   "excess": -0.18899457342796852
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "homebuilders",
+   "fit": "contradicts",
+   "excess": 0.13697967692071344
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": 0.03995178065103744
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "shipping / logistics",
+   "fit": "mixed",
+   "excess": 0.14003218134766704
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": 0.12796938973711422
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "EV / battery",
+   "fit": "mixed",
+   "excess": 0.09043563169128305
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "solar / clean",
+   "fit": "mixed",
+   "excess": 0.14683399822522
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "crypto equities",
+   "fit": "confirms",
+   "excess": -0.20392672412477672
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.06928580949826708
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.14924954120107992
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.5083861502688531
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": 0.025492589749619016
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.05817595103569506
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": -0.03433276815985992
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.07845900204504219
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": 0.12559501373455062
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": 0.08806953741907353
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.048911481092653586
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "gaming / esports",
+   "fit": "confirms",
+   "excess": -0.16743394483434215
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": 0.001277590035067444
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": 0.04866814428885494
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.04124913494063709
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "confirms",
+   "excess": -0.1550921151481926
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "industrials (broad)",
+   "fit": "confirms",
+   "excess": 0.13299952295284978
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.4121392012540763
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "Magnificent 7",
+   "fit": "mixed",
+   "excess": -0.06822206210713277
+  },
+  {
+   "asof": "2025-11-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": 0.22679883105414608
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "AI",
+   "fit": "mixed",
+   "excess": 0.11598134816015697
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "semis / memory",
+   "fit": "mixed",
+   "excess": 0.44993822246263865
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "cloud / software",
+   "fit": "contradicts",
+   "excess": 0.05113204356742218
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "cyber",
+   "fit": "confirms",
+   "excess": 0.16993883788240172
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": -0.057882658013690524
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": -0.2475728714204315
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": -0.18120502453952458
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "steel / metals",
+   "fit": "mixed",
+   "excess": -0.03597794651360989
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "uranium / nuclear",
+   "fit": "confirms",
+   "excess": -0.16329023086984118
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "power / grid",
+   "fit": "confirms",
+   "excess": -0.04627618693345581
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "defense",
+   "fit": "mixed",
+   "excess": -0.13716539649054332
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "energy: upstream",
+   "fit": "contradicts",
+   "excess": 0.03818967021421401
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": 0.006940446390000021
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.018857234421554365
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "biotech / healthcare",
+   "fit": "contradicts",
+   "excess": -0.1012269803553754
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": -0.11139102472745016
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "retail / consumer",
+   "fit": "contradicts",
+   "excess": -0.09868853407215199
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "homebuilders",
+   "fit": "confirms",
+   "excess": -0.24073137261552457
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "real estate",
+   "fit": "mixed",
+   "excess": -0.05659463491006108
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "shipping / logistics",
+   "fit": "contradicts",
+   "excess": -0.049113513823127265
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.0878929819310897
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "EV / battery",
+   "fit": "contradicts",
+   "excess": 0.033579599921508274
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "solar / clean",
+   "fit": "contradicts",
+   "excess": 0.10584369465726444
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "crypto equities",
+   "fit": "confirms",
+   "excess": 0.13399668950953536
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "China",
+   "fit": "contradicts",
+   "excess": -0.17958726837239025
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": -0.07721293227509907
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": 0.2569236618369244
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "agriculture",
+   "fit": "mixed",
+   "excess": -0.04670531129084188
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "insurance",
+   "fit": "contradicts",
+   "excess": -0.08743945769050954
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "capital markets / brokers",
+   "fit": "mixed",
+   "excess": -0.04493412790296203
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "private equity / alternatives",
+   "fit": "contradicts",
+   "excess": -0.12037264827462257
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "staples / food",
+   "fit": "mixed",
+   "excess": -0.12072970549980977
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": -0.12818333043531066
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "social / media",
+   "fit": "mixed",
+   "excess": -0.14256327474393948
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": -0.13187954991006656
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.15645408551173412
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "environmental / water",
+   "fit": "confirms",
+   "excess": -0.1724118986453925
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "Israel tech",
+   "fit": "contradicts",
+   "excess": 0.017292843536275804
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "innovation / disruptive growth",
+   "fit": "contradicts",
+   "excess": 0.02312863954917055
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "industrials (broad)",
+   "fit": "contradicts",
+   "excess": -0.11526834556028676
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "materials (broad)",
+   "fit": "mixed",
+   "excess": -0.1374312443071387
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "Magnificent 7",
+   "fit": "mixed",
+   "excess": 0.03680434247467823
+  },
+  {
+   "asof": "2026-02-19",
+   "theme": "coal / lithium / nickel",
+   "fit": "contradicts",
+   "excess": -0.10591949812593811
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "AI",
+   "fit": "confirms",
+   "excess": -0.04162441811181248
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "semis / memory",
+   "fit": "confirms",
+   "excess": -0.08548058873442994
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "cloud / software",
+   "fit": "mixed",
+   "excess": 0.14522241193603902
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "cyber",
+   "fit": "mixed",
+   "excess": 0.11436391526495782
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "copper",
+   "fit": "mixed",
+   "excess": 0.08022690271775401
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "gold",
+   "fit": "confirms",
+   "excess": 0.1154501401528137
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "silver",
+   "fit": "confirms",
+   "excess": -0.006111083438216369
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "steel / metals",
+   "fit": "confirms",
+   "excess": -0.0325103853406854
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "uranium / nuclear",
+   "fit": "mixed",
+   "excess": -0.053873492822691195
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "power / grid",
+   "fit": "mixed",
+   "excess": -0.07083440340646002
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "defense",
+   "fit": "contradicts",
+   "excess": -0.033930479253232504
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "energy: upstream",
+   "fit": "confirms",
+   "excess": -0.01785743650448716
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "energy: refiners",
+   "fit": "confirms",
+   "excess": 0.16418281256236766
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "energy: midstream",
+   "fit": "confirms",
+   "excess": -0.04493222810053177
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "biotech / healthcare",
+   "fit": "confirms",
+   "excess": 0.2284158128529739
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "banks",
+   "fit": "confirms",
+   "excess": 0.04411966293397662
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "retail / consumer",
+   "fit": "confirms",
+   "excess": 0.04743647389482356
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "homebuilders",
+   "fit": "mixed",
+   "excess": 0.042146348182632076
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "real estate",
+   "fit": "confirms",
+   "excess": 0.0006464601596558595
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "shipping / logistics",
+   "fit": "confirms",
+   "excess": 0.08920457801390635
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "infrastructure",
+   "fit": "mixed",
+   "excess": -0.03675862429200941
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "EV / battery",
+   "fit": "confirms",
+   "excess": -0.11894437380998829
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "solar / clean",
+   "fit": "confirms",
+   "excess": -0.1902712156750537
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "crypto equities",
+   "fit": "mixed",
+   "excess": -0.035584555071113744
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "China",
+   "fit": "confirms",
+   "excess": -0.0941386902161007
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "Japan",
+   "fit": "contradicts",
+   "excess": 0.017044783492224935
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "Korea / DRAM",
+   "fit": "no data",
+   "excess": -0.033046041659196
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "agriculture",
+   "fit": "confirms",
+   "excess": 0.004741105170443682
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "insurance",
+   "fit": "confirms",
+   "excess": 0.07159430478498785
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "capital markets / brokers",
+   "fit": "confirms",
+   "excess": 0.08268182966714155
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "private equity / alternatives",
+   "fit": "mixed",
+   "excess": 0.03554226837259988
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "staples / food",
+   "fit": "confirms",
+   "excess": -0.026934515569729256
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "leisure / travel",
+   "fit": "confirms",
+   "excess": 0.10949648466071704
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "social / media",
+   "fit": "confirms",
+   "excess": -0.036653072892865124
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "gaming / esports",
+   "fit": "contradicts",
+   "excess": 0.05316493543136702
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "mortgage REITs",
+   "fit": "thin",
+   "excess": -0.04724018405011221
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "environmental / water",
+   "fit": "contradicts",
+   "excess": 0.036536517057055
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "Israel tech",
+   "fit": "mixed",
+   "excess": -0.08271510278778327
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "innovation / disruptive growth",
+   "fit": "mixed",
+   "excess": 0.07351621864558022
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "industrials (broad)",
+   "fit": "mixed",
+   "excess": 0.011656606799746783
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "materials (broad)",
+   "fit": "confirms",
+   "excess": 0.044366626464016345
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "Magnificent 7",
+   "fit": "confirms",
+   "excess": -0.06032237178900679
+  },
+  {
+   "asof": "2026-05-20",
+   "theme": "coal / lithium / nickel",
+   "fit": "mixed",
+   "excess": -0.028441731283995558
+  }
+ ],
+ "limits": [
+  "constituents are today's top 5 (survivorship)",
+  "not conditioned on the theme running on RS",
+  "about 34 quarters at most, themes overlap"
+ ]
+}

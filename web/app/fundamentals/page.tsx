@@ -212,8 +212,10 @@ export default async function FundamentalsPage() {
           </div>
           <p className="mb-2 text-[0.7rem] text-slate-500">
             The chip says whether what the theme&apos;s own companies report agrees with the theme running: more
-            capturing or accelerating names than slowing ones, with the median pointing the same way. Context, not
-            a signal, and not tested to predict anything.
+            capturing or accelerating names than slowing ones, with the median pointing the same way. Tested on
+            33 quarters since 2018 (theme return against SPY over the next 63 trading days): themes that
+            &ldquo;confirm&rdquo; beat those that &ldquo;contradict&rdquo; by 0.6 points per quarter, t = 0.9, and won 17 of
+            33 quarters, which is no reliable difference. Description only, not a signal.
           </p>
           {live.map((t) => (
             <RollupRow key={t.theme} label={t.theme} r={t} fit={t.fit} fallback={t.source?.startsWith("hand")} />
