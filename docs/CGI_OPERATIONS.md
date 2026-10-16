@@ -334,6 +334,25 @@ build.
 Almost certainly a schema version that was not bumped. This has happened six
 times. Check the module constant, not the table in `cache.py`.
 
+### After a deploy that touches `api/` (learned 2026-10-17)
+
+A push that added a heavy page call and a version bump was followed by about
+ten minutes of 503s from Render, then 502s on every page.
+
+- **Judge only after three clean checks.** Render must answer 200 on the root
+  three times in a row, one minute apart. Redeploys flap.
+- **Poll at most once a minute.** Faster polling (20 s across three endpoints)
+  drew Cloudflare 429s on the Render address and made the picture worse.
+- **A version bump costs one blocking rebuild** (fundamentals ~55 s). Load the
+  affected page once right after the deploy so a visitor never does; the page
+  shows its loading state until the rebuild finishes.
+- **Never let a page visit trigger a heavy first build.** Anything that
+  downloads many filings is filled off the API and written to the cache:
+  `scripts/fill_customer_links.py` (monthly task `refresh-customer-links-cache`)
+  does this for the 10-K customer list. The API then only reads it.
+- Render's logs are not readable from the CLI or connector; if an outage needs
+  a cause, open the `cgi-api` logs in the Render dashboard.
+
 ### A TradingView list will not load
 
 Almost always a wrong EXCHANGE prefix: TradingView drops a symbol it cannot place without
