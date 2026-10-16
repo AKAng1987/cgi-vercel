@@ -7,6 +7,10 @@ on:
     - cron: "*/10 22-23,0-15 * * *"
   workflow_dispatch: {}
 permissions: {}
+# one at a time: a slow run must not pile runs up behind it
+concurrency:
+  group: keep-api-awake
+  cancel-in-progress: false
 jobs:
   ping:
     runs-on: ubuntu-latest
@@ -24,9 +28,11 @@ jobs:
       # watchlists, freshness), so a rebuild lands here and not on a visitor, whose page would otherwise time out.
       # Only public URLs; a slow or failed warm-up never fails the run (the API keeps computing after a client gives up).
       - name: Warm the heavy caches
-        timeout-minutes: 8
+        timeout-minutes: 4
+        continue-on-error: true
         run: |
+          # in parallel, so one slow rebuild does not hold up the rest; a slow or failed warm-up never fails the run
           for path in / /countries /backtest /api/themes /api/watchlists /api/freshness; do
-            out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 110 "https://cgi-vercel.vercel.app$path" || echo "timeout")
-            echo "$path -> $out"
+            ( out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 90 "https://cgi-vercel.vercel.app$path" || echo "timeout"); echo "$path -> $out" ) &
           done
+          wait
