@@ -3,6 +3,46 @@
  "claims": [],
  "delta": [
   {
+   "change_pct": 0.0,
+   "from": 45,
+   "from_q": "2026Q2",
+   "metric": "fy_sales_guide_high_bn",
+   "ticker": "ASML",
+   "to": 45,
+   "to_q": "2026Q3",
+   "unit": "EUR bn"
+  },
+  {
+   "change_pct": 2.3,
+   "from": 43,
+   "from_q": "2026Q2",
+   "metric": "fy_sales_guide_low_bn",
+   "ticker": "ASML",
+   "to": 44,
+   "to_q": "2026Q3",
+   "unit": "EUR bn"
+  },
+  {
+   "change_pct": 25.8,
+   "from": 9.3,
+   "from_q": "2026Q2",
+   "metric": "net_sales_bn",
+   "ticker": "ASML",
+   "to": 11.7,
+   "to_q": "2026Q3",
+   "unit": "EUR bn"
+  },
+  {
+   "change_pct": 2.8,
+   "from": 15.997,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "BAC",
+   "to": 16.449,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
    "change_pct": -7.1,
    "from": 1.366,
    "from_q": "2026Q2",
@@ -13,12 +53,42 @@
    "unit": "$bn"
   },
   {
+   "change_pct": 6.0,
+   "from": 25.511,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "JPM",
+   "to": 27.036,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
    "change_pct": 9.1,
    "from": 2.515,
    "from_q": "2026Q2",
    "metric": "provision_bn",
    "ticker": "JPM",
    "to": 2.743,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 12.0,
+   "from": 35.9,
+   "from_q": "2026Q1",
+   "metric": "revenue_usd_bn",
+   "ticker": "TSM",
+   "to": 40.2,
+   "to_q": "2026Q2",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 1.6,
+   "from": 12.317,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "WFC",
+   "to": 12.517,
    "to_q": "2026Q3",
    "unit": "$bn"
   },
@@ -34,10 +104,61 @@
   }
  ],
  "facts": {
+  "ASML": {
+   "2026Q2": {
+    "filed": "2026-07-15",
+    "metrics": {
+     "fy_sales_guide_high_bn": {
+      "note": "full-year 2026 net sales guide, high end",
+      "unit": "EUR bn",
+      "value": 45
+     },
+     "fy_sales_guide_low_bn": {
+      "note": "full-year 2026 net sales guide, low end",
+      "unit": "EUR bn",
+      "value": 43
+     },
+     "net_sales_bn": {
+      "note": "total net sales, headline figure rounded to 0.1",
+      "unit": "EUR bn",
+      "value": 9.3
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/937966/000162828026048235/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-14",
+    "metrics": {
+     "fy_sales_guide_high_bn": {
+      "note": "full-year 2026 net sales guide, high end",
+      "unit": "EUR bn",
+      "value": 45
+     },
+     "fy_sales_guide_low_bn": {
+      "note": "full-year 2026 net sales guide, low end",
+      "unit": "EUR bn",
+      "value": 44
+     },
+     "net_sales_bn": {
+      "note": "total net sales, headline figure rounded to 0.1",
+      "unit": "EUR bn",
+      "value": 11.7
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/937966/000162828026065813/"
+   }
+  },
   "BAC": {
    "2026Q2": {
     "filed": "2026-07-14",
     "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 15.997
+     },
      "provision_bn": {
       "note": "provision for credit losses",
       "unit": "$bn",
@@ -50,6 +171,11 @@
    "2026Q3": {
     "filed": "2026-10-14",
     "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 16.449
+     },
      "provision_bn": {
       "note": "provision for credit losses",
       "unit": "$bn",
@@ -64,6 +190,11 @@
    "2026Q2": {
     "filed": "2026-07-14",
     "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 25.511
+     },
      "provision_bn": {
       "note": "provision for credit losses",
       "unit": "$bn",
@@ -76,6 +207,11 @@
    "2026Q3": {
     "filed": "2026-10-13",
     "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 27.036
+     },
      "provision_bn": {
       "note": "provision for credit losses",
       "unit": "$bn",
@@ -86,10 +222,41 @@
     "source": "https://www.sec.gov/Archives/edgar/data/19617/000162828026065582/"
    }
   },
+  "TSM": {
+   "2026Q1": {
+    "filed": "2026-07-16",
+    "metrics": {
+     "revenue_usd_bn": {
+      "note": "net revenue; the Q1 figure is read from the Q2 release's comparison column",
+      "unit": "$bn",
+      "value": 35.9
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000451/"
+   },
+   "2026Q2": {
+    "filed": "2026-07-16",
+    "metrics": {
+     "revenue_usd_bn": {
+      "note": "net revenue",
+      "unit": "$bn",
+      "value": 40.2
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000451/"
+   }
+  },
   "WFC": {
    "2026Q2": {
     "filed": "2026-07-14",
     "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 12.317
+     },
      "provision_bn": {
       "note": "provision for credit losses",
       "unit": "$bn",
@@ -102,6 +269,11 @@
    "2026Q3": {
     "filed": "2026-10-13",
     "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 12.517
+     },
      "provision_bn": {
       "note": "provision for credit losses",
       "unit": "$bn",
