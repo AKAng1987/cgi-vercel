@@ -555,6 +555,12 @@ def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
     }
 
 
+def customer_link_symbols() -> list[str]:
+    """Names whose latest 10-K is parsed for customer disclosures: the AI layer cake plus a few software names.
+    Shared by /api/customer-links and scripts/fill_customer_links.py so the two never drift apart."""
+    return sorted({s for v in AI_LAYERS.values() for s in v} | {"TWLO", "DDOG", "CRM", "PLTR", "PANW", "AMD"})
+
+
 POSITIVE_VERDICTS = ("capturing", "accelerating")
 NEGATIVE_VERDICTS = ("rolling over", "slowing")
 FIT_MIN_NAMES = 3

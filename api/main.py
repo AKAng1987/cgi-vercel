@@ -321,8 +321,7 @@ def customer_links_endpoint():
     Cached for a week for the same reason.
     """
     import fundamentals_data as fdm
-    syms = sorted({s for v in fdm.AI_LAYERS.values() for s in v}
-                  | {"TWLO", "DDOG", "CRM", "PLTR", "PANW", "AMD"})
+    syms = fdm.customer_link_symbols()
     # Background refresh: a cold build downloads ~30 10-Ks, far longer than any
     # page timeout, and the Fundamentals page now reads this endpoint.
     return cache.get_or_fetch_bg("customer_links",

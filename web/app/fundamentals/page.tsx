@@ -127,9 +127,9 @@ export default async function FundamentalsPage() {
     apiFetch<FundamentalsResponse>("/api/fundamentals"),
     // Only for the link to the TradingView list: a failure just drops the link.
     apiFetch<WatchlistsResponse>("/api/watchlists").catch(() => null),
-    // 10-K customer candidates are held back: the first build downloads ~30 10-Ks and took the free API down
-    // (2026-10-17). They return once the cache is filled out of band.
-    Promise.resolve<CustomerLinksResponse | null>(null),
+    // 10-K customer candidates: optional. The cache is filled by scripts/fill_customer_links.py, never by a page
+    // visit (the first in-API build overloaded the free instance on 2026-10-17); a failure just drops the sub-list.
+    apiFetch<CustomerLinksResponse>("/api/customer-links").catch(() => null),
   ]);
   const candidates = (cust?.companies ?? []).filter((c) => c.status === "ok" && (c.candidates?.length ?? 0) > 0);
   const earn = findList(tvLists, LIST_EARN);
@@ -300,7 +300,9 @@ export default async function FundamentalsPage() {
             {candidates.flatMap((c) =>
               (c.candidates ?? [])
                 .filter((x) => x.kind !== "no concentration disclosed")
-                .slice(0, 2)
+                // the same disclosure is often repeated in several sentences: one row per percentage and name
+                .filter((x, i, a) => a.findIndex((y) => y.max_pct === x.max_pct && y.named_counterparty === x.named_counterparty) === i)
+                .slice(0, 3)
                 .map((x, i) => (
                   <div key={`${c.symbol}-${i}`} className="flex flex-wrap items-baseline gap-2 border-l-2 border-slate-800 pl-2 text-[0.72rem]">
                     <span className="font-mono text-slate-200">{c.symbol}</span>
