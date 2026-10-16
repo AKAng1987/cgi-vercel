@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 17  # 17: countries_in_force (themes detector on each country's ETFs). 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
+SCHEMA_VERSION = 18  # 18: blocks built in parallel (one cold rebuild). 17: countries_in_force (themes detector on each country's ETFs). 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
 
 BENCH = "SPY"
 
@@ -472,12 +472,13 @@ def build_country_blocks(countries: list[dict]) -> dict[str, dict]:
     with ThreadPoolExecutor(max_workers=8) as pool:
         codes = [c["code"] for c in countries] + ["US"]
         _premiums.update(zip(codes, pool.map(_risk_premium, codes)))
-    blocks = {
-        c["code"]: _country_block(
-            c["code"], (c.get("equity") or {}).get("symbol"), c.get("currency")
-        )
-        for c in countries
-    }
+    # Each country's block reads a dozen series; run the countries side by side (a cold rebuild took 50+ s one by one,
+    # past the web page's time limit). Results are keyed by code, so the order does not matter.
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        built = list(pool.map(
+            lambda c: (c["code"], _country_block(c["code"], (c.get("equity") or {}).get("symbol"), c.get("currency"))),
+            countries))
+    blocks = dict(built)
     _blocks_cache["at"], _blocks_cache["data"] = time.monotonic(), blocks
     return blocks
 

@@ -347,7 +347,18 @@ def _run(px: dict[str, float], bench: dict[str, float]) -> dict:
     }
 
 
+def _prefetch(symbols: list[str]) -> None:
+    """Load every series at once. The rebuild used to read ~115 full histories one after another (50 s and more, past
+    the web page's time limit on a cold cache); ad._load_close memoises each result, so the loop below then reads
+    from memory."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=12) as pool:
+        list(pool.map(_load, symbols))
+
+
 def build_themes_response() -> dict:
+    _prefetch(sorted({BENCH, *[s for legs in THEMES.values() for s in legs]}))
     bench = _load(BENCH)
     out = []
     table_as_of = max(bench) if bench else None
