@@ -323,8 +323,10 @@ def customer_links_endpoint():
     import fundamentals_data as fdm
     syms = sorted({s for v in fdm.AI_LAYERS.values() for s in v}
                   | {"TWLO", "DDOG", "CRM", "PLTR", "PANW", "AMD"})
-    return cache.get_or_fetch("customer_links",
-                              lambda: customer_links.build_customer_links(syms))
+    # Background refresh: a cold build downloads ~30 10-Ks, far longer than any
+    # page timeout, and the Fundamentals page now reads this endpoint.
+    return cache.get_or_fetch_bg("customer_links",
+                                 lambda: customer_links.build_customer_links(syms))
 
 
 @app.get("/api/watchlists")

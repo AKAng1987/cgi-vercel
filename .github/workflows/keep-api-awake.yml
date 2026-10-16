@@ -32,7 +32,7 @@ jobs:
         continue-on-error: true
         run: |
           # in parallel, so one slow rebuild does not hold up the rest; a slow or failed warm-up never fails the run
-          for path in / /countries /backtest /api/themes /api/watchlists /api/freshness; do
+          for path in / /countries /backtest /fundamentals /api/themes /api/watchlists /api/freshness; do
             ( out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 90 "https://cgi-vercel.vercel.app$path" || echo "timeout"); echo "$path -> $out" ) &
           done
           wait

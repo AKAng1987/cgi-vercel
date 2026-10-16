@@ -555,6 +555,39 @@ def _rollup(names: list[str], comp: dict[str, dict]) -> dict:
     }
 
 
+POSITIVE_VERDICTS = ("capturing", "accelerating")
+NEGATIVE_VERDICTS = ("rolling over", "slowing")
+FIT_MIN_NAMES = 3
+
+
+def _fit(rollup: dict) -> dict:
+    """Does what the theme's own companies report agree with the theme running?
+
+    CONTEXT, NOT A SIGNAL. It counts constituents whose revenue is accelerating
+    into expanding margin (positive) against those decelerating (negative), and
+    requires the quarterly median acceleration to point the same way when one
+    exists. Fewer than FIT_MIN_NAMES readable names is "thin": a verdict from
+    two companies is an anecdote. "buying growth" and "holding" count toward
+    neither side, so they push a theme toward "mixed" rather than "confirms".
+    """
+    if rollup.get("status") != "ok":
+        return {"label": "no data", "pos": 0, "neg": 0, "n": 0}
+    v = rollup.get("verdicts", {})
+    pos = sum(v.get(k, 0) for k in POSITIVE_VERDICTS)
+    neg = sum(v.get(k, 0) for k in NEGATIVE_VERDICTS)
+    n = rollup.get("n", 0)
+    med = rollup.get("median_revenue_acceleration_pp")
+    if n < FIT_MIN_NAMES:
+        label = "thin"
+    elif pos > neg and (med is None or med > 0):
+        label = "confirms"
+    elif neg > pos and (med is None or med < 0):
+        label = "contradicts"
+    else:
+        label = "mixed"
+    return {"label": label, "pos": pos, "neg": neg, "n": n}
+
+
 def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
     active = set(active_themes or [])
     constituents, provenance, fell_back = theme_constituents()
@@ -596,6 +629,8 @@ def build_fundamentals_response(active_themes: list[str] | None = None) -> dict:
                "source": ("hand-seeded fallback" if t in fell_back
                           else "derived from ETF holdings"),
                **_rollup(names, ok)} for t, names in constituents.items()]
+    for t in themes:
+        t["fit"] = _fit(t)
     themes.sort(key=lambda t: (not t["is_live"], t["theme"]))
     layers = [{"layer": k, "constituents": v, **_rollup(v, ok)} for k, v in AI_LAYERS.items()]
 

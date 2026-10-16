@@ -661,6 +661,7 @@ export interface FundamentalsResponse {
     constituents: string[];
     is_live: boolean;
     source?: string;
+    fit?: { label: "confirms" | "contradicts" | "mixed" | "thin" | "no data"; pos: number; neg: number; n: number };
   } & FundRollup)[];
   ai_layers: ({ layer: string; constituents: string[] } & FundRollup)[];
   links: FundLink[];
@@ -1135,4 +1136,25 @@ export interface ErpBlock {
   };
   freshness: { newest_month: string | null; expected_month: string; behind: boolean };
   caveats: string[];
+}
+
+export interface CustomerCandidate {
+  quote: string;
+  max_pct: number | null;
+  named_counterparty: string | null;
+  kind: string;
+}
+
+export interface CustomerLinksResponse {
+  as_of: string;
+  source: string;
+  note: string;
+  companies: {
+    symbol: string;
+    status: string;
+    filed?: string;
+    source?: string;
+    candidates?: CustomerCandidate[];
+    n_named?: number;
+  }[];
 }

@@ -2,7 +2,8 @@ import { apiFetch } from "@/lib/api";
 import { TvListLink } from "../components/TvListLink";
 import { WatchlistsResponse, findList, LIST_EARN } from "@/lib/tvLists";
 import { PricedIn } from "../components/fundamentals/PricedIn";
-import { FundamentalsResponse, FundRollup } from "@/lib/types";
+import { FundamentalsResponse, FundRollup, CustomerLinksResponse } from "@/lib/types";
+import { EarningsLedger } from "../components/fundamentals/EarningsLedger";
 import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
 
 // The data pages wait on the API (cold start or a cache rebuild can take 30-75 s): give them the full 60 s.
@@ -63,7 +64,17 @@ function Spark({ pts }: { pts: number[] }) {
   );
 }
 
-function RollupRow({ label, r, wide, fallback }: { label: string; r: FundRollup & { constituents: string[] }; wide?: boolean; fallback?: boolean }) {
+const FIT_STYLE: Record<string, string> = {
+  confirms: "bg-emerald-950 text-emerald-400",
+  contradicts: "bg-rose-950 text-rose-400",
+  mixed: "bg-slate-900 text-slate-400",
+  thin: "bg-slate-900 text-slate-600",
+  "no data": "bg-slate-900 text-slate-600",
+};
+
+type Fit = { label: string; pos: number; neg: number; n: number };
+
+function RollupRow({ label, r, wide, fallback, fit }: { label: string; r: FundRollup & { constituents: string[] }; wide?: boolean; fallback?: boolean; fit?: Fit }) {
   if (r.status !== "ok") {
     return (
       <div className="flex items-baseline gap-3 border-b border-slate-900 py-1.5 text-[0.72rem]">
@@ -79,6 +90,14 @@ function RollupRow({ label, r, wide, fallback }: { label: string; r: FundRollup 
       <span className={`${wide ? "w-32" : "w-40"} shrink-0 text-slate-200`}>{label}</span>
       <span className="w-20 shrink-0 tabular-nums">{sign(r.median_revenue_acceleration_pp)}</span>
       <span className="w-8 shrink-0 text-slate-600">n={r.n}</span>
+      {fit && (
+        <span
+          className={`shrink-0 rounded px-1.5 text-[0.6rem] ${FIT_STYLE[fit.label] ?? FIT_STYLE.mixed}`}
+          title={`${fit.pos} capturing or accelerating, ${fit.neg} slowing or rolling over, of ${fit.n} readable names. Context, not a signal.`}
+        >
+          {fit.label === "confirms" ? "fundamentals confirm" : fit.label === "contradicts" ? "fundamentals contradict" : fit.label}
+        </span>
+      )}
       <span className="flex flex-wrap gap-1">
         {Object.entries(r.verdicts ?? {}).map(([v, c]) => (
           <span key={v} className={`rounded bg-slate-900 px-1.5 text-[0.6rem] ${VERDICT_COLOR[v] ?? "text-slate-400"}`}>
@@ -104,11 +123,14 @@ function RollupRow({ label, r, wide, fallback }: { label: string; r: FundRollup 
 }
 
 export default async function FundamentalsPage() {
-  const [d, tvLists] = await Promise.all([
+  const [d, tvLists, cust] = await Promise.all([
     apiFetch<FundamentalsResponse>("/api/fundamentals"),
     // Only for the link to the TradingView list: a failure just drops the link.
     apiFetch<WatchlistsResponse>("/api/watchlists").catch(() => null),
+    // 10-K customer candidates: optional, a failure just drops the sub-list.
+    apiFetch<CustomerLinksResponse>("/api/customer-links").catch(() => null),
   ]);
+  const candidates = (cust?.companies ?? []).filter((c) => c.status === "ok" && (c.candidates?.length ?? 0) > 0);
   const earn = findList(tvLists, LIST_EARN);
   const live = d.themes.filter((t) => t.is_live);
   const rest = d.themes.filter((t) => !t.is_live);
@@ -187,8 +209,13 @@ export default async function FundamentalsPage() {
           <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
             Themes running on RS · {live.length}
           </div>
+          <p className="mb-2 text-[0.7rem] text-slate-500">
+            The chip says whether what the theme&apos;s own companies report agrees with the theme running: more
+            capturing or accelerating names than slowing ones, with the median pointing the same way. Context, not
+            a signal, and not tested to predict anything.
+          </p>
           {live.map((t) => (
-            <RollupRow key={t.theme} label={t.theme} r={t} fallback={t.source?.startsWith("hand")} />
+            <RollupRow key={t.theme} label={t.theme} r={t} fit={t.fit} fallback={t.source?.startsWith("hand")} />
           ))}
         </section>
       )}
@@ -261,6 +288,35 @@ export default async function FundamentalsPage() {
           ))}
         </div>
       </section>
+
+      {candidates.length > 0 && (
+        <section className="mb-7">
+          <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
+            Customers named in 10-Ks · candidates, awaiting approval
+          </div>
+          <p className="mb-2 text-[0.7rem] text-slate-500">{cust?.note}</p>
+          <div className="space-y-1">
+            {candidates.flatMap((c) =>
+              (c.candidates ?? [])
+                .filter((x) => x.kind !== "no concentration disclosed")
+                .slice(0, 2)
+                .map((x, i) => (
+                  <div key={`${c.symbol}-${i}`} className="flex flex-wrap items-baseline gap-2 border-l-2 border-slate-800 pl-2 text-[0.72rem]">
+                    <span className="font-mono text-slate-200">{c.symbol}</span>
+                    <span className="text-slate-400">{x.max_pct !== null ? `${x.max_pct}% of revenue` : "concentration"}</span>
+                    <span className="text-slate-300">{x.named_counterparty ?? "not named"}</span>
+                    <a href={c.source} target="_blank" rel="noreferrer" className="text-[0.65rem] text-slate-600 underline">
+                      10-K {c.filed}
+                    </a>
+                    <span className="w-full text-[0.65rem] text-slate-600">{x.quote}</span>
+                  </div>
+                )),
+            )}
+          </div>
+        </section>
+      )}
+
+      <EarningsLedger />
 
       <section className="text-[0.65rem] leading-relaxed text-slate-600">
         <div className="mb-1 font-bold uppercase tracking-[2px]">Limits, carried deliberately</div>
