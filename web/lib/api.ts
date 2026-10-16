@@ -3,7 +3,7 @@
  * token never reaches the browser. Only call this from Server Components,
  * Route Handlers, or other server-side code.
  */
-const TIMEOUT_MS = 50_000; // below the pages' 60 s maxDuration
+const TIMEOUT_MS = 55_000; // below the pages' 60 s maxDuration
 
 export async function apiFetch<T = unknown>(
   path: string,

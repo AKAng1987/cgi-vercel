@@ -56,7 +56,7 @@ def _warm_up_caches() -> None:
             ("macro/growth", macro_data.build_growth_response),
             ("live", lambda: dashboard_data.build_live_response(date_str=None)),
             ("markov/axis_drivers", lambda: cache.get_or_fetch("axis_drivers", __import__("axis_drivers").compute_axis_drivers)),
-            ("watchlists", lambda: cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)),
+            ("watchlists", lambda: cache.get_or_fetch_bg("watchlists", watchlists_data.build_watchlists_response)),
         ]:
             try:
                 fn()
@@ -200,7 +200,7 @@ def notes():
     running on RS, so this reads the theme detector rather than taking the
     list from the caller."""
     try:
-        th = cache.get_or_fetch("themes", themes_data.build_themes_response)
+        th = cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
         active = [t["theme"] for t in th.get("themes", []) if t.get("stage")]
     except Exception:
         active = []
@@ -256,12 +256,12 @@ def freshness_heartbeat(body: dict = Body(default={})):
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
 def technicals():
-    return cache.get_or_fetch("technicals", technicals_data.build_technicals_response)
+    return cache.get_or_fetch_bg("technicals", technicals_data.build_technicals_response)
 
 
 @app.get("/api/themes", dependencies=[Depends(require_bearer_token)])
 def themes():
-    return cache.get_or_fetch("themes", themes_data.build_themes_response)
+    return cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
 
 
 @app.get("/api/fundamentals", dependencies=[Depends(require_bearer_token)])
@@ -273,7 +273,7 @@ def fundamentals():
     same way /api/notes does it, so the page can lead with the live ones.
     """
     try:
-        th = cache.get_or_fetch("themes", themes_data.build_themes_response)
+        th = cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
         active = [t["theme"] for t in th.get("themes", []) if t.get("stage")]
     except Exception:
         active = []
@@ -332,14 +332,14 @@ def watchlists():
     """Public, read-only: ticker lists per regime for the TradingView cloud
     routine. Nothing sensitive, so no bearer -- the routine runs in an
     environment that cannot hold secrets."""
-    return cache.get_or_fetch("watchlists", watchlists_data.build_watchlists_response)
+    return cache.get_or_fetch_bg("watchlists", watchlists_data.build_watchlists_response)
 
 
 @app.get("/api/mixture", dependencies=[Depends(require_bearer_token)])
 def mixture():
     """Per-ticker return in the current regime vs the one the next release
     could land us in, weighted by p_flip (history and market-implied)."""
-    return cache.get_or_fetch("mixture", mixture_data.build_mixture_response)
+    return cache.get_or_fetch_bg("mixture", mixture_data.build_mixture_response)
 
 
 @app.get("/api/regime-matrix", dependencies=[Depends(require_bearer_token)])
@@ -436,7 +436,7 @@ def context():
     stale. Everything computable is computed here, so they stay current.
     24h cache: the inputs go back to 1927 and only the tail ever moves.
     """
-    return cache.get_or_fetch("context_tables", context_tables.build_context)
+    return cache.get_or_fetch_bg("context_tables", context_tables.build_context)
 
 
 @app.get("/api/countries", dependencies=[Depends(require_bearer_token)])
