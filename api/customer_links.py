@@ -90,17 +90,21 @@ def _get(url: str, timeout: int = 90) -> bytes:
         return gzip.decompress(raw) if r.headers.get("Content-Encoding") == "gzip" else raw
 
 
-def _latest_10k(cik: int) -> tuple[Optional[str], Optional[str]]:
+def _latest_filing(cik: int, form_wanted: str) -> tuple[Optional[str], Optional[str]]:
     try:
         d = json.loads(_get(SUBMISSIONS.format(cik=cik), timeout=45).decode("utf-8"))
     except Exception:
         return None, None
     rec = d.get("filings", {}).get("recent", {})
     for i, form in enumerate(rec.get("form", [])):
-        if form == "10-K":
+        if form == form_wanted:
             acc = rec["accessionNumber"][i].replace("-", "")
             return ARCHIVE.format(cik=cik, acc=acc, doc=rec["primaryDocument"][i]), rec["filingDate"][i]
     return None, None
+
+
+def _latest_10k(cik: int) -> tuple[Optional[str], Optional[str]]:
+    return _latest_filing(cik, "10-K")
 
 
 def _sentences(html: str) -> list[str]:
@@ -118,19 +122,7 @@ def _sentences(html: str) -> list[str]:
     return out
 
 
-def for_symbol(sym: str) -> dict:
-    cik = sx.cik_map().get(sym.upper())
-    if cik is None:
-        return {"symbol": sym, "status": "not an SEC filer"}
-    url, filed = _latest_10k(cik)
-    if not url:
-        return {"symbol": sym, "status": "no 10-K (likely a 20-F/40-F filer)"}
-    try:
-        html = _get(url).decode("utf-8", "ignore")
-    except Exception as exc:
-        _logger.warning("[links] %s: %s", sym, exc)
-        return {"symbol": sym, "status": f"fetch failed: {type(exc).__name__}"}
-
+def _candidates(html: str, form: str, filed: str, url: str) -> list[dict]:
     cands = []
     for sent in _sentences(html):
         if GEOGRAPHIC.search(sent):
@@ -145,13 +137,46 @@ def for_symbol(sym: str) -> dict:
             "named_counterparty": names[0] if names else None,
             "kind": ("no concentration disclosed" if negative
                      else "named link" if names else "concentration only"),
+            "form": form, "filed": filed, "source": url,
         })
-    # Real concentrations first, then negatives -- a "no customer over 10%"
+    return cands
+
+
+def for_symbol(sym: str) -> dict:
+    """Customer-concentration candidates from the latest 10-K and, when it is NEWER, the latest 10-Q.
+
+    The 10-K sets the annual picture; a 10-Q filed after it is the quarter's update and is what an earnings week
+    changes. Each candidate carries its own form, filing date and URL so the page can say which it came from."""
+    cik = sx.cik_map().get(sym.upper())
+    if cik is None:
+        return {"symbol": sym, "status": "not an SEC filer"}
+    url, filed = _latest_10k(cik)
+    urlq, filedq = _latest_filing(cik, "10-Q")
+    if not url and not urlq:
+        return {"symbol": sym, "status": "no 10-K or 10-Q (likely a 20-F/40-F filer)"}
+
+    cands, filings = [], []
+    # newest first, so a quarter's update outranks the annual figure it replaces
+    todo = [("10-Q", filedq, urlq)] if urlq and (not filed or filedq > filed) else []
+    if url:
+        todo.append(("10-K", filed, url))
+    for form, f_date, f_url in todo:
+        try:
+            html = _get(f_url).decode("utf-8", "ignore")
+        except Exception as exc:
+            _logger.warning("[links] %s %s: %s", sym, form, exc)
+            continue
+        filings.append({"form": form, "filed": f_date, "source": f_url})
+        cands += _candidates(html, form, f_date, f_url)
+    if not filings:
+        return {"symbol": sym, "status": "fetch failed"}
+    # Real concentrations first (newest filing first among equals), then negatives -- a "no customer over 10%"
     # is a finding but should never outrank an actual 22% relationship.
-    cands.sort(key=lambda c: (c["kind"] == "no concentration disclosed",
-                              -(c["max_pct"] or 0)))
-    return {"symbol": sym, "status": "ok", "filed": filed, "source": url,
-            "candidates": cands[:6],
+    cands.sort(key=lambda c: (c["kind"] == "no concentration disclosed", -(c["max_pct"] or 0),
+                              c["form"] != "10-Q"))
+    top = filings[0]
+    return {"symbol": sym, "status": "ok", "filed": top["filed"], "source": top["source"], "filings": filings,
+            "candidates": cands[:8],
             "n_named": sum(1 for c in cands if c["named_counterparty"])}
 
 
@@ -161,7 +186,7 @@ def build_customer_links(symbols: list[str]) -> dict:
     ok = [r for r in rows if r.get("status") == "ok"]
     return {
         "as_of": dt.date.today().isoformat(),
-        "source": "SEC 10-K primary documents, parsed for 10%-customer disclosure",
+        "source": "SEC 10-K and newer 10-Q primary documents, parsed for 10%-customer disclosure",
         "n_symbols": len(symbols),
         "n_with_disclosure": sum(1 for r in ok if r.get("candidates")),
         "n_named": sum(r.get("n_named", 0) for r in ok),

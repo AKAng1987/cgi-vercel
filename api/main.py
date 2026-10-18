@@ -314,18 +314,17 @@ def liquidity():
 
 @app.get("/api/customer-links", dependencies=[Depends(require_bearer_token)])
 def customer_links_endpoint():
-    """Revenue-concentration disclosures from 10-Ks, as CANDIDATES.
+    """Revenue-concentration disclosures from 10-Ks and newer 10-Qs, as CANDIDATES.
 
-    Scoped to the AI layer cake plus the standing-theme watchlist rather than
-    the full universe: a 10-K is 2-10MB and the filings change once a year.
-    Cached for a week for the same reason.
-    """
-    import fundamentals_data as fdm
-    syms = fdm.customer_link_symbols()
-    # Background refresh: a cold build downloads ~30 10-Ks, far longer than any
-    # page timeout, and the Fundamentals page now reads this endpoint.
-    return cache.get_or_fetch_bg("customer_links",
-                                 lambda: customer_links.build_customer_links(syms))
+    READ-ONLY on purpose. A build downloads ~40 filings and, run inside the free API on top of the normal
+    rebuilds, overloaded it (2026-10-17). The cache is filled weekly from the Mac by
+    scripts/fill_customer_links.py (task refresh-customer-links-cache); this returns whatever was stored,
+    ignoring the TTL, or an empty list with a note when nothing has been stored yet."""
+    data = cache._get_raw("customer_links")
+    if data is None:
+        return {"as_of": None, "source": "not built yet", "companies": [],
+                "note": "Not built yet. Run scripts/fill_customer_links.py on the Mac."}
+    return data
 
 
 @app.get("/api/watchlists")

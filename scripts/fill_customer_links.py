@@ -1,11 +1,11 @@
 """
-fill_customer_links.py -- build the 10-K customer-disclosure cache OFF the API, then store it where the API reads it.
+fill_customer_links.py -- build the 10-K / 10-Q customer-disclosure cache OFF the API, then store it where the API reads it.
 
 Why: the first build downloads ~30 annual reports (2-10 MB each). Run inside the free Render API on top of the normal
 Fundamentals rebuild it overloaded the instance (2026-10-17 outage). Here it runs on this Mac and only the finished
 result is written to the cache, so a page visit never triggers the heavy work. Filings change once a year, so run it
-about monthly or after a company's annual report; the cache expires after 168 h and the API then serves the previous copy
-while it refreshes, so a rerun every week or two keeps it warm.
+every Sunday before the brief (task refresh-customer-links-cache). The API only READS the cache and never rebuilds it,
+so a late or missed run leaves the previous copy in place instead of triggering a heavy build.
 
   api/.venv/bin/python scripts/fill_customer_links.py
 """

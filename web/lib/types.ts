@@ -1143,6 +1143,9 @@ export interface CustomerCandidate {
   max_pct: number | null;
   named_counterparty: string | null;
   kind: string;
+  form?: string;
+  filed?: string;
+  source?: string;
 }
 
 export interface CustomerLinksResponse {

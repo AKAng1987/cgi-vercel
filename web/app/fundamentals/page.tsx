@@ -295,7 +295,7 @@ export default async function FundamentalsPage() {
       {candidates.length > 0 && (
         <section className="mb-7">
           <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
-            Customers named in 10-Ks · candidates, awaiting approval
+            Customers named in 10-Ks and 10-Qs · candidates, awaiting approval
           </div>
           <p className="mb-2 text-[0.7rem] text-slate-500">{cust?.note}</p>
           <div className="space-y-1">
@@ -310,8 +310,8 @@ export default async function FundamentalsPage() {
                     <span className="font-mono text-slate-200">{c.symbol}</span>
                     <span className="text-slate-400">{x.max_pct !== null ? `${x.max_pct}% of revenue` : "concentration"}</span>
                     <span className="text-slate-300">{x.named_counterparty ?? "not named"}</span>
-                    <a href={c.source} target="_blank" rel="noreferrer" className="text-[0.65rem] text-slate-600 underline">
-                      10-K {c.filed}
+                    <a href={x.source ?? c.source} target="_blank" rel="noreferrer" className="text-[0.65rem] text-slate-600 underline">
+                      {x.form ?? "10-K"} {x.filed ?? c.filed}
                     </a>
                     <span className="w-full text-[0.65rem] text-slate-600">{x.quote}</span>
                   </div>
