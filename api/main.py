@@ -223,7 +223,11 @@ def freshness_endpoint():
     context and never as a verdict: PHCBBS has been 238 days old and
     entirely correct since BSP stopped publishing in February.
     """
-    return cache.get_or_fetch("freshness", freshness.build_freshness)
+    # Background refresh: a cold build takes ~55 s and the cache lives one hour, so with a blocking fetch whoever
+    # opened Macro, the ERP gauge or the brief just after each expiry waited that long (the intermittent
+    # "page will not load"). The refresh routine's heartbeat still invalidates the key, so the morning
+    # data-health check always reads a freshly built copy.
+    return cache.get_or_fetch_bg("freshness", freshness.build_freshness)
 
 
 @app.post("/api/freshness/heartbeat")

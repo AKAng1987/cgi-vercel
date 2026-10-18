@@ -213,7 +213,7 @@ def build_brief(cadence: str = "daily") -> dict:
     # alarm that speaks every day is one that gets muted, which is exactly
     # how the age-based design would have ended -- PHCBBS has been 238 days
     # old and entirely correct since BSP stopped publishing in February.
-    fresh, e_fr = _try("freshness", lambda: cache.get_or_fetch(
+    fresh, e_fr = _try("freshness", lambda: cache.get_or_fetch_bg(
         "freshness", freshness.build_freshness))
     # The routine itself, before anything it was meant to update. A dead
     # routine explains every stale series below it, and is the one failure
