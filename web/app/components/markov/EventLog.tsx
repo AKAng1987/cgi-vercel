@@ -48,8 +48,15 @@ function leanRight(e: MarkovEvent): boolean | null {
   const l = lean(e);
   return l === null ? null : (l === "flip") === e.flipped;
 }
-function leanRecord(events: MarkovEvent[]) {
-  const sc = events.filter((e) => e.scheduled && lean(e) !== null);
+/** What the stored "market" number actually is. For the FOMC it is fed funds futures. For CPI / GDP / SLOOS the
+ *  daily job stores an EXPERIMENTAL CLASSIFIER, which is not the Drivers figure the brief and the Upcoming table
+ *  show (that one is not stored beforehand yet). They are scored apart so the classifier is never mistaken for
+ *  the Drivers number. */
+function isFutures(e: MarkovEvent): boolean {
+  return (e.market_source ?? "").toLowerCase().includes("futures");
+}
+function leanRecord(events: MarkovEvent[], futures: boolean) {
+  const sc = events.filter((e) => e.scheduled && lean(e) !== null && isFutures(e) === futures);
   const up = sc.filter((e) => lean(e) === "flip");
   const down = sc.filter((e) => lean(e) === "hold");
   return {
@@ -60,7 +67,8 @@ function leanRecord(events: MarkovEvent[]) {
 }
 
 export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; pending: MarkovResponse["pending"]; summary: MarkovResponse["summary"] }) {
-  const rec = leanRecord(events);
+  const fut = leanRecord(events, true);
+  const clf = leanRecord(events, false);
   return (
     <section className="mb-6">
       <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
@@ -71,9 +79,9 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
           sub={`${summary.n_pre_registered} pre-registered${summary.n_unscheduled ? ` · +${summary.n_unscheduled} unscheduled` : ""}`} />
         <Stat label="Flips" value={`${summary.n_flips}/${summary.n_events}`} />
         <Stat label="Brier · history" value={brier(summary.brier)} sub="the base rate itself: no lean to score" />
-        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`${summary.n_market_scored} scored · above base: flipped ${rec.upRight}/${rec.up} · below base: held ${rec.downRight}/${rec.down}`} />
+        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`fed funds futures: above base flipped ${fut.upRight}/${fut.up}, below base held ${fut.downRight}/${fut.down} · experimental classifier: above ${clf.upRight}/${clf.up}, below ${clf.downRight}/${clf.down}`} />
         <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-[0.68rem] leading-snug text-slate-500">
-          0 = perfect, 0.25 = coin-flip. Lower wins. The lean is simple: the market/drivers probability above its base rate leans toward a flip, below it toward no change; a correct no-change counts as much as a caught flip. History is the base rate, so it cannot lean. Releases with no stored market number are not scored on the lean.
+          0 = perfect, 0.25 = coin-flip. Lower wins. The lean is simple: the market/drivers probability above its base rate leans toward a flip, below it toward no change; a correct no-change counts as much as a caught flip. History is the base rate, so it cannot lean. For the FOMC the stored number is fed funds futures; for CPI, GDP and SLOOS it is an experimental classifier that the brief never shows, NOT the Drivers figure (which is not stored beforehand yet), so the two are counted apart. Releases with no stored number are not scored.
         </div>
       </div>
 
@@ -129,6 +137,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)}</td>
                   <td className={TD} title="market/drivers probability above the base rate leans flip, below leans no change">
                     <span className="mr-1 text-slate-400">{lean(e) ?? "—"}</span><HitCell hit={leanRight(e)} />
+                    {lean(e) !== null && !isFutures(e) && <span className="ml-1 text-[0.62rem] text-slate-600">classifier</span>}
                   </td>
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.pre_registered_on
