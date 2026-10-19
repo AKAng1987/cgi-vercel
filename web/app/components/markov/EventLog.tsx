@@ -34,7 +34,22 @@ function HitCell({ hit }: { hit: boolean | null }) {
   return <span className={`font-bold ${hit ? "text-[var(--cgi-up)]" : "text-[var(--cgi-down)]"}`}>{hit ? "HIT" : "MISS"}</span>;
 }
 
+/** "Right when it said hold" and "right when it said flip" are different claims, so they are counted apart:
+ *  one number (hit at 0.5) hid that a correct no-change call is a result too. A hold called at the base rate
+ *  is not skill by itself, which is what the Brier column is for. */
+function callRecord(events: MarkovEvent[], pick: (e: MarkovEvent) => number | null) {
+  const scored = events.filter((e) => e.scheduled && pick(e) !== null);
+  const holds = scored.filter((e) => (pick(e) as number) < 0.5);
+  const flips = scored.filter((e) => (pick(e) as number) >= 0.5);
+  return {
+    holdsRight: holds.filter((e) => !e.flipped).length, holds: holds.length,
+    flipsRight: flips.filter((e) => e.flipped).length, flips: flips.length,
+  };
+}
+
 export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; pending: MarkovResponse["pending"]; summary: MarkovResponse["summary"] }) {
+  const hist = callRecord(events, (e) => e.p_flip);
+  const mkt = callRecord(events, (e) => e.p_market);
   return (
     <section className="mb-6">
       <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
@@ -44,10 +59,10 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
         <Stat label="Releases scored" value={String(summary.n_events)}
           sub={`${summary.n_pre_registered} pre-registered${summary.n_unscheduled ? ` · +${summary.n_unscheduled} unscheduled` : ""}`} />
         <Stat label="Flips" value={`${summary.n_flips}/${summary.n_events}`} />
-        <Stat label="Brier · history" value={brier(summary.brier)} sub={`hit ${pct(summary.hit_rate)} at 0.5`} />
-        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`${summary.n_market_scored} scored · hit ${pct(summary.hit_rate_market)}`} />
+        <Stat label="Brier · history" value={brier(summary.brier)} sub={`called hold: ${hist.holdsRight}/${hist.holds} right · called flip: ${hist.flipsRight}/${hist.flips} right`} />
+        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`${summary.n_market_scored} scored · called hold: ${mkt.holdsRight}/${mkt.holds} · called flip: ${mkt.flipsRight}/${mkt.flips}`} />
         <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-[0.68rem] leading-snug text-slate-500">
-          0 = perfect, 0.25 = coin-flip. Lower wins. History vs. market on the same events is the experiment.
+          0 = perfect, 0.25 = coin-flip. Lower wins. A correct hold counts as much as a caught flip; but a hold called at the base rate (about 30%) is only what chance gives, so the Brier column, not the hit count, shows skill. History vs. market on the same events is the experiment.
         </div>
       </div>
 
