@@ -43,7 +43,7 @@ function isFutures(e: MarkovEvent): boolean {
 
 type Source = { name: string; note: string; p: (e: MarkovEvent) => number | null; always?: "hold" };
 const SOURCES: Source[] = [
-  { name: "Always no change", note: "the baseline every call has to beat", p: (e) => e.p_flip, always: "hold" },
+  { name: "Base rate", note: "history: its call is always no change; its Brier uses the base probability. The baseline every source has to beat", p: (e) => e.p_flip, always: "hold" },
   { name: "Fed funds futures", note: "FOMC only", p: (e) => (isFutures(e) ? e.p_market : null) },
   { name: "Drivers table", note: "what the brief prints; stored before the release from 2026-10-19", p: (e) => e.p_drivers ?? null },
   { name: "Experimental classifier", note: "stored daily, never shown in the brief", p: (e) => (!isFutures(e) && e.market_source ? e.p_market : null) },
@@ -91,7 +91,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Releases scored" value={String(summary.n_events)}
           sub={`${summary.n_pre_registered} pre-registered${summary.n_unscheduled ? ` · +${summary.n_unscheduled} unscheduled` : ""}`} />
-        <Stat label="Flipped" value={`${summary.n_flips}/${summary.n_events}`} sub="so 'always no change' was right on the rest" />
+        <Stat label="Flipped" value={`${summary.n_flips}/${summary.n_events}`} sub="so the base rate's no-change call was right on the rest" />
         <div className="col-span-2 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-[0.68rem] leading-snug text-slate-500 md:col-span-2">
           Every probability source is tracked side by side and none is declared better yet. A call is a flip call when
           its probability is above the base rate for that release, a no-change call when it is equal or below. Brier:
