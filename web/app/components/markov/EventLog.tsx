@@ -40,9 +40,9 @@ function HitCell({ hit }: { hit: boolean | null }) {
  *  probability IS the base rate, so it has no lean of its own; only the market/drivers number can lean. */
 function lean(e: MarkovEvent): "flip" | "hold" | null {
   if (e.p_market === null || e.p_flip === null) return null;
-  const d = e.p_market - e.p_flip;
-  if (Math.abs(d) < 0.005) return null;
-  return d > 0 ? "flip" : "hold";
+  // No change is the default: only a reading clearly ABOVE the base rate leans toward a flip; equal or below leans
+  // toward no change.
+  return e.p_market - e.p_flip > 0.005 ? "flip" : "hold";
 }
 function leanRight(e: MarkovEvent): boolean | null {
   const l = lean(e);
@@ -81,7 +81,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
         <Stat label="Brier · history" value={brier(summary.brier)} sub="the base rate itself: no lean to score" />
         <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`fed funds futures: above base flipped ${fut.upRight}/${fut.up}, below base held ${fut.downRight}/${fut.down} · experimental classifier: above ${clf.upRight}/${clf.up}, below ${clf.downRight}/${clf.down}`} />
         <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-[0.68rem] leading-snug text-slate-500">
-          0 = perfect, 0.25 = coin-flip. Lower wins. The lean is simple: the market/drivers probability above its base rate leans toward a flip, below it toward no change; a correct no-change counts as much as a caught flip. History is the base rate, so it cannot lean. For the FOMC the stored number is fed funds futures; for CPI, GDP and SLOOS it is an experimental classifier that the brief never shows, NOT the Drivers figure (which is not stored beforehand yet), so the two are counted apart. Releases with no stored number are not scored.
+          0 = perfect, 0.25 = coin-flip. Lower wins. The lean is simple: the market/drivers probability above its base rate is a flip call; at or below it is a no-change call; a correct no-change counts as much as a caught flip. History is the base rate, so it cannot lean. For the FOMC the stored number is fed funds futures; for CPI, GDP and SLOOS it is an experimental classifier that the brief never shows, NOT the Drivers figure (which is not stored beforehand yet), so the two are counted apart. Releases with no stored number are not scored.
         </div>
       </div>
 
