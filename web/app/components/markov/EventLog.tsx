@@ -34,22 +34,33 @@ function HitCell({ hit }: { hit: boolean | null }) {
   return <span className={`font-bold ${hit ? "text-[var(--cgi-up)]" : "text-[var(--cgi-down)]"}`}>{hit ? "HIT" : "MISS"}</span>;
 }
 
-/** "Right when it said hold" and "right when it said flip" are different claims, so they are counted apart:
- *  one number (hit at 0.5) hid that a correct no-change call is a result too. A hold called at the base rate
- *  is not skill by itself, which is what the Brier column is for. */
-function callRecord(events: MarkovEvent[], pick: (e: MarkovEvent) => number | null) {
-  const scored = events.filter((e) => e.scheduled && pick(e) !== null);
-  const holds = scored.filter((e) => (pick(e) as number) < 0.5);
-  const flips = scored.filter((e) => (pick(e) as number) >= 0.5);
+/** The lean: is the market/drivers probability ABOVE or BELOW the base rate for that state? Above = it leans
+ *  toward a flip, below = toward no change. This is the rule used here because the 0.5 cut-off is wrong for
+ *  releases whose base rate is far from 0.5 (FOMC 8%, CPI 30%): nothing would ever be called a flip. The history
+ *  probability IS the base rate, so it has no lean of its own; only the market/drivers number can lean. */
+function lean(e: MarkovEvent): "flip" | "hold" | null {
+  if (e.p_market === null || e.p_flip === null) return null;
+  const d = e.p_market - e.p_flip;
+  if (Math.abs(d) < 0.005) return null;
+  return d > 0 ? "flip" : "hold";
+}
+function leanRight(e: MarkovEvent): boolean | null {
+  const l = lean(e);
+  return l === null ? null : (l === "flip") === e.flipped;
+}
+function leanRecord(events: MarkovEvent[]) {
+  const sc = events.filter((e) => e.scheduled && lean(e) !== null);
+  const up = sc.filter((e) => lean(e) === "flip");
+  const down = sc.filter((e) => lean(e) === "hold");
   return {
-    holdsRight: holds.filter((e) => !e.flipped).length, holds: holds.length,
-    flipsRight: flips.filter((e) => e.flipped).length, flips: flips.length,
+    n: sc.length,
+    upRight: up.filter((e) => e.flipped).length, up: up.length,
+    downRight: down.filter((e) => !e.flipped).length, down: down.length,
   };
 }
 
 export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; pending: MarkovResponse["pending"]; summary: MarkovResponse["summary"] }) {
-  const hist = callRecord(events, (e) => e.p_flip);
-  const mkt = callRecord(events, (e) => e.p_market);
+  const rec = leanRecord(events);
   return (
     <section className="mb-6">
       <div className="mb-2 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
@@ -59,10 +70,10 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
         <Stat label="Releases scored" value={String(summary.n_events)}
           sub={`${summary.n_pre_registered} pre-registered${summary.n_unscheduled ? ` · +${summary.n_unscheduled} unscheduled` : ""}`} />
         <Stat label="Flips" value={`${summary.n_flips}/${summary.n_events}`} />
-        <Stat label="Brier · history" value={brier(summary.brier)} sub={`called hold: ${hist.holdsRight}/${hist.holds} right · called flip: ${hist.flipsRight}/${hist.flips} right`} />
-        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`${summary.n_market_scored} scored · called hold: ${mkt.holdsRight}/${mkt.holds} · called flip: ${mkt.flipsRight}/${mkt.flips}`} />
+        <Stat label="Brier · history" value={brier(summary.brier)} sub="the base rate itself: no lean to score" />
+        <Stat label="Brier · market" value={brier(summary.brier_market)} sub={`${summary.n_market_scored} scored · above base: flipped ${rec.upRight}/${rec.up} · below base: held ${rec.downRight}/${rec.down}`} />
         <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-[0.68rem] leading-snug text-slate-500">
-          0 = perfect, 0.25 = coin-flip. Lower wins. A correct hold counts as much as a caught flip; but a hold called at the base rate (about 30%) is only what chance gives, so the Brier column, not the hit count, shows skill. History vs. market on the same events is the experiment.
+          0 = perfect, 0.25 = coin-flip. Lower wins. The lean is simple: the market/drivers probability above its base rate leans toward a flip, below it toward no change; a correct no-change counts as much as a caught flip. History is the base rate, so it cannot lean. Releases with no stored market number are not scored on the lean.
         </div>
       </div>
 
@@ -95,7 +106,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                 <th className={`${TH} text-left`}>Outcome</th>
                 <th className={`${TH} text-left`}>After</th>
                 <th className={`${TH} text-right`}>Brier H / M</th>
-                <th className={`${TH} text-left`}>Hit H / M</th>
+                <th className={`${TH} text-left`}>Lean vs base</th>
                 <th className={`${TH} text-left`}>Registered</th>
               </tr>
             </thead>
@@ -116,7 +127,9 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} font-bold ${e.flipped ? "text-[var(--cgi-gold)]" : "text-slate-400"}`} title={e.flip_recorded_on ? `recorded in model-history on ${e.flip_recorded_on}` : ""}>{e.flipped ? "FLIP" : "hold"}</td>
                   <td className={`${TD} text-slate-200`} title={qTitle(e.model, e.quadrant_after)}>{q(e.model, e.quadrant_after)}</td>
                   <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)}</td>
-                  <td className={TD}><HitCell hit={e.hit} /> <span className="text-slate-600">/</span> <HitCell hit={e.hit_market} /></td>
+                  <td className={TD} title="market/drivers probability above the base rate leans flip, below leans no change">
+                    <span className="mr-1 text-slate-400">{lean(e) ?? "—"}</span><HitCell hit={leanRight(e)} />
+                  </td>
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.pre_registered_on
                       ? <span className={e.pre_registration_note ? "text-[var(--cgi-gold)]" : "text-[var(--cgi-up)]"} title={e.pre_registration_note ?? "both probabilities were in DynamoDB before the release"}>{e.pre_registered_on.replace("T", " ").replace("Z", "Z")}</span>
