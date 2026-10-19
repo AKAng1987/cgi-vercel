@@ -1,5 +1,5 @@
 {
- "as_of": "2026-10-17",
+ "as_of": "2026-10-19",
  "claims": [],
  "delta": [
   {
@@ -73,13 +73,13 @@
    "unit": "$bn"
   },
   {
-   "change_pct": 12.0,
-   "from": 35.9,
-   "from_q": "2026Q1",
+   "change_pct": 16.2,
+   "from": 40.2,
+   "from_q": "2026Q2",
    "metric": "revenue_usd_bn",
    "ticker": "TSM",
-   "to": 40.2,
-   "to_q": "2026Q2",
+   "to": 46.72,
+   "to_q": "2026Q3",
    "unit": "$bn"
   },
   {
@@ -246,6 +246,33 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000451/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-15",
+    "metrics": {
+     "gross_margin_pct": {
+      "note": "gross margin for the quarter",
+      "unit": "%",
+      "value": 66.4
+     },
+     "q4_rev_guide_high_usd_bn": {
+      "note": "4Q26 revenue guidance, high end",
+      "unit": "$bn",
+      "value": 54.3
+     },
+     "q4_rev_guide_low_usd_bn": {
+      "note": "4Q26 revenue guidance, low end",
+      "unit": "$bn",
+      "value": 52.3
+     },
+     "revenue_usd_bn": {
+      "note": "net revenue; +16.2% on the quarter per the release",
+      "unit": "$bn",
+      "value": 46.72
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000726/"
    }
   },
   "WFC": {
