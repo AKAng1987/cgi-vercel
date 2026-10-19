@@ -33,6 +33,7 @@ from typing import Optional
 import boto3
 
 import cache
+import cgi_state
 import macro_data
 import release_calendar as cal
 import signals_data
@@ -269,6 +270,41 @@ def _gdp_flip_by_estimate(log: list[dict]) -> dict:
     }
 
 
+PREREG_KEY = "drivers_prereg"
+LOGGER = __import__("logging").getLogger("cgi_api.markov_data")
+
+
+def _snapshot_drivers(upcoming: list, today: str, hour_utc: int) -> None:
+    """Pre-register the DRIVERS figure for each upcoming release, so it can be scored later.
+
+    The daily Lambda stores futures (FOMC) or an experimental classifier (CPI/GDP/SLOOS) before each release, but
+    the Drivers table figure the brief and the page show was never stored, so it could not be scored. Taken at each
+    build (the morning routine's heartbeat triggers one daily) and overwritten until the release prints, so the last
+    figure before the print stands. Never after it: a number taken once the print is out is not a prediction.
+    US prints land around 12:30 UTC and the FOMC at 18:00 UTC; 11:00 UTC is the cut-off on a release day."""
+    try:
+        store = cgi_state.get(PREREG_KEY) or {}
+        changed = False
+        for u in upcoming:
+            d = u.get("drivers") or (u.get("market") if (u.get("market") or {}).get("label") == "Drivers" else None)
+            if not d or d.get("p_flip") is None:
+                continue
+            if u["date"] < today or (u["date"] == today and hour_utc >= 11):
+                continue
+            key = f"{u['date']}|{u['type']}"
+            new = {"snapshot_date": today, "p_drivers": round(float(d["p_flip"]), 4), "base": u["p_flip"],
+                   "detail": d.get("detail")}
+            old = store.get(key) or {}
+            if old.get("snapshot_date") == new["snapshot_date"] and old.get("p_drivers") == new["p_drivers"]:
+                continue
+            store[key] = {**new, "taken_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+            changed = True
+        if changed:
+            cgi_state.put(PREREG_KEY, store)
+    except Exception:  # noqa: BLE001 -- additive; never break the page
+        LOGGER.exception("[markov] drivers pre-registration failed")
+
+
 def build_markov_response() -> dict:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
     hist = {m: _load_model(f"{m}_US") for m in ("compass", "grid")}
@@ -319,6 +355,9 @@ def build_markov_response() -> dict:
             "gap": gap,
             "context": _gdpnow_context() if axis == "growth" else None,
         })
+
+    _snapshot_drivers(upcoming, today, dt.datetime.now(dt.timezone.utc).hour)
+    prereg = cgi_state.get(PREREG_KEY) or {}
 
     # ── event log since track-record start ──────────────────────────────
     # For each release on/after TRACK_START up to today: state before, the
@@ -412,6 +451,13 @@ def build_markov_response() -> dict:
             "brier_market": round((p_mkt - y) ** 2, 4) if p_mkt is not None else None,
             "hit": (p_hist >= 0.5) == flipped,
             "hit_market": ((p_mkt >= 0.5) == flipped) if p_mkt is not None else None,
+            # the Drivers table figure, pre-registered by _snapshot_drivers (or copied from the brief slide that
+            # printed it, flagged from_brief) -- a separate number from p_market, which for CPI/GDP/SLOOS is the
+            # experimental classifier. Both are tracked; no rule picks one.
+            "p_drivers": (prereg.get(f"{r['date']}|{r['type']}") or {}).get("p_drivers"),
+            "p_drivers_note": (prereg.get(f"{r['date']}|{r['type']}") or {}).get("detail"),
+            "brier_drivers": (round(((prereg[f"{r['date']}|{r['type']}"]["p_drivers"]) - y) ** 2, 4)
+                              if (prereg.get(f"{r['date']}|{r['type']}") or {}).get("p_drivers") is not None else None),
         })
     claimed = {(e["flip_recorded_on"], e["axis"]) for e in log if e.get("flip_recorded_on")}
     for e in events:
@@ -422,6 +468,7 @@ def build_markov_response() -> dict:
                 "p_flip": None, "p_market": None, "market_source": None, "pre_registered_on": None,
                 "flipped": True, "quadrant_after": None, "brier": None, "brier_market": None,
                 "hit": None, "hit_market": None,
+                "p_drivers": None, "p_drivers_note": None, "brier_drivers": None,
             })
     log.sort(key=lambda x: x["date"], reverse=True)
 

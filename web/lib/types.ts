@@ -219,6 +219,10 @@ export interface MarkovEvent {
   brier_market: number | null;
   hit: boolean | null;
   hit_market: boolean | null;
+  /** The Drivers table figure, stored before the release (a separate number from p_market for CPI/GDP/SLOOS). */
+  p_drivers?: number | null;
+  p_drivers_note?: string | null;
+  brier_drivers?: number | null;
 }
 
 export interface AxisDriver {

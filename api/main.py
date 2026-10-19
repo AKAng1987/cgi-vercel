@@ -253,6 +253,12 @@ def freshness_heartbeat(body: dict = Body(default={})):
             checked if isinstance(checked, dict) else None,
             ref if isinstance(ref, dict) else None)
         cache.invalidate("freshness")
+        # Daily Drivers pre-registration: a markov build stores today's Drivers figure for every upcoming release,
+        # so it exists even on a day nobody opens the CGI page. In the background; the heartbeat must stay quick.
+        try:
+            threading.Thread(target=markov_data.build_markov_response, daemon=True).start()
+        except Exception:  # noqa: BLE001
+            pass
         return {"ok": True, **written}
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"could not record heartbeat: {exc}")
