@@ -1,6 +1,55 @@
 {
- "as_of": "2026-10-19",
- "claims": [],
+ "as_of": "2026-10-20",
+ "claims": [
+  {
+   "baseline": 2.743,
+   "check_quarter": "2026Q4",
+   "claim": "JPM provision keeps rising next quarter",
+   "date": "2026-10-19",
+   "direction": "up",
+   "id": "2026w43-banks-1",
+   "metric": "provision_bn",
+   "result": null,
+   "thread": "banks",
+   "ticker": "JPM"
+  },
+  {
+   "baseline": 0.654,
+   "check_quarter": "2026Q4",
+   "claim": "US Bancorp provision keeps rising next quarter",
+   "date": "2026-10-19",
+   "direction": "up",
+   "id": "2026w43-banks-2",
+   "metric": "provision_bn",
+   "result": null,
+   "thread": "banks",
+   "ticker": "USB"
+  },
+  {
+   "baseline": 0.368,
+   "check_quarter": "2026Q4",
+   "claim": "Goldman provision stays above its Q2 level",
+   "date": "2026-10-19",
+   "direction": "up",
+   "id": "2026w43-banks-3",
+   "metric": "provision_bn",
+   "result": null,
+   "thread": "banks",
+   "ticker": "GS"
+  },
+  {
+   "baseline": 46.72,
+   "check_quarter": "2026Q4",
+   "claim": "TSMC Q4 revenue lands inside its $52.3-54.3bn guide (higher than Q3)",
+   "date": "2026-10-19",
+   "direction": "up",
+   "id": "2026w43-ai-1",
+   "metric": "revenue_bn",
+   "result": null,
+   "thread": "ai",
+   "ticker": "TSM"
+  }
+ ],
  "delta": [
   {
    "change_pct": 0.0,
@@ -53,6 +102,26 @@
    "unit": "$bn"
   },
   {
+   "change_pct": -4.7,
+   "from": 3.954,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "GS",
+   "to": 3.77,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 260.8,
+   "from": 0.102,
+   "from_q": "2026Q2",
+   "metric": "provision_bn",
+   "ticker": "GS",
+   "to": 0.368,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
    "change_pct": 6.0,
    "from": 25.511,
    "from_q": "2026Q2",
@@ -73,12 +142,82 @@
    "unit": "$bn"
   },
   {
+   "change_pct": 51.0,
+   "from": 0.098,
+   "from_q": "2026Q2",
+   "metric": "provision_bn",
+   "ticker": "MS",
+   "to": 0.148,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 3.5,
+   "from": 3.357,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "SCHW",
+   "to": 3.476,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 0.5,
+   "from": 0.86,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "STT",
+   "to": 0.864,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": null,
+   "from": 0.0,
+   "from_q": "2026Q2",
+   "metric": "provision_bn",
+   "ticker": "STT",
+   "to": -0.004,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
    "change_pct": 16.2,
    "from": 40.2,
    "from_q": "2026Q2",
    "metric": "revenue_usd_bn",
    "ticker": "TSM",
    "to": 46.72,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": -2.4,
+   "from": 0.536,
+   "from_q": "2026Q2",
+   "metric": "nco_bn",
+   "ticker": "USB",
+   "to": 0.523,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 2.5,
+   "from": 4.361,
+   "from_q": "2026Q2",
+   "metric": "nii_bn",
+   "ticker": "USB",
+   "to": 4.468,
+   "to_q": "2026Q3",
+   "unit": "$bn"
+  },
+  {
+   "change_pct": 21.6,
+   "from": 0.538,
+   "from_q": "2026Q2",
+   "metric": "provision_bn",
+   "ticker": "USB",
+   "to": 0.654,
    "to_q": "2026Q3",
    "unit": "$bn"
   },
@@ -186,6 +325,42 @@
     "source": "https://www.sec.gov/Archives/edgar/data/70858/000007085826000481/"
    }
   },
+  "GS": {
+   "2026Q2": {
+    "filed": "2026-10-13",
+    "metrics": {
+     "nii_bn": {
+      "note": "prior quarter per 3Q26 release",
+      "unit": "$bn",
+      "value": 3.954
+     },
+     "provision_bn": {
+      "note": "prior quarter per 3Q26 release",
+      "unit": "$bn",
+      "value": 0.102
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/886982/000088698226000529/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-13",
+    "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 3.77
+     },
+     "provision_bn": {
+      "note": "provision for credit losses",
+      "unit": "$bn",
+      "value": 0.368
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/886982/000088698226000529/"
+   }
+  },
   "JPM": {
    "2026Q2": {
     "filed": "2026-07-14",
@@ -220,6 +395,94 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/19617/000162828026065582/"
+   }
+  },
+  "MS": {
+   "2026Q2": {
+    "filed": "2026-10-14",
+    "metrics": {
+     "provision_bn": {
+      "note": "prior quarter per 3Q26 release",
+      "unit": "$bn",
+      "value": 0.098
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/895421/000089542126000288/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-14",
+    "metrics": {
+     "provision_bn": {
+      "note": "provision for credit losses",
+      "unit": "$bn",
+      "value": 0.148
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/895421/000089542126000288/"
+   }
+  },
+  "SCHW": {
+   "2026Q2": {
+    "filed": "2026-10-15",
+    "metrics": {
+     "nii_bn": {
+      "note": "net interest revenue, prior quarter column of the 3Q26 release",
+      "unit": "$bn",
+      "value": 3.357
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/316709/000031670926000035/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-15",
+    "metrics": {
+     "nii_bn": {
+      "note": "net interest revenue",
+      "unit": "$bn",
+      "value": 3.476
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/316709/000031670926000035/"
+   }
+  },
+  "STT": {
+   "2026Q2": {
+    "filed": "2026-10-14",
+    "metrics": {
+     "nii_bn": {
+      "note": "prior quarter per 3Q26 release",
+      "unit": "$bn",
+      "value": 0.86
+     },
+     "provision_bn": {
+      "note": "prior quarter per 3Q26 release",
+      "unit": "$bn",
+      "value": 0.0
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/93751/000009375126000592/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-14",
+    "metrics": {
+     "nii_bn": {
+      "note": "net interest income",
+      "unit": "$bn",
+      "value": 0.864
+     },
+     "provision_bn": {
+      "note": "provision for credit losses (release)",
+      "unit": "$bn",
+      "value": -0.004
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/93751/000009375126000592/"
    }
   },
   "TSM": {
@@ -275,6 +538,52 @@
     "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000726/"
    }
   },
+  "USB": {
+   "2026Q2": {
+    "filed": "2026-07-16",
+    "metrics": {
+     "nco_bn": {
+      "note": "total net charge-offs",
+      "unit": "$bn",
+      "value": 0.536
+     },
+     "nii_bn": {
+      "note": "net interest income, GAAP",
+      "unit": "$bn",
+      "value": 4.361
+     },
+     "provision_bn": {
+      "note": "provision for credit losses",
+      "unit": "$bn",
+      "value": 0.538
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000039/"
+   },
+   "2026Q3": {
+    "filed": "2026-10-15",
+    "metrics": {
+     "nco_bn": {
+      "note": "total net charge-offs",
+      "unit": "$bn",
+      "value": 0.523
+     },
+     "nii_bn": {
+      "note": "net interest income, GAAP",
+      "unit": "$bn",
+      "value": 4.468
+     },
+     "provision_bn": {
+      "note": "provision for credit losses",
+      "unit": "$bn",
+      "value": 0.654
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000054/"
+   }
+  },
   "WFC": {
    "2026Q2": {
     "filed": "2026-07-14",
@@ -314,10 +623,10 @@
  },
  "note": "Company-published figures with their SEC source. Descriptive context, not a signal.",
  "scorecard": {
-  "claims": 0,
+  "claims": 4,
   "held": 0,
   "not_testable": 0,
   "tested": 0,
-  "waiting": 0
+  "waiting": 4
  }
 }
