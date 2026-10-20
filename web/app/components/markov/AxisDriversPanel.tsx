@@ -1,4 +1,4 @@
-import { AxisAnchor, AxisDriver, AxisDrivers, DriverLevel, MarkovAxis } from "@/lib/types";
+import { AxisAnchor, AxisDriver, AxisDrivers, DriverLevel, MarkovAxis, MarketRead } from "@/lib/types";
 import { flipTo, stateWord } from "@/lib/regimeView";
 
 const ORDER: MarkovAxis[] = ["liquidity", "credit", "growth", "inflation"];
@@ -138,7 +138,18 @@ function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipU
   );
 }
 
-export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: Record<MarkovAxis, AxisDrivers> } | null }) {
+/** Fed funds futures read for the next FOMC: the same FedWatch figure the Macro tab shows. Liquidity is the only
+ *  axis with a market price for its own event, so it is the only card that carries it. */
+export type LiquidityFutures = { date: string; read: MarketRead } | null;
+
+function shortDate(iso: string): string {
+  return `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}`;
+}
+
+export function AxisDriversPanel({ drivers, futures = null }: {
+  drivers: { as_of: string; axes: Record<MarkovAxis, AxisDrivers> } | null;
+  futures?: LiquidityFutures;
+}) {
   if (!drivers) return null;
   return (
     <section className="mb-6">
@@ -170,6 +181,13 @@ export function AxisDriversPanel({ drivers }: { drivers: { as_of: string; axes: 
                   today <span className={`font-bold ${dir !== null && Math.abs(dir) >= 0.08 ? "text-[var(--cgi-gold)]" : "text-slate-100"}`}>{pct(c.conditioned_p_flip)}</span>
                 </div>
               </div>
+              {axis === "liquidity" && futures && (
+                <div className="mb-2 text-[0.7rem] text-slate-400">
+                  futures: <span className="font-bold text-slate-100">{pct(futures.read.p_flip)}</span> chance of {to.word} {to.arrow} at{" "}
+                  {futures.date ? `the ${shortDate(futures.date)} FOMC` : "the next FOMC"}
+                  <span className="text-slate-500"> · {futures.read.detail} · from the Macro tab</span>
+                </div>
+              )}
               <table className="w-full border-collapse">
                 <thead>
                   <tr>

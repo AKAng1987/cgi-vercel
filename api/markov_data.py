@@ -124,6 +124,19 @@ def _flip_rates(events: list[dict], dwell: dict) -> dict:
 # the experimental Phase 2 classifier's daily P(axis up); Growth has no
 # market read yet (GDPNow is shown as context, not as a probability).
 
+def liquidity_flip_p(p: dict, state: int) -> float:
+    """P(the liquidity axis flips at this FOMC), from fed funds futures.
+
+    The compass model (cmon-backend-service update_compass_model.py) calls a decision "Tightening" only when the
+    target rate went UP; a hold ("No Fed updates") and a cut are both "Loosening". So:
+      state 1 (liquidity up, easing):    flips only on a hike        -> P(hike)
+      state 0 (liquidity down, tight):   flips on a hold OR a cut    -> P(hold) + P(cut) = 1 - P(hike)
+    The state-0 branch used P(cut) alone until 2026-10-20, which showed ~0% for a ~82% event the first time the
+    axis was tight at an FOMC (C3 after the Sep 17 hike).
+    """
+    return float(p["p_hike"]) if state == 1 else float(p["p_hold"]) + float(p["p_cut"])
+
+
 def _market_liquidity(fomc_date: str, state: int) -> Optional[dict]:
     try:
         meetings = macro_data._filter_meetings_by_horizon(
@@ -134,10 +147,8 @@ def _market_liquidity(fomc_date: str, state: int) -> Optional[dict]:
         return None
     for p in probs.get("probabilities", []):
         if p.get("date") == fomc_date:
-            # Liquidity up = easing trend. A hike flips it; a hold or cut keeps it.
-            p_flip = p["p_hike"] if state == 1 else p["p_cut"]
             return {
-                "p_flip": round(float(p_flip), 3),
+                "p_flip": round(liquidity_flip_p(p, state), 3),
                 "label": "Market",          # a real price: the only one of the three
                 "source": "fed funds futures (FedWatch method)",
                 "detail": f"{p.get('most_likely')} {round(float(p.get('prob_most_likely', 0)) * 100)}% · hike {round(p['p_hike']*100)} / hold {round(p['p_hold']*100)} / cut {round(p['p_cut']*100)}",

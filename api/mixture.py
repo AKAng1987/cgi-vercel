@@ -44,7 +44,7 @@ import watchlists as wl
 
 # Bump on any change to the response shape: cache.SCHEMA_FROM_MODULE points at
 # this, so the new shape cannot be served stale from a cached old one.
-SCHEMA_VERSION = 8   # 8: tv_symbol on every row. 7: 7: market_label. 6: 6: symbols no longer guessed. 5: 5: URA retired. 4: 4: retired tickers filtered out of the blob. 3: 3: the market p_flip it reads (driver table) is now publication-lagged
+SCHEMA_VERSION = 9   # 9: market p_flip for a tight (state 0) FOMC is 1 - P(hike), not P(cut). 8: tv_symbol on every row. 7: 7: market_label. 6: 6: symbols no longer guessed. 5: 5: URA retired. 4: 4: retired tickers filtered out of the blob. 3: 3: the market p_flip it reads (driver table) is now publication-lagged
 
 # A thin "if flips" cell is expected -- by construction there are fewer
 # occurrences of the destination regime. These floors are deliberately lower

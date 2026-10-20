@@ -51,7 +51,14 @@ export default async function CgiPage() {
 
       <UpcomingReleases current={data.current} upcoming={data.upcoming} asOf={data.as_of} />
 
-      <AxisDriversPanel drivers={data.drivers} />
+      <AxisDriversPanel
+        drivers={data.drivers}
+        futures={(() => {
+          // The Macro tab's fed funds futures read for the next FOMC (label "Market" = real futures pricing).
+          const liq = data.upcoming.find((u) => u.axis === "liquidity");
+          return liq?.market && liq.market.label === "Market" ? { date: liq.date, read: liq.market } : null;
+        })()}
+      />
 
       <EventLog events={data.event_log} pending={data.pending} summary={data.summary} />
 

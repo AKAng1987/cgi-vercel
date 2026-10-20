@@ -152,10 +152,10 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "sec_exchanges": 1,
     "watchlists": 10,  # 2026-10-15: TTL 34h -> 6h, rebuilt after CPI so the list moves on to FOMC.  2026-10-09: 27 theme-leg ETFs joined the universe.  # FX/CRYPTO fallbacks removed (UUP, BITO were wrong). v7: URA retired (duplicate of URANIUM). v6: 2026-10-04: retired tickers (PBS JJC JJN PIN BJK VICE CNCR) out of the universe. v5: 2026-10-04: symbols from tv_symbols.json, never guessed; unplaceable names dropped before the cut. v4: earning-it stocks on their real exchange (were all AMEX:); 2026-10-03: worst 10 -> 20, and no overlap with best
     "etf_constituents": 3,  # 2026-10-09: new theme legs.  # 2026-09-25: MOO for agriculture + unreachable fall-through
-    "brief_daily": 5,  # 2026-10-09: P(flip) rows carry out-of-sample verdicts + liquidity drivers.  # 2026-10-04: feed-integrity problems in the freshness section; 3: markov market lagged + relabelled
+    "brief_daily": 6,  # 2026-10-20: tight-state FOMC market p_flip fixed (1 - P(hike)). v5 2026-10-09: P(flip) rows carry out-of-sample verdicts + liquidity drivers.  # 2026-10-04: feed-integrity problems in the freshness section; 3: markov market lagged + relabelled
     "liquidity": 1,
     "customer_links": 1,
-    "brief_weekly": 5,  # 2026-10-09: same as brief_daily.  # 2026-10-04: same
+    "brief_weekly": 6,  # 2026-10-20: same. v5 2026-10-09: same as brief_daily.  # 2026-10-04: same
     "countries": 1,
     "erp_sync": 1,
     "context_tables": 6,  # 2026-10-10b: erp history carries monthly S&P 500 for the chart overlay.  # 5: 2026-10-10: erp block (Damodaran implied ERP gauge).  # 4: 2026-09-26: NameError fix; v3 never actually served.  # 2026-09-26: Warsh added + chair carries a confirmation date.  # fed_episodes -> derived rate_cycles + balance_sheet
