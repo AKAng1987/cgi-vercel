@@ -282,19 +282,25 @@ def fundamentals():
     a connector staying up. Themes still running on RS are flagged is_live the
     same way /api/notes does it, so the page can lead with the live ones.
     """
-    try:
-        th = cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
-        active = [t["theme"] for t in th.get("themes", []) if t.get("stage")]
-    except Exception:
-        active = []
     # Background refresh: the universe is ~116 names derived from real ETF
     # holdings and a cold recompute takes ~30s, which would exceed the Vercel
     # server component's function timeout and fail the page rather than just
     # be slow. Serve the previous value, refresh behind it.
+    #
+    # The live-theme list is read INSIDE the build, and a failure there fails the build (so the previous good copy
+    # keeps being served) instead of falling back to "no themes running". The old try/except did exactly that
+    # fallback, and a themes lookup that failed at refresh time was cached for 24 h: the page lost its whole
+    # "Themes running on RS" section and the fit chips (2026-10-20).
     return cache.get_or_fetch_bg(
         "fundamentals",
-        lambda: fundamentals_data.build_fundamentals_response(active_themes=active),
+        lambda: fundamentals_data.build_fundamentals_response(active_themes=_active_theme_names()),
     )
+
+
+def _active_theme_names() -> list[str]:
+    """Themes currently in force. Raises if themes cannot be read, on purpose (see fundamentals())."""
+    th = cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
+    return [t["theme"] for t in th.get("themes", []) if t.get("stage")]
 
 
 @app.get("/api/brief", dependencies=[Depends(require_bearer_token)])
