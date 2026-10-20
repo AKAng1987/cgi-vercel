@@ -318,6 +318,17 @@ Check `GET /api/freshness`. It answers **are we behind the source**, not
 - `value_disagrees` — our copy and FRED differ on the same date. Something
   is broken in one of them; find out which before trusting either.
 
+### A price looks wildly off (learned 2026-10-20)
+
+`/api/freshness` has a `price_jumps` check: any daily price series (marketstack, Yahoo, Alpha Vantage) whose
+newest ten closes contain a one-day move beyond 3x either way is a problem, because a vendor returning the wrong
+instrument produces exactly that on the way in and again on the way out. Origin: marketstack returned GLD about
+ten times too high for 12-15 Oct (3,782 against 382); every other check passed because the newest date was
+current, and the Backtest showed GLD at +181.92% average high in first place. Fix: replace the bad rows from
+TradingView (back up the old rows first), then rebuild `Cache/backtest/occurrences.json` (the 03:30 UTC
+`cmon-stage-backend-backtest-refresher`, or invoke it). A genuine reverse split also trips the check and has
+to be cleared by hand. FRED-type balances (RRPONTSYD) are excluded by source.
+
 ### A page is slow
 
 First hit after idle is a Render free-tier cold start, up to ~75s. Warm,

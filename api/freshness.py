@@ -583,6 +583,62 @@ def peer_lag(today: Optional[dt.date] = None) -> dict:
         return {"problems": [], "n_problems": 1, "checked": 0, "error": f"{type(exc).__name__}: {exc}"}
 
 
+# The jump guard: a feed can be current AND wrong by a constant factor. In Oct 2026 marketstack returned a
+# gold series about ten times too high for four days (GLD 3,782 against 382); every check above passed, because
+# the newest date was current, and the Backtest tab then showed GLD at "+181.92% average high" in first place.
+# A real one-day move beyond JUMP_RATIO in either direction in a price series is vanishingly rare, while a
+# vendor mixing up an instrument produces exactly that, twice (on the way in and on the way out). Price sources
+# only: FRED-type balances such as RRPONTSYD legitimately swing by more. A genuine reverse split also trips it
+# and has to be cleared by hand, which is the right amount of noise for a data-integrity alarm.
+JUMP_RATIO = 3.0
+JUMP_LOOKBACK = 10     # newest closes inspected per series
+
+
+def jump_problems(closes: dict, retired: frozenset = frozenset()) -> dict:
+    """Pure core: {symbol: [(date, close), ...] oldest first} -> one problem per series with a one-day
+    move beyond JUMP_RATIO either way inside the lookback, listing every date it happened."""
+    problems, checked = [], 0
+    for sym, rows in sorted(closes.items()):
+        if sym in retired or len(rows) < 2:
+            continue
+        checked += 1
+        hits = []
+        for (d0, c0), (d1, c1) in zip(rows, rows[1:]):
+            if c0 and c1 and c0 > 0 and c1 > 0:
+                ratio = c1 / c0
+                if ratio > JUMP_RATIO or ratio < 1 / JUMP_RATIO:
+                    hits.append(f"{d0} {c0:g} -> {d1} {c1:g} (x{ratio:.2f})")
+        if hits:
+            problems.append({"symbol": sym, "detail": "; ".join(hits),
+                             "hint": "a price source returning the wrong instrument or scale; a real split also looks like this"})
+    return {"problems": problems, "n_problems": len(problems), "checked": checked,
+            "ratio": JUMP_RATIO, "lookback": JUMP_LOOKBACK}
+
+
+def _recent_closes(symbol: str, n: int = JUMP_LOOKBACK) -> list:
+    resp = _ddb.query(TableName=PRICE_TABLE, KeyConditionExpression="#s = :s",
+                      ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
+                      ExpressionAttributeValues={":s": {"S": symbol}},
+                      ProjectionExpression="#d, #c", ScanIndexForward=False, Limit=n)
+    rows = [(i["date"]["S"], float(i["close"]["N"])) for i in resp.get("Items", []) if "close" in i and "N" in i["close"]]
+    return sorted(rows)
+
+
+def price_jumps(today: Optional[dt.date] = None) -> dict:
+    """I/O wrapper; a check that cannot run reports itself as a problem."""
+    try:
+        import dashboard_data as dd
+        from concurrent.futures import ThreadPoolExecutor
+        reg = [r for r in _registry() if r.get("frequency") == "1D" and r["source"] in PEER_SOURCES]
+        syms = sorted({r["symbol"] for r in reg})
+        with ThreadPoolExecutor(16) as ex:
+            closes = dict(zip(syms, ex.map(_recent_closes, syms)))
+        return jump_problems(closes, frozenset(dd.RETIRED_TICKERS))
+    except Exception as exc:  # noqa: BLE001
+        _logger.exception("[freshness] price_jumps could not run")
+        return {"problems": [], "n_problems": 1, "checked": 0, "error": f"{type(exc).__name__}: {exc}"}
+
+
 # The referee: an independent second source for a handful of benchmarks.
 #
 # Every check above asks whether a feed is BEHIND. None can see a feed that is current and WRONG: in Oct 2026
@@ -759,6 +815,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     integrity = feed_integrity(today)
     pipeline = pipeline_lag(today)
     peers = peer_lag(today)
+    jumps = price_jumps(today)
     ref = referee(beat.pop("referee_bars", None), today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
@@ -768,11 +825,12 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "feed_integrity": integrity,
         "pipeline_lag": pipeline,
         "peer_lag": peers,
+        "price_jumps": jumps,
         "referee": ref,
         "erp": erp,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + ref["n_problems"] + erp["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

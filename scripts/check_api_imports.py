@@ -169,6 +169,20 @@ if _bond["n_problems"] != 0 or [p["symbol"] for p in _bond_late["problems"]] != 
 print("OK: peer-lag guard flags a Yahoo ETF a bar behind SPY and passes futures, retired names, agreement and the bond-market holiday")
 
 
+# Jump guard. Replays Oct 2026: marketstack returned GLD ~10x too high for 12-15 Oct (3782 against 382), the
+# newest date was current so every other guard passed, and the Backtest showed GLD at +181.92% average high.
+_gld = [("2026-10-08", 378.62), ("2026-10-09", 384.58), ("2026-10-12", 3782.06), ("2026-10-13", 3778.01),
+        ("2026-10-14", 3728.71), ("2026-10-15", 3787.7), ("2026-10-16", 382.01), ("2026-10-19", 379.69)]
+_calm = [("2026-10-08", 100.0), ("2026-10-09", 104.0), ("2026-10-12", 96.0), ("2026-10-13", 130.0)]   # +35% is fine
+_two_x = [("2026-10-12", 50.0), ("2026-10-13", 100.0)]                                                 # a 2:1 move is below the bar
+_jump = _fr.jump_problems({"GLD": _gld, "CALM": _calm, "TWOX": _two_x, "OLD": _gld}, frozenset({"OLD"}))
+_hit = _jump["problems"][0]["detail"] if _jump["problems"] else ""
+if not ([p["symbol"] for p in _jump["problems"]] == ["GLD"] and "x9.83" in _hit and "x0.10" in _hit and _jump["checked"] == 3):
+    print(f"FAIL: jump guard is wrong: {_jump}")
+    sys.exit(1)
+print("OK: jump guard flags GLD's tenfold error on the way in and out, and passes a 35% move, a 2:1 move and a retired name")
+
+
 # Fifth guard: the referee. Replays Oct 2026: RUT stored to Oct 2 while TradingView had Oct 5 and Oct 6, and a
 # futures close stored two hours into the next session (90.79 vs a 91.11 settlement). Must flag both, and pass
 # agreeing feeds, a futures bar still in progress, and the 10y's few-bp Treasury-vs-traded gap.
