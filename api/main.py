@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timezone
+import logging
 import threading
 from typing import Optional
 
@@ -230,6 +231,19 @@ def freshness_endpoint():
     return cache.get_or_fetch_bg("freshness", freshness.build_freshness)
 
 
+def _refresh_themes_after_routine() -> None:
+    """Rebuild the themes right after the morning routine has written its TradingView-filled series.
+
+    MAGS, UUP and the futures arrive from TradingView at ~00:35 UTC, after the ETFs from the price source and after
+    the themes cache had already been built (~00:16 UTC), and a series write invalidates nothing. So the Themes
+    table showed MAGS a day behind ("as of 10-19", 2026-10-21) until the six-hour cache rolled over. Cheap (~5 s,
+    prices come from DynamoDB) and run in the background so the heartbeat stays quick; a failure keeps the old copy."""
+    try:
+        cache.set("themes", themes_data.build_themes_response())
+    except Exception:  # noqa: BLE001
+        logging.getLogger("cgi_api.main").exception("[heartbeat] themes refresh failed")
+
+
 @app.post("/api/freshness/heartbeat")
 def freshness_heartbeat(body: dict = Body(default={})):
     """The refresh routine reports that it finished a run.
@@ -257,6 +271,7 @@ def freshness_heartbeat(body: dict = Body(default={})):
         # so it exists even on a day nobody opens the CGI page. In the background; the heartbeat must stay quick.
         try:
             threading.Thread(target=markov_data.build_markov_response, daemon=True).start()
+            threading.Thread(target=_refresh_themes_after_routine, daemon=True).start()
         except Exception:  # noqa: BLE001
             pass
         return {"ok": True, **written}
