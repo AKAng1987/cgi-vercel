@@ -132,6 +132,7 @@ def release_on(date: str) -> list[dict]:
 #   Challenger job cuts business day before NFP        -> growth
 #   NFP (jobs)          1st Friday (BLS occasionally shifts; verify Jan/Jul) -> growth
 #   BOJ decision        hardcoded 2026               -> liquidity (global)
+#   BSP / ECB decision  hardcoded from official pages -> liquidity (global)
 #   Quad witching       3rd Friday Mar/Jun/Sep/Dec    -> positioning
 #   Opex                3rd Friday other months       -> positioning
 #
@@ -147,18 +148,32 @@ _BOJ = {
     2027: ["2027-01-22", "2027-03-18", "2027-04-28", "2027-06-11", "2027-07-22", "2027-09-22", "2027-10-29", "2027-12-17"],
 }
 
+# BSP Monetary Board policy meetings, from bsp.gov.ph (schedule page, checked 2026-10-21).
+# 2027 is not published yet: add it when the BSP releases it.
+_BSP = {
+    2026: ["2026-02-19", "2026-04-23", "2026-06-18", "2026-08-27", "2026-10-22", "2026-12-17"],
+}
+# ECB monetary policy decision days, from ecb.europa.eu (meeting calendar, checked 2026-10-21).
+# The page lists upcoming meetings only, so the first 2026 dates are not included.
+_ECB = {
+    2026: ["2026-10-29", "2026-12-17"],
+    2027: ["2027-02-04", "2027-03-18", "2027-04-29", "2027-06-10", "2027-07-22", "2027-09-09", "2027-10-28", "2027-12-16"],
+}
+
 WATCH_INFORMS = {
     "ISM_MFG": ["growth", "inflation"],
     "ISM_SVC": ["growth", "inflation"],
     "CHALLENGER": ["growth"],
     "NFP": ["growth"],
     "BOJ": ["liquidity"],
+    "BSP": ["liquidity"],
+    "ECB": ["liquidity"],
     "QUAD_WITCH": ["positioning"],
     "OPEX": ["positioning"],
 }
 WATCH_LABEL = {
     "ISM_MFG": "ISM Manufacturing", "ISM_SVC": "ISM Services", "CHALLENGER": "Challenger job cuts",
-    "NFP": "Jobs report (NFP)", "BOJ": "BOJ decision", "QUAD_WITCH": "Quad witching", "OPEX": "Monthly opex",
+    "NFP": "Jobs report (NFP)", "BOJ": "BOJ decision", "BSP": "BSP decision", "ECB": "ECB decision", "QUAD_WITCH": "Quad witching", "OPEX": "Monthly opex",
 }
 
 
@@ -203,6 +218,8 @@ def watch_events(year: int) -> list[dict]:
             {"date": third_fri.isoformat(), "type": "QUAD_WITCH" if m in (3, 6, 9, 12) else "OPEX"},
         ]
     out += [{"date": d, "type": "BOJ"} for d in _BOJ.get(year, [])]
+    out += [{"date": d, "type": "BSP"} for d in _BSP.get(year, [])]
+    out += [{"date": d, "type": "ECB"} for d in _ECB.get(year, [])]
     for r in out:
         r["tier"] = "watch"
         r["label"] = WATCH_LABEL[r["type"]]
