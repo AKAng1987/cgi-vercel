@@ -615,7 +615,9 @@ def jump_problems(closes: dict, retired: frozenset = frozenset()) -> dict:
             "ratio": JUMP_RATIO, "lookback": JUMP_LOOKBACK}
 
 
-def _recent_closes(symbol: str, n: int = JUMP_LOOKBACK) -> list:
+def _close_series(symbol: str, n: int = JUMP_LOOKBACK) -> list:
+    """Newest n closes, OLDEST FIRST (jump_problems compares neighbours in date order). Not _recent_closes: that name
+    already belongs to the referee's helper (newest first), and a second def silently replaced this one."""
     resp = _ddb.query(TableName=PRICE_TABLE, KeyConditionExpression="#s = :s",
                       ExpressionAttributeNames={"#s": "symbol", "#d": "date", "#c": "close"},
                       ExpressionAttributeValues={":s": {"S": symbol}},
@@ -632,7 +634,7 @@ def price_jumps(today: Optional[dt.date] = None) -> dict:
         reg = [r for r in _registry() if r.get("frequency") == "1D" and r["source"] in PEER_SOURCES]
         syms = sorted({r["symbol"] for r in reg})
         with ThreadPoolExecutor(16) as ex:
-            closes = dict(zip(syms, ex.map(_recent_closes, syms)))
+            closes = dict(zip(syms, ex.map(_close_series, syms)))
         return jump_problems(closes, frozenset(dd.RETIRED_TICKERS))
     except Exception as exc:  # noqa: BLE001
         _logger.exception("[freshness] price_jumps could not run")

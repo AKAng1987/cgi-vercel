@@ -169,6 +169,18 @@ if _bond["n_problems"] != 0 or [p["symbol"] for p in _bond_late["problems"]] != 
 print("OK: peer-lag guard flags a Yahoo ETF a bar behind SPY and passes futures, retired names, agreement and the bond-market holiday")
 
 
+# No two functions in freshness.py may share a name: the second silently replaces the first (2026-10-21: the jump
+# guard's _recent_closes was replaced by the referee's, which returns newest first).
+import ast as _ast
+_names = [n.name for n in _ast.parse((pathlib.Path(__file__).resolve().parents[1] / "api" / "freshness.py").read_text()).body
+          if isinstance(n, (_ast.FunctionDef, _ast.AsyncFunctionDef))]
+_dupes = sorted({n for n in _names if _names.count(n) > 1})
+if _dupes:
+    print(f"FAIL: freshness.py defines these functions more than once: {_dupes}")
+    sys.exit(1)
+print("OK: freshness.py has no duplicate function names")
+
+
 # Jump guard. Replays Oct 2026: marketstack returned GLD ~10x too high for 12-15 Oct (3782 against 382), the
 # newest date was current so every other guard passed, and the Backtest showed GLD at +181.92% average high.
 _gld = [("2026-10-08", 378.62), ("2026-10-09", 384.58), ("2026-10-12", 3782.06), ("2026-10-13", 3778.01),
