@@ -34,6 +34,23 @@ import datetime as dt
 # markets move on announcement. effective: when the money or the rule lands.
 POLICY: list[dict] = [
     {
+        "country": "US", "type": "trade", "announced": "2026-09-26", "effective": None,
+        "title": "US-China trade summit: tariff cuts on about $30bn of goods each way, AI dialogue",
+        "detail": ("During the Xi visit the two sides agreed tariff relief on roughly $30bn of "
+                   "non-sensitive goods in each direction (US farm products, wood and cosmetics; "
+                   "Chinese small appliances and toys), an AI risk dialogue with the next round in "
+                   "November, a trade council, and a two-month extension of the truce that was due "
+                   "to expire on 10 November. Reuters called it personal diplomacy more than a "
+                   "breakthrough. Read-through: the de-escalation is for the China and agriculture "
+                   "legs; the shipping leg depends on whether routes normalise; the AI dialogue is "
+                   "context for the AI and semis themes, not a catalyst. Effective dates of the cuts "
+                   "are not yet published."),
+        "themes": ["China", "agriculture", "retail / consumer", "shipping / logistics", "AI"],
+        "tickers": ["FXI", "KWEB", "CQQQ", "MOO", "DBA", "XRT", "SEA"],
+        "source": "user, Reuters 2026-09-26 (link supplied by the user; details from syndicated reports)",
+        "confidence": "confirmed",
+    },
+    {
         "country": "JP", "type": "fiscal", "announced": "2025-10-01", "effective": None,
         "title": "Takaichi becomes PM, proposes spending programme",
         "detail": ("New Japanese PM with a spending programme. The yen depreciated and "

@@ -14,7 +14,7 @@ concurrency:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 12
     steps:
       - name: Visit the API root
         env:
@@ -28,11 +28,14 @@ jobs:
       # watchlists, freshness), so a rebuild lands here and not on a visitor, whose page would otherwise time out.
       # Only public URLs; a slow or failed warm-up never fails the run (the API keeps computing after a client gives up).
       - name: Warm the heavy caches
-        timeout-minutes: 4
+        timeout-minutes: 9
         continue-on-error: true
         run: |
-          # in parallel, so one slow rebuild does not hold up the rest; a slow or failed warm-up never fails the run
-          for path in / /countries /backtest /fundamentals /api/themes /api/watchlists /api/freshness; do
-            ( out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 90 "https://cgi-vercel.vercel.app$path" || echo "timeout"); echo "$path -> $out" ) &
+          # ONE AT A TIME, with a short pause: the API has limited memory (Render emailed "exceeded its memory limit" on
+          # 2026-10-23), and several cold rebuilds at once (themes, countries, fundamentals) are the likeliest cause.
+          # A slow or failed warm-up never fails the run (the API keeps computing after a client gives up).
+          for path in /api/freshness /api/watchlists /api/themes / /countries /backtest /fundamentals; do
+            out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}s" --max-time 75 "https://cgi-vercel.vercel.app$path" || echo "timeout")
+            echo "$path -> $out"
+            sleep 8
           done
-          wait
