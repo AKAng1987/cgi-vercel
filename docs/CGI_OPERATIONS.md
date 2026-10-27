@@ -176,6 +176,20 @@ scheduled task runs 09:30 Monday to Saturday, is script-driven
 that let 38 backtest tickers go unnoticed for a day: the list lived in one
 place and the work in another.
 
+### COT: weekly today, twice a week from December 2026
+
+`api/cot_data.py` reads the CFTC's public API live (legacy futures-only, 39 contracts, 6 h cache). The CFTC plans to publish
+twice a week by the end of 2026: Wednesday 15:30 ET (data through Monday) and Friday 15:30 ET (data through Wednesday). The
+module is built so that does not move any number silently: everything runs on ONE FINAL OBSERVATION A WEEK (the last as-of date in
+each ISO week: Tuesday today, Wednesday once the new schedule runs) and the Williams windows are calendar days, not row counts.
+An earlier-in-the-week read (Monday as-of) is INTERIM: shown on the page in its own strip, never used for the headline numbers,
+extremes or "entered an extreme" alerts. `publish_date()` estimates the publication day from the as-of weekday, and the daily
+brief shows positioning in the two days after a release. Guards: `/api/freshness` -> `cot` compares the CFTC's newest report date
+with what we serve and flags STALLED (no report for 9 days, 6 once twice-weekly; the signal that the new reports live in a
+different dataset and `cot_data.BASE` must change) and CADENCE (an as-of weekday outside Mon-Wed, or more than two dates a
+week). `cgi_health.py` prints the COT line. Test: `api/.venv/bin/python scripts/check_cot_cadence.py` (add `--live` to compare
+today's CFTC output with a saved baseline). In December, read `/api/cot/public` -> `cadence` once to confirm.
+
 ### Country release calendar (rates, inflation, GDP)
 
 Once a week the routine runs `cgi_refresh.py calendar`, makes the one TradingView call it prints

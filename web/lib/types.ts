@@ -496,13 +496,43 @@ export interface CotContract {
   cot_index: Record<string, number | null>;
   cot_index_pct_oi: Record<string, number | null>;
   signal: string | null;
+  interim?: CotInterimContract | null;
   n_weeks: number;
   history_from: string;
   spark: number[];
 }
 
+// An earlier-in-the-week read (Monday as-of while the weekly report is Wednesday's): information only, never the headline.
+export interface CotInterimContract {
+  as_of: string;
+  spec: number;
+  spec_pct_oi: number;
+  change_vs_final: number;
+  cot_index_3y: number | null;
+  cot_index_3y_pct_oi: number | null;
+}
+
+export interface CotCadence {
+  pattern: string;
+  as_of_weekdays_last_6w?: string[];
+  rows_per_week_last_8w?: number;
+  first_non_tuesday_seen?: string | null;
+  twice_weekly: boolean;
+  problem: string | null;
+}
+
 export interface CotResponse {
   as_of: string | null;
+  as_of_weekday?: string | null;
+  published_est?: string | null;
+  latest_observation?: string | null;
+  cadence?: CotCadence;
+  interim?: {
+    as_of: string;
+    published_est: string;
+    note: string;
+    contracts: ({ contract: string; group: string; final_as_of: string; final_cot_index_3y: number | null } & CotInterimContract)[];
+  } | null;
   source: string;
   groups: { group: string; contracts: CotContract[] }[];
   extremes: { contract: string; cot_index_3y: number | null; cot_index_3y_pct_oi: number | null; spec: number; signal: string | null }[];

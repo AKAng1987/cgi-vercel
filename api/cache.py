@@ -49,7 +49,7 @@ TTL_HOURS: dict[str, float] = {
     "hud_extra": 6.0,  # HUD rows computed from price-history for tickers the workbook lacks
     "hud_fallback": 1.0,  # HUD rows rebuilt from price-history when the nightly workbook is behind the prices
     "policy_watch": 6.0,  # central bank feeds; 6h so an announcement lands same-day
-    "cot": 12.0,  # COT publishes Friday 15:30 ET; 12h keeps it fresh without hammering CFTC
+    "cot": 6.0,  # COT publishes Friday 15:30 ET today, Wednesday and Friday from December 2026; 6h keeps either fresh without hammering CFTC
     "technicals": 12.0,  # LIVE: breadth glance (net new highs + participation gauges)
     "themes": 6.0,  # LIVE brief: theme onset/age from RS persistence
     "sec_exchanges": 168.0,  # SEC ticker -> exchange, for TradingView symbols; listings change slowly
@@ -146,7 +146,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "hud_extra": 3,  # 2026-10-09: 27 new universe tickers.  # 2026-10-07: payload carries px_date; weekend bars dropped
     "hud_fallback": 1,
     "policy_watch": 1,
-    "cot": 3,  # 2026-10-03: dead E-mini names fixed; 22 -> 39 contracts
+    "cot": 4,  # 2026-10-27: weekly final series, calendar-day windows, interim/cadence/publish fields. 3 (2026-10-03): dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands
     "themes": 13,  # 2026-10-16: parallel loads (forces one cold rebuild to time it).  2026-10-15: rebuild after MAGS/UUP are filled in from TradingView.  2026-10-14: onset = merged run (15d dips), stage cut-offs 55/152, survival re-measured.  2026-10-13c: rebuild after the Yahoo backfill (MAGS 12 Oct).  2026-10-13b: legs carry as_of, lead_as_of_behind.  2026-10-13: TTL 24h -> 6h so the table follows the daily price load.  # 2026-10-09b: ARKW cloud -> innovation (cross-theme duplicate).  # 2026-10-09: sub-sector legs + 16 new themes, URA->URANIUM.  # 2026-09-25: MOO added to agriculture.  # 2026-09-25: megatrend by >365d rule, dollar standing theme, AI capex rename  # 2026-09-24: standing themes, DXJ-led Japan, Korea/DRAM, megatrend class  # 2026-09-24: empirical stages + survival replace invented age cut-offs
     "sec_exchanges": 1,
@@ -219,6 +219,19 @@ def get(cache_key: str) -> Optional[dict]:
         return None
 
     return json.loads(obj["Body"].read().decode("utf-8"))
+
+
+def peek(cache_key: str) -> Optional[tuple[dict, float]]:
+    """(payload, age_hours) for whatever is stored, IGNORING the TTL and the schema version; None if nothing is stored.
+    For health checks that ask "what are we serving, and how old is it", never for serving a page."""
+    try:
+        obj = _s3.get_object(Bucket=BUCKET, Key=_key(cache_key))
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
+            return None
+        raise
+    age = (datetime.now(timezone.utc) - obj["LastModified"]).total_seconds() / 3600.0
+    return json.loads(obj["Body"].read().decode("utf-8")), age
 
 
 def set(cache_key: str, value: dict) -> None:

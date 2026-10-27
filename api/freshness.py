@@ -809,6 +809,68 @@ def erp_check(today: Optional[dt.date] = None) -> dict:
                      if st["behind"] else "current")}
 
 
+COT_STALL_DAYS = {"weekly": 9, "twice": 6}
+
+
+def cot_problems(source_newest: Optional[str], cached: Optional[dict], today: dt.date) -> dict:
+    """Pure part of the COT check. `source_newest` = newest as-of date the CFTC API holds; `cached` = the COT payload we are
+    serving (or None).
+
+    STALLED: the newest report at the CFTC was published more than 9 days ago (6 once reports are twice a week). This is
+    the check that notices the new twice-weekly reports landing in a different dataset: our fetch keeps answering from
+    the old one and nothing else would say so.
+    CADENCE: the as-of weekdays or frequency in the data are not a pattern the code knows (cot_data._cadence).
+    The cached payload being behind the source is reported but is not a problem: the cache rebuilds from the source on
+    the next request after its 6 h TTL."""
+    import cot_data
+
+    problems = []
+    cad = (cached or {}).get("cadence") or {}
+    if source_newest is None:
+        problems.append({"check": "source", "detail": "the CFTC API returned no report date"})
+        pub = None
+    else:
+        pub = cot_data.publish_date(source_newest)
+        limit = COT_STALL_DAYS["twice" if cad.get("twice_weekly") else "weekly"]
+        quiet = (today - pub).days
+        if quiet > limit:
+            problems.append({"check": "stalled",
+                             "detail": (f"newest CFTC report is as of {source_newest} (published {pub.isoformat()}); "
+                                        f"nothing newer for {quiet} days, expected within {limit}. If the new twice-weekly "
+                                        f"reports use a different dataset, cot_data.BASE must change.")})
+    if cad.get("problem"):
+        problems.append({"check": "cadence", "detail": cad["problem"]})
+    ours = (cached or {}).get("as_of")
+    return {"problems": problems, "n_problems": len(problems), "source_newest": source_newest,
+            "published_est": pub.isoformat() if pub else None, "ours_as_of": ours,
+            "latest_observation": (cached or {}).get("latest_observation"),
+            "cache_behind_source": bool(source_newest and ours and ours < source_newest),
+            "pattern": cad.get("pattern")}
+
+
+def cot_check(today: Optional[dt.date] = None) -> dict:
+    """COT freshness: the CFTC's own newest report date against the payload we serve. Reads the CFTC directly (public),
+    so no refresh routine is involved."""
+    import json as _json
+    import urllib.request as _rq
+
+    import cache
+    import cot_data
+
+    today = today or dt.date.today()
+    try:
+        url = f"{cot_data.BASE}?$select=report_date_as_yyyy_mm_dd&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=1"
+        with _rq.urlopen(url, timeout=20) as r:
+            rows = _json.load(r)
+        source_newest = rows[0]["report_date_as_yyyy_mm_dd"][:10] if rows else None
+        peeked = cache.peek("cot")
+        out = cot_problems(source_newest, peeked[0] if peeked else None, today)
+        out["cache_age_hours"] = round(peeked[1], 1) if peeked else None
+        return out
+    except Exception as exc:  # noqa: BLE001 -- a check that cannot run is itself a problem worth seeing
+        return {"problems": [], "n_problems": 1, "error": f"{type(exc).__name__}: {str(exc)[:160]}"}
+
+
 def build_freshness(today: Optional[dt.date] = None) -> dict:
     erp = erp_check(today)
     fred = fred_crosscheck(today)
@@ -819,6 +881,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     peers = peer_lag(today)
     jumps = price_jumps(today)
     ref = referee(beat.pop("referee_bars", None), today)
+    cot = cot_check(today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
@@ -830,9 +893,10 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "price_jumps": jumps,
         "referee": ref,
         "erp": erp,
+        "cot": cot,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

@@ -63,6 +63,18 @@ def _section(name: str, headline: str, body: Any, error: Optional[str] = None) -
             "status": "unavailable" if error else "ok", "error": error}
 
 
+def _cot_released_recently(cot, today: dt.date, days: int = 2) -> bool:
+    """True when the newest COT report (final or interim) was published within the last `days` days, by the publish date
+    cot_data estimates from its as-of weekday. A payload from before that field existed falls back to the old rule."""
+    pub = (cot or {}).get("latest_published_est")
+    if not pub:
+        return today.weekday() == 4
+    try:
+        return 0 <= (today - dt.date.fromisoformat(pub)).days <= days
+    except ValueError:
+        return today.weekday() == 4
+
+
 def build_brief(cadence: str = "daily") -> dict:
     cadence = cadence if cadence in WINDOW else "daily"
     window = WINDOW[cadence]
@@ -173,8 +185,8 @@ def build_brief(cadence: str = "daily") -> dict:
     else:
         sections.append(_section("fundamentals", "unavailable", None, e_fu))
 
-    # 5 positioning -- Fridays daily, always weekly (COT publishes Friday)
-    if cadence == "weekly" or today.weekday() == 4:
+    # 5 positioning -- the morning after a COT release (Friday today; Wednesday and Friday from December 2026), always weekly
+    if cadence == "weekly" or _cot_released_recently(cot, today):
         if cot:
             ex = cot.get("extremes") or []
             sections.append(_section("positioning", f"{len(ex)} contracts at an extreme",
