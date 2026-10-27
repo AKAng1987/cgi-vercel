@@ -2,6 +2,17 @@ import { CalendarEvent, RegimeCountry } from "@/lib/types";
 
 const KIND: Record<CalendarEvent["kind"], string> = { rate: "rate", cpi: "CPI", gdp: "GDP" };
 
+/** TradingView lists GDP twice (year on year and quarter on quarter); one line per country, kind and day is enough. */
+function unique(events: CalendarEvent[]): CalendarEvent[] {
+  const seen = new Set<string>();
+  return events.filter((e) => {
+    const k = `${e.country}|${e.kind}|${e.date}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 function detail(e: CalendarEvent): string {
   const f = (v: number | null) => (v === null ? null : String(v));
   if (e.kind === "rate") {
@@ -21,8 +32,7 @@ function missing(e: CalendarEvent): boolean {
  * shows amber, which is the check that would have caught the Philippine rate sitting at 5.0% after the 22 Oct hike.
  */
 export function CalendarStrip({ countries, asOf }: { countries: RegimeCountry[]; asOf?: string | null }) {
-  const events = countries
-    .flatMap((c) => c.calendar ?? [])
+  const events = unique(countries.flatMap((c) => c.calendar ?? []))
     .filter((e) => e.days_to_go >= -7 && e.days_to_go <= 31)
     .sort((a, b) => a.date.localeCompare(b.date) || a.country.localeCompare(b.country));
   if (!events.length) {
@@ -90,7 +100,7 @@ export function CalendarStrip({ countries, asOf }: { countries: RegimeCountry[];
 
 /** One line under a country's macro figures: its next releases, nearest first, amber if one has printed and is not loaded. */
 export function CalLine({ events }: { events?: CalendarEvent[] }) {
-  const ev = (events ?? []).filter((e) => e.days_to_go >= -7);
+  const ev = unique(events ?? []).filter((e) => e.days_to_go >= -7);
   if (!ev.length) return null;
   const shown = ev.slice(0, 3);
   return (

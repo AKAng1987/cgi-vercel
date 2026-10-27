@@ -32,13 +32,18 @@ KEY = "calendar/country_calendar.json"
 #   [country, date_iso, title, indicator, category, period, previous, forecast, importance, ticker]
 FIELDS = ("country", "date", "title", "indicator", "category", "period", "previous", "forecast", "importance", "ticker")
 
-_NOT_A_DECISION = re.compile(r"minutes|press conference|report|speech|statement|summary|testimony|projections|outlook", re.I)
+# TradingView files many things under the indicator "Interest Rate": votes, speeches, minutes, survey read-outs, council meetings.
+# A row is a rate DECISION only if its title says so (a decision, or China's loan prime rate) and says nothing of the others.
+_IS_A_DECISION = re.compile(r"decision|loan prime rate|policy rate", re.I)
+_NOT_A_DECISION = re.compile(
+    r"minutes|accounts|press conference|report|speech|statement|summary|testimony|projections|outlook|vote|appearance|"
+    r"readout|read-out|focus|council|senate|\b5y\b|deposit|facility", re.I)
 
 
 def classify(indicator: str, title: str, category: str) -> Optional[str]:
     """rate | cpi | gdp, or None for everything else (PMI, trade, retail, jobs, confidence, minutes, press conferences)."""
     ind, ttl, cat = (indicator or "").strip(), (title or ""), (category or "").lower()
-    if ind == "Interest Rate" and not _NOT_A_DECISION.search(ttl):
+    if ind == "Interest Rate" and _IS_A_DECISION.search(ttl) and not _NOT_A_DECISION.search(ttl):
         return "rate"
     if ind == "Inflation Rate":
         return "cpi"
