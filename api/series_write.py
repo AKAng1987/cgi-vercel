@@ -314,6 +314,15 @@ def _invalidate(symbol: str) -> list[str]:
             dropped += _cache.invalidate(key)
         except Exception:  # noqa: BLE001 -- see docstring
             _logger.exception("[series] could not invalidate %r", key)
+    # The countries payload is rebuilt from per-country blocks memoised in-process for 6 hours. Deleting the stored payload
+    # alone made the rebuild re-read the OLD blocks: the PH policy rate (5.5% after the 22 Oct hike) was written and still
+    # showed 5.0% (2026-10-27). Drop the blocks too, so the next request really rebuilds them.
+    if "countries" in _dependent_cache_keys(symbol):
+        try:
+            import country_data as _cd
+            _cd._blocks_cache["data"] = None
+        except Exception:  # noqa: BLE001 -- see docstring
+            _logger.exception("[series] could not drop the in-process country blocks for %r", symbol)
     return dropped
 
 
