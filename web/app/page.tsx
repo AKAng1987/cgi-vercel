@@ -4,6 +4,7 @@ import { RegimeCard } from "./components/RegimeCard";
 import { EdgeStrip } from "./components/brief/EdgeStrip";
 import { WatchlistsResponse, findList, LIST_NOW, LIST_FLIP } from "@/lib/tvLists";
 import { BreadthStrip } from "./components/brief/BreadthStrip";
+import { PhBreadthStrip } from "./components/brief/PhBreadthStrip";
 import { ChangeStrip } from "./components/brief/ChangeStrip";
 import { PolicyNotes } from "./components/brief/PolicyNotes";
 import { StandingTheme } from "./components/brief/StandingTheme";
@@ -86,6 +87,8 @@ export default async function Live() {
       )}
 
       {tech && <BreadthStrip t={tech} />}
+
+      <PhBreadthStrip />
 
       <StandingTheme themes={themes.standing} />
       <ThemesTable themes={themes.themes} runStats={themes.run_stats} />
