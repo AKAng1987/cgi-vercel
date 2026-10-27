@@ -1,5 +1,5 @@
 {
- "as_of": "2026-10-20",
+ "as_of": "2026-10-27",
  "claims": [
   {
    "baseline": 2.743,
@@ -421,6 +421,30 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/895421/000089542126000288/"
+   }
+  },
+  "NUE": {
+   "2026Q3": {
+    "filed": "2026-10-26",
+    "metrics": {
+     "net_earnings_bn": {
+      "note": "attributable to stockholders",
+      "unit": "$bn",
+      "value": 1.32
+     },
+     "net_sales_bn": {
+      "note": "net sales",
+      "unit": "$bn",
+      "value": 11.25
+     },
+     "steel_mills_ebt_bn": {
+      "note": "steel mills segment pre-tax",
+      "unit": "$bn",
+      "value": 1.788
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/73309/000119312526432117/"
    }
   },
   "SCHW": {
