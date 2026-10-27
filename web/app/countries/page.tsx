@@ -1,4 +1,5 @@
 import { CountriesHistory } from "../components/countries/CountriesHistory";
+import { CalendarStrip, CalLine } from "../components/countries/CountryCalendar";
 import { apiFetch } from "@/lib/api";
 import { COMPASS_Q_MAP, GRID_Q_MAP } from "@/lib/regimeConstants";
 import { CountryCurve, MacroPoint, RegimeCell, RegimeCountry, RegimeFxCell, RegimeMatrixResponse, TenorReturns } from "@/lib/types";
@@ -226,6 +227,7 @@ function Row({ c, regime }: { c: RegimeCountry; regime: string }) {
               </div>
             )}
             <Curve cv={c.curve} />
+            <CalLine events={c.calendar} />
             {c.risk_premium && (
               <div className="text-[0.66rem]" title={c.risk_premium.source}>
                 <span className="text-slate-500">Equity risk premium </span>
@@ -500,6 +502,8 @@ export default async function ForeignPage({
           <span className="tabular-nums">{m.last_refreshed_at?.slice(0, 10) ?? "—"}</span>.
         </p>
       </header>
+
+      <CalendarStrip countries={m.countries} asOf={m.calendar_asof} />
 
       <section className="flex flex-wrap items-start gap-6">
         <div className="space-y-1">

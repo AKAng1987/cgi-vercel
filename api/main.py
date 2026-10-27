@@ -30,6 +30,7 @@ import watchlists as watchlists_data
 import mixture as mixture_data
 import regime_matrix
 import release_calendar
+import country_calendar
 import context_tables
 import country_data
 import priced_in
@@ -277,6 +278,32 @@ def freshness_heartbeat(body: dict = Body(default={})):
         return {"ok": True, **written}
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"could not record heartbeat: {exc}")
+
+
+@app.get("/api/country_calendar")
+def country_calendar_get():
+    """The stored country release calendar (rates, inflation, GDP for the Countries page countries). Read-only; the rows are
+    already visible on the Countries page. The refresh routine reads it to decide which series are due."""
+    return country_calendar.read()
+
+
+@app.post("/api/country_calendar")
+def country_calendar_post(body: dict = Body(default={})):
+    """The refresh routine posts the week's TradingView calendar rows (compact lists, see country_calendar.FIELDS).
+
+    Unauthenticated for the same reason POST /api/series and the heartbeat are: the routine's environment cannot hold a
+    secret. What it can store is bounded here: known countries, rows classified and validated in code, a 52-day window,
+    at most 600 rows, short titles. A post that keeps NO rows is refused so a bad run cannot wipe a good snapshot.
+    """
+    rows, report = country_calendar.clean(body.get("rows") if isinstance(body, dict) else None)
+    if not rows:
+        raise HTTPException(status_code=400, detail={"error": "no valid rows; stored calendar left as it was", "report": report})
+    try:
+        written = country_calendar.write(rows)
+        cache.invalidate("countries")
+        return {"ok": True, "at": written["at"], "report": report}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"could not store the calendar: {exc}")
 
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])

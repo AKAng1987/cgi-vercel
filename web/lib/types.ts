@@ -754,7 +754,24 @@ export type RiskPremiumRow = {
   source: string;
 };
 
+// One scheduled release for a country (api/country_calendar.py): a central-bank decision, an inflation print or GDP.
+// series = the CGI series it feeds (null when CGI does not track it); loaded is set only for a release that has passed.
+export type CalendarEvent = {
+  country: string;
+  date: string;
+  title: string;
+  kind: "rate" | "cpi" | "gdp";
+  series: string | null;
+  period: string | null;
+  previous: number | null;
+  forecast: number | null;
+  importance: number;
+  days_to_go: number;
+  loaded?: boolean;
+};
+
 export type RegimeCountry = {
+  calendar?: CalendarEvent[];
   macro?: CountryMacro | null;
   curve?: CountryCurve | null;
   risk_premium?: {
@@ -789,6 +806,7 @@ export type RegimeCountry = {
 };
 
 export type RegimeMatrixResponse = {
+  calendar_asof?: string | null;
   schema_version: number;
   last_refreshed_at: string | null;
   compass_q: number;

@@ -46,7 +46,7 @@ import themes_data as td
 # Bumping this invalidates the "countries" cache automatically -- cache.py's
 # SCHEMA_FROM_MODULE points at this constant precisely so the bump lives in the
 # same file as the shape change. 2: added the curve block.
-SCHEMA_VERSION = 18  # 18: blocks built in parallel (one cold rebuild). 17: countries_in_force (themes detector on each country's ETFs). 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
+SCHEMA_VERSION = 19  # 19: release calendar per country (calendar, calendar_asof). 18: blocks built in parallel (one cold rebuild). 17: countries_in_force (themes detector on each country's ETFs). 16: risk_premium_table, premiums read in parallel. 15: Damodaran country risk premium block. 14: PIN retired, India uses INDA only. 13: 13: JP/EU central-bank assets read from FRED-fed series; 12: currency_state (managed/pending/untracked) on every country; 11: six new USD pairs
 
 BENCH = "SPY"
 
@@ -510,6 +510,16 @@ def build_countries(compass_q: Optional[int] = None, grid_q: Optional[int] = Non
         c["curve"] = block.get("curve")
         c["risk_premium"] = block.get("risk_premium")
         c["market"] = block.get("market")
+
+    # The release calendar is attached here, not inside the memoised blocks: it changes weekly (and a post invalidates the
+    # stored payload), while the blocks are held in-process for 6 hours.
+    import country_calendar
+    snap = country_calendar.read()
+    loaded = {p["symbol"]: p["as_of"] for c in matrix["countries"] for p in (c.get("macro") or {}).values()
+              if isinstance(p, dict) and p.get("symbol") and p.get("as_of")}
+    for c in matrix["countries"]:
+        c["calendar"] = country_calendar.for_country(snap, c["code"], loaded=loaded)[:10]
+    matrix["calendar_asof"] = snap.get("at")
 
     # The tide: the average across all countries in this regime, so a country's
     # number is read against it rather than in isolation. 64% of the variance in

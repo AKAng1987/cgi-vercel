@@ -176,6 +176,23 @@ scheduled task runs 09:30 Monday to Saturday, is script-driven
 that let 38 backtest tickers go unnoticed for a day: the list lived in one
 place and the work in another.
 
+### Country release calendar (rates, inflation, GDP)
+
+Once a week the routine runs `cgi_refresh.py calendar`, makes the one TradingView call it prints
+(`mcp-tv-get-economic-calendar`, the 19 Countries-page countries, next ~31 days, importance medium and up) and sends each
+event as a compact row in `apply` under `_calendar`. `POST /api/country_calendar` (via the Vercel proxy
+`web/app/api/country_calendar`) classifies and validates in `api/country_calendar.py` (known countries, rate/CPI/GDP only,
+52-day window, <= 600 rows; a post that keeps no rows is refused so a bad run cannot wipe the stored one) and stores one S3
+blob. Each row's TradingView ticker maps to a CGI series through `series_write.ALLOWED`.
+
+`cgi_refresh.py plan` reads it: a series whose release has passed and whose stored date is older is due now (for ten days
+after the release, then the old cadence rules take over, so a source that never posts the print is not asked daily forever);
+a series whose next release is ahead is left alone, except policy rates, which also get a weekly safety check. Series the
+calendar does not list (M2, loans, central-bank assets, curves) keep the cadence rules and `RELEASE_WINDOW`. The Countries
+page shows the calendar, and an amber "released but not yet in CGI" line when a print has happened and the stored series has not
+reached it. Why: on 22 Oct the BSP hiked to 5.5% and the page still said 5.0% five days later, because policy rates were only
+asked monthly. Limits: TradingView looks ~31 days ahead and lags official releases.
+
 ### Alerts to CTS Ideas (built, awaiting a token)
 
 `cgi-cts-poster` (Lambda, EventBridge `cgi-cts-poster-daily`, 02:30 UTC) posts regime
