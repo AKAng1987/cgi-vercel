@@ -47,6 +47,7 @@ TTL_HOURS: dict[str, float] = {
     "dot_plot": 168.0,  # 7d
     "axis_drivers": 24.0,  # markov: what-moves-each-axis event study (~14 DDB pulls)
     "hud_extra": 6.0,  # HUD rows computed from price-history for tickers the workbook lacks
+    "hud_spark": 6.0,  # last 60 closes per TAPE row for the sparklines
     "hud_fallback": 1.0,  # HUD rows rebuilt from price-history when the nightly workbook is behind the prices
     "policy_watch": 6.0,  # central bank feeds; 6h so an announcement lands same-day
     "cot": 6.0,  # COT publishes Friday 15:30 ET today, Wednesday and Friday from December 2026; 6h keeps either fresh without hammering CFTC
@@ -145,6 +146,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "dot_plot": 1,
     "hud_extra": 3,  # 2026-10-09: 27 new universe tickers.  # 2026-10-07: payload carries px_date; weekend bars dropped
     "hud_fallback": 1,
+    "hud_spark": 1,
     "policy_watch": 1,
     "cot": 4,  # 2026-10-27: weekly final series, calendar-day windows, interim/cadence/publish fields. 3 (2026-10-03): dead E-mini names fixed; 22 -> 39 contracts
     "technicals": 2,  # 2026-09-24: Nasdaq universe, 3-day rule, per-day bands

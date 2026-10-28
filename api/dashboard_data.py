@@ -494,6 +494,53 @@ def _recent_closes(symbol: str, limit: int = 300) -> list[tuple[str, float]]:
 WEEKEND_TRADING = {"BTC", "ETH"}
 
 
+SPARK_POINTS = 60  # closes per sparkline (about three months of sessions)
+
+
+def _spark_series(symbols: list[str]) -> dict:
+    """Last SPARK_POINTS weekday closes for each symbol, oldest first, read in parallel. A symbol with fewer than two
+    closes maps to None. Weekend-dated bars are dropped for anything that does not trade at weekends, same rule as
+    hud_from_price_history."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    def one(sym: str):
+        try:
+            rows = _recent_closes(sym, limit=SPARK_POINTS + 12)
+        except Exception:  # noqa: BLE001 -- one symbol must not lose the rest
+            return None
+        if sym not in WEEKEND_TRADING:
+            rows = [(d, c) for d, c in rows if datetime.date.fromisoformat(d).weekday() < 5]
+        closes = [float(f"{c:.5g}") for _, c in rows][-SPARK_POINTS:]  # 5 significant figures: the shape is what is drawn
+        return closes if len(closes) >= 2 else None
+
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        return dict(zip(symbols, ex.map(one, symbols)))
+
+
+def attach_spark(hud_groups: list[dict]) -> None:
+    """Adds `spark` (list of closes or None) to every row, in place on copies of the rows. Cached 6 h and keyed by the
+    SPY close date so a fresh close rebuilds it (same pattern as hud_extra). Never fatal: on any error the rows are
+    left without a spark and the page simply draws none."""
+    try:
+        import cache as _cache
+
+        symbols = [t["symbol"] for g in hud_groups for t in g["tickers"]]
+        _px = _recent_closes("SPY", limit=1)
+        px_date = _px[-1][0] if _px else None
+
+        def _compute() -> dict:
+            return {"px_date": px_date, "series": _spark_series(symbols)}
+
+        cached = _cache.get_or_fetch("hud_spark", _compute)
+        if cached.get("px_date") != px_date or not set(symbols) <= set(cached.get("series", {})):
+            cached = _compute()
+        series = cached.get("series", {})
+        for g in hud_groups:
+            g["tickers"] = [dict(t, spark=series.get(t["symbol"])) for t in g["tickers"]]
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("[live] sparklines failed; serving rows without them")
+
+
 def hud_from_price_history(symbol: str, sector: str) -> Optional[dict]:
     rows = _recent_closes(symbol)
     if symbol not in WEEKEND_TRADING:
@@ -630,6 +677,8 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
             "default_rs_denom": rs_denom,
             "tickers": group_tickers,
         })
+
+    attach_spark(hud_groups)
 
     return {
         "as_of": resolved_date,
