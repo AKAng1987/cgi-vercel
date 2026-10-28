@@ -467,3 +467,7 @@ The specifics do not generalise, and this document should not be turned into
 a template until it has been used at least once during a real failure. A
 runbook that has never been opened in anger is a guess about what future-you
 will need to know.
+
+### TAPE views (2026-10-29)
+
+`/tape` keeps the table as its default and adds a switch: Table, Heatmap, Rotation, Stretch, plus a horizon (1D to 1Y) kept in the URL (`?view=heatmap&h=3m`). Movers (top and bottom 10 over the horizon, price groups only, stale rows left out and counted) sit above Table and Heatmap. Every row also carries a Pace ladder (move per trading day over each window: speeding up, fading, mixed) and, from `/api/live`, a 60-close sparkline (`spark`, built by `dashboard_data.attach_spark`, cache `hud_spark` 6 h). Rotation plots 3M against 1M return minus the benchmark's (SPX for groups; each group's own benchmark for its symbols). Stretch is price against its 7-day EMA in 7-day standard deviations and shows a gap when the stored spread is in another unit (|z| over 4: RUT, USDKRW, USDIDR, BTC, ETH carry workbook spreads like that). All views are descriptive, read only the rows `/api/live` already returns, and never fill a stale or missing value. Arithmetic lives in `web/lib/tapeMath.ts`, checked by `node scripts/check-tape-math.mjs`.
