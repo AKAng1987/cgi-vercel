@@ -2,6 +2,7 @@
 
 import { HudGroup } from "@/lib/types";
 import { HUD_DISPLAY_COLUMNS, pctColor } from "@/lib/regimeConstants";
+import { TapeLadder } from "./tape/TapeLadder";
 
 function fmtPrice(v: number | null): string {
   if (v === null || v === undefined) return "—";
@@ -62,6 +63,9 @@ export function HudTable({
                   {c.label}
                 </th>
               ))}
+              <th className="bg-[var(--cgi-surface)] px-1.5 py-1 text-left text-[0.68rem] uppercase tracking-wide text-slate-400" title="Move per trading day over 1D, 5D, 1M, 3M, 6M and 1Y">
+                Pace
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -92,6 +96,9 @@ export function HudTable({
                     </td>
                   );
                 })}
+                <td className="px-1.5 py-0.5">
+                  <TapeLadder t={t} />
+                </td>
               </tr>
             ))}
           </tbody>
