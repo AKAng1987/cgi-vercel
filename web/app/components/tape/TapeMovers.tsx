@@ -19,6 +19,7 @@ export function TapeMovers({
   onSelect: (symbol: string) => void;
 }) {
   const rows: Row[] = [];
+  const seen = new Set<string>(); // a few symbols (KWEB, WOOD, SLX) sit in two groups; list each once
   let excluded = 0;
   for (const g of groups) {
     if (!isPriceGroup(g)) continue; // yields and spreads: a % change of a level is not a move in price
@@ -28,6 +29,8 @@ export function TapeMovers({
         excluded += 1;
         continue;
       }
+      if (seen.has(t.symbol)) continue;
+      seen.add(t.symbol);
       rows.push({ symbol: t.symbol, group: g.name, v });
     }
   }

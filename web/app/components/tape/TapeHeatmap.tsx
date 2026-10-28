@@ -3,6 +3,7 @@
 import { HudGroup, HudTicker } from "@/lib/types";
 import { HKey, HORIZONS, isPriceGroup, isStale, tileColor } from "@/lib/tapeMath";
 import { fmtPct, asOfLabel } from "./format";
+import { TapeSpark } from "./TapeSpark";
 
 function tip(t: HudTicker): string {
   const parts = HORIZONS.map((h) => `${h.label} ${fmtPct(t[h.key])}`);
@@ -56,6 +57,11 @@ export function TapeHeatmap({
                   >
                     <div className="truncate text-[0.72rem] font-semibold text-slate-100">{t.symbol}</div>
                     <div className="text-[0.68rem] text-slate-200">{fmtPct(t[horizon], 1)}</div>
+                    {t.spark && t.spark.length > 1 && (
+                      <div className="mt-0.5 flex justify-center opacity-80">
+                        <TapeSpark values={t.spark} width={56} height={12} muted={stale} />
+                      </div>
+                    )}
                     {stale && t.as_of && (
                       <div className="text-[0.55rem] text-[var(--cgi-gold)]">as of {asOfLabel(t.as_of)}</div>
                     )}

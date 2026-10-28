@@ -3,6 +3,7 @@
 import { HudGroup } from "@/lib/types";
 import { HUD_DISPLAY_COLUMNS, pctColor } from "@/lib/regimeConstants";
 import { TapeLadder } from "./tape/TapeLadder";
+import { TapeSpark } from "./tape/TapeSpark";
 
 function fmtPrice(v: number | null): string {
   if (v === null || v === undefined) return "—";
@@ -66,6 +67,9 @@ export function HudTable({
               <th className="bg-[var(--cgi-surface)] px-1.5 py-1 text-left text-[0.68rem] uppercase tracking-wide text-slate-400" title="Move per trading day over 1D, 5D, 1M, 3M, 6M and 1Y">
                 Pace
               </th>
+              <th className="bg-[var(--cgi-surface)] px-1.5 py-1 text-left text-[0.68rem] uppercase tracking-wide text-slate-400" title="Last 60 closes">
+                60D
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -98,6 +102,9 @@ export function HudTable({
                 })}
                 <td className="px-1.5 py-0.5">
                   <TapeLadder t={t} />
+                </td>
+                <td className="px-1.5 py-0.5">
+                  <TapeSpark values={t.spark} muted={!!(latest && t.as_of && t.as_of < latest)} />
                 </td>
               </tr>
             ))}

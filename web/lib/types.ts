@@ -31,6 +31,8 @@ export interface HudTicker {
   pct_1y: number | null;
   as_of: string | null;
   stale_days: number | null;
+  /** Last ~60 closes, oldest first, for the sparkline; null or absent when the API has no history for the row. */
+  spark?: number[] | null;
 }
 
 export interface HudGroup {
