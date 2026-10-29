@@ -23,6 +23,20 @@ export function newestClose(groups: HudGroup[]): string {
   return groups.flatMap((g) => g.tickers.map((t) => t.as_of ?? "")).reduce((a, b) => (b > a ? b : a), "");
 }
 
+/**
+ * The close date most rows share (ties go to the newer date). The new views measure "stale" against THIS, not the
+ * newest date any row has: feeds do not all publish at once (2026-10-28: FX and the VIX were already at the 28th while
+ * 166 ETFs were still at the 27th), and against the newest date nearly the whole universe would read as stale.
+ * The table keeps its stricter per-row "as of" tag.
+ */
+export function commonClose(groups: HudGroup[]): string {
+  const count = new Map<string, number>();
+  for (const g of groups) for (const t of g.tickers) if (t.as_of) count.set(t.as_of, (count.get(t.as_of) ?? 0) + 1);
+  let best = "", bestN = 0;
+  for (const [d, n] of count) if (n > bestN || (n === bestN && d > best)) { best = d; bestN = n; }
+  return best;
+}
+
 /** A row whose newest close is older than the newest any row has. Same rule the table uses for its "as of" tag. */
 export function isStale(t: HudTicker, latest: string): boolean {
   return !!(latest && t.as_of && t.as_of < latest);

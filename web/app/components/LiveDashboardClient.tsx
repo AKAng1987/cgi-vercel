@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LiveResponse } from "@/lib/types";
-import { HORIZONS, HKey, newestClose } from "@/lib/tapeMath";
+import { HORIZONS, HKey, commonClose, newestClose } from "@/lib/tapeMath";
 import { HudTable } from "./HudTable";
 import { TradingViewChart } from "./TradingViewChart";
 import { TapeControls, TapeView, VIEWS } from "./tape/TapeControls";
@@ -15,6 +15,8 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
   // The newest close any row has. A row older than this is shown with its own date, so a source that has
   // fallen behind cannot pass for today's number (2026-10: RUT sat on Oct 2 beside Oct 6 rows).
   const latest = newestClose(data.hud_groups);
+  // The views below measure "stale" against the date most rows share, so a feed that publishes a day early does not make the rest look stale.
+  const common = commonClose(data.hud_groups);
   const [selectedSymbol, setSelectedSymbol] = useState(
     data.hud_groups[0]?.tickers[0]?.symbol ?? "SPX"
   );
@@ -61,7 +63,7 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
         onHorizon={(h) => { setHorizon(h); remember(view, h); }}
       />
       {(view === "table" || view === "heatmap") && (
-        <TapeMovers groups={data.hud_groups} latest={latest} horizon={horizon} onSelect={select} />
+        <TapeMovers groups={data.hud_groups} latest={common} horizon={horizon} onSelect={select} />
       )}
       {view === "table" &&
         data.hud_group_order.map((name) => {
@@ -70,11 +72,11 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
           return <HudTable key={name} group={group} latest={latest} onSelectSymbol={select} />;
         })}
       {view === "heatmap" && (
-        <TapeHeatmap groups={data.hud_groups} order={data.hud_group_order} latest={latest} horizon={horizon} onSelect={select} />
+        <TapeHeatmap groups={data.hud_groups} order={data.hud_group_order} latest={common} horizon={horizon} onSelect={select} />
       )}
-      {view === "rotation" && <TapeRotation groups={data.hud_groups} latest={latest} onSelect={select} />}
+      {view === "rotation" && <TapeRotation groups={data.hud_groups} latest={common} onSelect={select} />}
       {view === "stretch" && (
-        <TapeStretch groups={data.hud_groups} order={data.hud_group_order} latest={latest} onSelect={select} />
+        <TapeStretch groups={data.hud_groups} order={data.hud_group_order} latest={common} onSelect={select} />
       )}
       <div id="tape-chart">
         <TradingViewChart symbol={selectedSymbol} />

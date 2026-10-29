@@ -5,7 +5,12 @@ import { HKey, HORIZONS, isPriceGroup, isStale, num } from "@/lib/tapeMath";
 import { pctColor } from "@/lib/regimeConstants";
 import { fmtPct } from "./format";
 
-type Row = { symbol: string; group: string; v: number };
+type Row = { symbol: string; group: string; v: number; price: number | null };
+
+// Same 4 significant figures the table uses for its Price column.
+function fmtPrice(v: number | null): string {
+  return num(v) ? Number(v.toPrecision(4)).toString() : "—";
+}
 
 export function TapeMovers({
   groups,
@@ -31,7 +36,7 @@ export function TapeMovers({
       }
       if (seen.has(t.symbol)) continue;
       seen.add(t.symbol);
-      rows.push({ symbol: t.symbol, group: g.name, v });
+      rows.push({ symbol: t.symbol, group: g.name, v, price: t.current });
     }
   }
   rows.sort((a, b) => b.v - a.v);
@@ -51,6 +56,7 @@ export function TapeMovers({
               className="flex w-full items-baseline gap-2 px-1 py-0.5 text-left hover:bg-slate-800/50"
             >
               <span className="w-14 shrink-0 font-medium text-slate-200">{r.symbol}</span>
+              <span className="w-16 shrink-0 text-right text-slate-300">{fmtPrice(r.price)}</span>
               <span className="w-16 shrink-0 text-right font-medium" style={{ color: pctColor(r.v) }}>
                 {fmtPct(r.v)}
               </span>
@@ -67,7 +73,7 @@ export function TapeMovers({
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[0.7rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">Movers · {label}</h2>
         <span className="text-[0.62rem] text-slate-500">
-          price groups only; {excluded} row{excluded === 1 ? "" : "s"} left out (stale or no value)
+          price groups only; closes as of {latest ? latest.slice(5) : "—"} or later; {excluded} row{excluded === 1 ? "" : "s"} left out (older close or no value)
         </span>
       </div>
       <div className="flex flex-col gap-3 md:flex-row">

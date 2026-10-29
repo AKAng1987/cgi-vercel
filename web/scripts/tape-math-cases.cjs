@@ -30,4 +30,7 @@ eq('tile null',m.tileColor(null,'pct_1m'),'var(--cgi-surface-alt)');
 eq('tile half',m.tileStrength(4,'pct_1m'),0.5);
 eq('tile capped',m.tileStrength(-20,'pct_1m'),1);
 eq('newestClose',m.newestClose([{name:'a',default_rs_denom:null,tickers:[row({as_of:'2026-10-23'}),row({as_of:'2026-10-27'})]}]),'2026-10-27');
+eq('commonClose mode',m.commonClose([{name:'a',default_rs_denom:null,tickers:[row({as_of:'2026-10-27'}),row({as_of:'2026-10-27'}),row({as_of:'2026-10-28'})]}]),'2026-10-27');
+eq('commonClose tie goes newer',m.commonClose([{name:'a',default_rs_denom:null,tickers:[row({as_of:'2026-10-27'}),row({as_of:'2026-10-28'})]}]),'2026-10-28');
+eq('commonClose empty',m.commonClose([]),'');
 console.log(fails?('FAILURES '+fails):'ALL PASS');process.exit(fails?1:0);
