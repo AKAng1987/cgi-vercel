@@ -1,5 +1,5 @@
 {
- "as_of": "2026-10-27",
+ "as_of": "2026-10-29",
  "claims": [
   {
    "baseline": 2.743,
@@ -325,6 +325,25 @@
     "source": "https://www.sec.gov/Archives/edgar/data/70858/000007085826000481/"
    }
   },
+  "GOOGL": {
+   "2026Q3": {
+    "filed": "2026-10-28",
+    "metrics": {
+     "capex_bn": {
+      "note": "purchases of property and equipment",
+      "unit": "$bn",
+      "value": 51.355
+     },
+     "cloud_rev_bn": {
+      "note": "Google Cloud revenue, +103%",
+      "unit": "$bn",
+      "value": 30.7
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/"
+   }
+  },
   "GS": {
    "2026Q2": {
     "filed": "2026-10-13",
@@ -397,6 +416,20 @@
     "source": "https://www.sec.gov/Archives/edgar/data/19617/000162828026065582/"
    }
   },
+  "KLAC": {
+   "2026Q3": {
+    "filed": "2026-10-28",
+    "metrics": {
+     "revenue_bn": {
+      "note": "fiscal Q1 2027 revenue",
+      "unit": "$bn",
+      "value": 4.136
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/319201/000031920126000032/"
+   }
+  },
   "MS": {
    "2026Q2": {
     "filed": "2026-10-14",
@@ -421,6 +454,49 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/895421/000089542126000288/"
+   }
+  },
+  "MSFT": {
+   "2026Q3": {
+    "filed": "2026-10-28",
+    "metrics": {
+     "azure_growth_pct": {
+      "note": "Azure revenue growth",
+      "unit": "%",
+      "value": 48
+     },
+     "cloud_rev_bn": {
+      "note": "Microsoft Cloud revenue, fiscal Q1",
+      "unit": "$bn",
+      "value": 63.9
+     },
+     "commercial_rpo_bn": {
+      "note": "commercial RPO, +73%",
+      "unit": "$bn",
+      "value": 677
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/789019/000119312526436122/"
+   }
+  },
+  "NOW": {
+   "2026Q3": {
+    "filed": "2026-10-28",
+    "metrics": {
+     "crpo_bn": {
+      "note": "current RPO, +20.5%",
+      "unit": "$bn",
+      "value": 13.65
+     },
+     "rpo_bn": {
+      "note": "remaining performance obligations, +22%",
+      "unit": "$bn",
+      "value": 29.7
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000092/"
    }
   },
   "NUE": {
@@ -606,6 +682,20 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000054/"
+   }
+  },
+  "VRT": {
+   "2026Q3": {
+    "filed": "2026-10-28",
+    "metrics": {
+     "net_sales_bn": {
+      "note": "net sales, +61%",
+      "unit": "$bn",
+      "value": 4.313
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1674101/000162828026067707/"
    }
   },
   "WFC": {
