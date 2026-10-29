@@ -159,4 +159,14 @@ check("TTM cash needs four values", fd._ttm_cash({"2025-03-31": 1.0, "2025-06-30
 old = sx.series(f, "capex")
 check("series() alone returns just Q1 for cash flow (the bug this replaces)", list(old.values()), [10e9])
 
+# 12. first-reported values and first-filed dates (point-in-time): next year's 10-Q re-files the quarter as a comparative
+f = facts_for(T, [
+    row("2025-01-01", "2025-03-31", 10e9, "2025-04-30"), row("2025-01-01", "2025-03-31", 11e9, "2026-04-30"),
+    row("2025-01-01", "2025-06-30", 25e9, "2025-07-30"), row("2025-01-01", "2025-06-30", 26e9, "2026-07-30"),
+])
+last, first = sx.cash_quarters(f, ("capex",)), sx.cash_quarters_first(f, ("capex",))
+check("latest-filing reader: Q1 restated 11bn filed 2026-04-30", last["2025-03-31"], (11e9, "2026-04-30"))
+check("first-filing reader: Q1 10bn filed 2025-04-30", first["2025-03-31"], (10e9, "2025-04-30"))
+check("first-filing reader: Q2 = 25 - 10 = 15bn, dated by the later first filing", first["2025-06-30"], (15e9, "2025-07-30"))
+
 sys.exit(1 if fails else 0)

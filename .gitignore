@@ -24,3 +24,7 @@ Thumbs.db
 .deploy-tmp/
 research/latent_state/data/series/
 research/latent_state/data/windows.json
+
+# study inputs (vendor and SEC data, regenerable; not for the public repo)
+research/capex_state/data/
+research/consensus_gap/data/

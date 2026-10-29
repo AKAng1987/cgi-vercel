@@ -1,0 +1,348 @@
+{
+ "data": {
+  "gdp_rows": 163,
+  "price_rows": 1177,
+  "fetched": "2026-10-30"
+ },
+ "PRIMARY growth ~ GDP advance gap": {
+  "tier": "primary",
+  "n_releases": 54,
+  "flips": 28,
+  "first": "2013-04-26",
+  "last": "2026-07-30",
+  "compare": {
+   "n_scored": 34,
+   "n_flips": 17,
+   "brier_base": 0.25934341673051803,
+   "brier_gap": 0.1569885807466198,
+   "diff": -0.10235483598389822,
+   "ci95": [
+    -0.1539114963388269,
+    -0.05102260545475642
+   ],
+   "verdict": "BETTER"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 27,
+    "flips": 4,
+    "rate": 0.14814814814814814
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 27,
+    "flips": 24,
+    "rate": 0.8888888888888888
+   }
+  },
+  "sign_rule": {
+   "n": 54,
+   "hit_rate": 0.8703703703703703,
+   "flip_rate": 0.5185185185185185,
+   "TP": 24,
+   "FP": 3,
+   "FN": 4,
+   "TN": 23,
+   "p_flip_given_pred": 0.8888888888888888,
+   "p_flip_given_not_pred": 0.14814814814814814
+  }
+ },
+ "SECONDARY inflation ~ CPI YoY gap": {
+  "tier": "secondary",
+  "n_releases": 161,
+  "flips": 12,
+  "first": "2013-03-15",
+  "last": "2026-09-11",
+  "compare": {
+   "n_scored": 141,
+   "n_flips": 12,
+   "brier_base": 0.07949391620534246,
+   "brier_gap": 0.07210605852447254,
+   "diff": -0.007387857680869948,
+   "ci95": [
+    -0.022215033107688093,
+    0.0065941111440505455
+   ],
+   "verdict": "no clear difference"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 147,
+    "flips": 4,
+    "rate": 0.027210884353741496
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 14,
+    "flips": 8,
+    "rate": 0.5714285714285714
+   }
+  },
+  "sign_rule": {
+   "n": 161,
+   "hit_rate": 0.937888198757764,
+   "flip_rate": 0.07453416149068323,
+   "TP": 8,
+   "FP": 6,
+   "FN": 4,
+   "TN": 143,
+   "p_flip_given_pred": 0.5714285714285714,
+   "p_flip_given_not_pred": 0.027210884353741496
+  }
+ },
+ "SECONDARY inflation ~ core PCE YoY gap": {
+  "tier": "secondary",
+  "n_releases": 120,
+  "flips": 1,
+  "first": "2014-10-31",
+  "last": "2026-09-30",
+  "compare": {
+   "n_scored": 100,
+   "n_flips": 1,
+   "brier_base": 0.009999999999999998,
+   "brier_gap": 0.009999999999999998,
+   "diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "verdict": "no clear difference"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 88,
+    "flips": 0,
+    "rate": 0.0
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 32,
+    "flips": 1,
+    "rate": 0.03125
+   }
+  },
+  "sign_rule": {
+   "n": 120,
+   "hit_rate": 0.7416666666666667,
+   "flip_rate": 0.008333333333333333,
+   "TP": 1,
+   "FP": 31,
+   "FN": 0,
+   "TN": 88,
+   "p_flip_given_pred": 0.03125,
+   "p_flip_given_not_pred": 0.0
+  }
+ },
+ "EXPLORATORY inflation ~ Inflation Rate MoM": {
+  "tier": "exploratory",
+  "n_releases": 156,
+  "flips": 12,
+  "first": "2013-07-16",
+  "last": "2026-09-11",
+  "compare": {
+   "n_scored": 136,
+   "n_flips": 11,
+   "brier_base": 0.0752502373456138,
+   "brier_gap": 0.07826075612664866,
+   "diff": 0.0030105187810348564,
+   "ci95": [
+    -0.00498678747294862,
+    0.00874443231935705
+   ],
+   "verdict": "no clear difference"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 103,
+    "flips": 5,
+    "rate": 0.04854368932038835
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 53,
+    "flips": 7,
+    "rate": 0.1320754716981132
+   }
+  },
+  "sign_rule": {
+   "n": 156,
+   "hit_rate": 0.6730769230769231,
+   "flip_rate": 0.07692307692307693,
+   "TP": 7,
+   "FP": 46,
+   "FN": 5,
+   "TN": 98,
+   "p_flip_given_pred": 0.1320754716981132,
+   "p_flip_given_not_pred": 0.04854368932038835
+  }
+ },
+ "EXPLORATORY inflation ~ Core Inflation Rate YoY": {
+  "tier": "exploratory",
+  "n_releases": 158,
+  "flips": 12,
+  "first": "2013-06-18",
+  "last": "2026-09-11",
+  "compare": {
+   "n_scored": 138,
+   "n_flips": 12,
+   "brier_base": 0.08120150012653762,
+   "brier_gap": 0.08016112520252974,
+   "diff": -0.0010403749240078747,
+   "ci95": [
+    -0.002944885386480863,
+    -0.00019495287015924495
+   ],
+   "verdict": "BETTER"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 120,
+    "flips": 6,
+    "rate": 0.05
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 38,
+    "flips": 6,
+    "rate": 0.15789473684210525
+   }
+  },
+  "sign_rule": {
+   "n": 158,
+   "hit_rate": 0.759493670886076,
+   "flip_rate": 0.0759493670886076,
+   "TP": 6,
+   "FP": 32,
+   "FN": 6,
+   "TN": 114,
+   "p_flip_given_pred": 0.15789473684210525,
+   "p_flip_given_not_pred": 0.05
+  }
+ },
+ "EXPLORATORY inflation ~ Core Inflation Rate MoM": {
+  "tier": "exploratory",
+  "n_releases": 128,
+  "flips": 11,
+  "first": "2015-04-17",
+  "last": "2026-09-11",
+  "compare": {
+   "n_scored": 108,
+   "n_flips": 11,
+   "brier_base": 0.09410695262238018,
+   "brier_gap": 0.09390668641857335,
+   "diff": -0.00020026620380680604,
+   "ci95": [
+    -0.0010139049467329307,
+    0.0004090770369249862
+   ],
+   "verdict": "no clear difference"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 89,
+    "flips": 8,
+    "rate": 0.0898876404494382
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 39,
+    "flips": 3,
+    "rate": 0.07692307692307693
+   }
+  },
+  "sign_rule": {
+   "n": 128,
+   "hit_rate": 0.65625,
+   "flip_rate": 0.0859375,
+   "TP": 3,
+   "FP": 36,
+   "FN": 8,
+   "TN": 81,
+   "p_flip_given_pred": 0.07692307692307693,
+   "p_flip_given_not_pred": 0.0898876404494382
+  }
+ },
+ "EXPLORATORY inflation ~ Core PCE Price Index MoM": {
+  "tier": "exploratory",
+  "n_releases": 136,
+  "flips": 3,
+  "first": "2014-10-31",
+  "last": "2026-09-30",
+  "compare": {
+   "n_scored": 116,
+   "n_flips": 2,
+   "brier_base": 0.018001561247159608,
+   "brier_gap": 0.018554489897279588,
+   "diff": 0.000552928650119982,
+   "ci95": [
+    -0.0004632084464658773,
+    0.0021082481513038393
+   ],
+   "verdict": "no clear difference"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 99,
+    "flips": 3,
+    "rate": 0.030303030303030304
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 37,
+    "flips": 0,
+    "rate": 0.0
+   }
+  },
+  "sign_rule": {
+   "n": 136,
+   "hit_rate": 0.7058823529411765,
+   "flip_rate": 0.022058823529411766,
+   "TP": 0,
+   "FP": 37,
+   "FN": 3,
+   "TN": 96,
+   "p_flip_given_pred": 0.0,
+   "p_flip_given_not_pred": 0.030303030303030304
+  }
+ },
+ "EXPLORATORY growth ~ GDP 2nd-estimate gap": {
+  "tier": "exploratory",
+  "n_releases": 52,
+  "flips": 20,
+  "first": "2013-05-30",
+  "last": "2026-08-26",
+  "compare": {
+   "n_scored": 32,
+   "n_flips": 11,
+   "brier_base": 0.2531990766807065,
+   "brier_gap": 0.23624350318153392,
+   "diff": -0.01695557349917259,
+   "ci95": [
+    -0.05816590171253957,
+    0.021595833294793403
+   ],
+   "verdict": "no clear difference"
+  },
+  "bins": {
+   "g<=0 (consensus implies no flip)": {
+    "n": 50,
+    "flips": 18,
+    "rate": 0.36
+   },
+   "g>0 (consensus implies a flip)": {
+    "n": 2,
+    "flips": 2,
+    "rate": 1.0
+   }
+  },
+  "sign_rule": {
+   "n": 52,
+   "hit_rate": 0.6538461538461539,
+   "flip_rate": 0.38461538461538464,
+   "TP": 2,
+   "FP": 0,
+   "FN": 18,
+   "TN": 32,
+   "p_flip_given_pred": 1.0,
+   "p_flip_given_not_pred": 0.36
+  }
+ },
+ "counts": {
+  "pre_registered": 3,
+  "exploratory": 5,
+  "note": "8 comparisons in all; at 95% expect about 0.4 false claims by chance"
+ }
+}

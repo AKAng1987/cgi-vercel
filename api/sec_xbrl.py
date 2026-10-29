@@ -434,8 +434,47 @@ def cash_quarters(facts: dict, measures: tuple[str, ...]) -> dict[str, tuple[flo
                 key = (st, k)
                 if key not in cum or filed > cum[key][1]:
                     cum[key] = (e, filed, float(v))
-            starts = {s for s, _k in cum}
+            starts = sorted({s for s, _k in cum})
             for s in starts:
+                for k in (1, 2, 3, 4):
+                    cur = cum.get((s, k))
+                    if cur is None:
+                        continue
+                    if k == 1:
+                        val, filed = cur[2], cur[1]
+                    else:
+                        prev = cum.get((s, k - 1))
+                        if prev is None:
+                            continue
+                        val, filed = cur[2] - prev[2], max(cur[1], prev[1])
+                    out.setdefault(cur[0], (val, filed))
+    return out
+
+
+def cash_quarters_first(facts: dict, measures: tuple[str, ...]) -> dict[str, tuple[float, str]]:
+    """end_date -> (quarter value AS FIRST REPORTED, date it was first filed), for point-in-time studies.
+
+    cash_quarters() keeps the LATEST filing of each window (restated, right for a display of what was spent), but the next
+    year's 10-Q carries this year's quarter as a comparative, so its "filed" date is a year late. For asking what was known on
+    a given day, take for each cumulative window the value from its EARLIEST filing, difference those, and date the quarter by
+    the later of the two windows' first filings (Q1 alone: its own first filing).
+    """
+    out: dict[str, tuple[float, str]] = {}
+    for m in measures:
+        for _tag, node in _nodes(facts, m):
+            cum: dict[tuple[str, int], tuple[str, str, float]] = {}
+            for r in _usd_rows(node):
+                st, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
+                if not (st and e) or v is None or not filed:
+                    continue
+                n = _days(st, e)
+                k = next((k for k, lo, hi in _CUM_WINDOWS if lo <= n <= hi), None)
+                if k is None:
+                    continue
+                key = (st, k)
+                if key not in cum or filed < cum[key][1]:
+                    cum[key] = (e, filed, float(v))
+            for s in sorted({s for s, _k in cum}):
                 for k in (1, 2, 3, 4):
                     cur = cum.get((s, k))
                     if cur is None:

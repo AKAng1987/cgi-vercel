@@ -38,9 +38,9 @@ import sec_xbrl as sx
 
 _logger = logging.getLogger("cgi_api.capex")
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 3   # 3: rows also carry as-first-reported capex/OCF and first-filed dates (cq1, ocfq1, filed1) for the capex_state study; 2: ocfq
 KEY = "capex/capex_quarterly.json"          # under cache.PREFIX
-FIRST_QUARTER = "2018Q1"                    # stored; YoY therefore exists from 2019Q1
+FIRST_QUARTER = "2011Q1"                    # stored; YoY therefore exists from 2012Q1 (XBRL cash-flow facts begin ~2009)
 SHOW_FROM = "2022Q1"                        # first quarter drawn (matches the chart)
 PARTIAL_BELOW = 0.90                        # share of prior-year capex matched
 
@@ -111,11 +111,18 @@ def company_record(ticker: str, sector: str) -> Optional[dict]:
     ocf = _by_cal_quarter(sx.cash_quarters(f, ("op_cash_flow",)))
     rev = sx.series(f, "revenue")
     rev_q = {cal_quarter(e): v for e, v in rev.items()}
+    cap1 = _by_cal_quarter(sx.cash_quarters_first(f, ("capex", "capex_alt")))
+    ocf1 = _by_cal_quarter(sx.cash_quarters_first(f, ("op_cash_flow",)))
     cq = {q: round(v[0] / 1e6, 1) for q, v in cap.items() if q >= FIRST_QUARTER}
     filed = {q: v[1] for q, v in cap.items() if q >= FIRST_QUARTER}
     return {
         "t": ticker, "cik": f.get("cik"), "name": f.get("entityName"), "sector": sector,
         "cq": cq, "filed": filed,
+        "ocfq": {q: round(v[0] / 1e6, 1) for q, v in ocf.items() if q >= FIRST_QUARTER},
+        # as first reported, dated by FIRST filing: what was knowable on a given day (point-in-time studies)
+        "cq1": {q: round(v[0] / 1e6, 1) for q, v in cap1.items() if q >= FIRST_QUARTER},
+        "filed1": {q: v[1] for q, v in cap1.items() if q >= FIRST_QUARTER},
+        "ocfq1": {q: round(v[0] / 1e6, 1) for q, v in ocf1.items() if q >= FIRST_QUARTER},
         "ocf_ttm": _round_m(_ttm({q: v[0] for q, v in ocf.items()})),
         "rev_ttm": _round_m(_ttm(rev_q)),
     }
