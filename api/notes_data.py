@@ -84,6 +84,25 @@ POLICY: list[dict] = [
         "source": "MARKOV event log", "confidence": "confirmed",
     },
     {
+        "country": "US", "type": "monetary", "announced": "2026-10-28", "effective": "2026-10-29",
+        "title": "FOMC holds, two dissent for a hike; compass C3 -> C2 pending",
+        "detail": ("The Fed left the target range unchanged, as expected, with Cook and Hammack "
+                   "dissenting in favour of 25bp, and gave no clear signal on December. Before "
+                   "the meeting history put the flip at 26% and futures at 90%, so the market "
+                   "was right. A hold is loosening in this model (only an increase is "
+                   "tightening), so liquidity moves C3 -> C2 once DFEDTARU settles; the model "
+                   "records it with the FRED lag, as it did in September. Longer-dated yields "
+                   "rose and the 10-year held above 5%, while front-end yields fell as hike "
+                   "bets were reconsidered, so the curve steepened on the day. Read-through: a "
+                   "pause that still leaves hike dissents is the case where the credit axis "
+                   "matters most, because C2 versus C1 now depends on bank lending, not the Fed."),
+        "themes": ["cloud / software", "innovation / disruptive growth", "Magnificent 7"],
+        "tickers": ["IGV", "ARKK", "MAGS", "KBE", "KRE"],
+        "source": "Reuters headlines and Trading Economics via TradingView 2026-10-28; "
+                  "statement and press conference text not read",
+        "confidence": "confirmed on the hold and the dissents; yield moves are from headlines",
+    },
+    {
         "country": "US", "type": "fiscal", "announced": "2022-08-09", "effective": "2022-08-09",
         "title": "CHIPS and Science Act ($280bn)",
         "detail": ("Semiconductor manufacturing and research subsidies. Semis/memory "
