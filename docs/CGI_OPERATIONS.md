@@ -59,6 +59,7 @@ neither — if the provider is down when the cache expires, there is nothing.
 | FOMC meeting calendar | federalreserve.gov scrape | none | CGI, MACRO |
 | Company fundamentals | SEC XBRL | none (User-Agent) | FUNDAMENTALS |
 | ETF holdings | State Street, then SEC N-PORT | none | FUNDAMENTALS |
+| S&P 500 capex by sector | SEC XBRL cash-flow facts, stored snapshot | none | FUNDAMENTALS (top section) |
 | Commitments of Traders | CFTC Socrata | none | POSITIONING |
 | Central bank press releases | RSS | none | POLICY |
 
@@ -471,3 +472,15 @@ will need to know.
 ### TAPE views (2026-10-29)
 
 `/tape` keeps the table as its default and adds a switch: Table, Heatmap, Rotation, Stretch, plus a horizon (1D to 1Y) kept in the URL (`?view=heatmap&h=3m`). Movers (top and bottom 10 over the horizon, price groups only, stale rows left out and counted) sit above Table and Heatmap. Every row also carries a Pace ladder (move per trading day over each window: speeding up, fading, mixed) and, from `/api/live`, a 60-close sparkline (`spark`, built by `dashboard_data.attach_spark`, cache `hud_spark` 6 h). Rotation plots 3M against 1M return minus the benchmark's (SPX for groups; each group's own benchmark for its symbols). Stretch is price against its 7-day EMA in 7-day standard deviations and shows a gap when the stored spread is in another unit (|z| over 4: RUT, USDKRW, USDIDR, BTC, ETH carry workbook spreads like that). All views are descriptive, read only the rows `/api/live` already returns, and never fill a stale or missing value. Arithmetic lives in `web/lib/tapeMath.ts`, checked by `node scripts/check-tape-math.mjs`.
+
+## Capex by sector (FUNDAMENTALS, top section; 2026-10-29)
+
+`/api/capex` is arithmetic on a snapshot that `~/market-dashboard/scripts/capex_build.py --upload` writes to
+`Cache/macro/capex/capex_quarterly.json` (500 SEC companyfacts payloads, about 8 minutes, so never in a request).
+Re-run it in earnings seasons (late Jan, Apr, Jul, Oct) and two weeks later for the late filers; the freshness block
+`capex` goes amber if the newest fully-filed quarter (quarter end + 75 days) is missing for more than 20% of reporters (the SEC feed often lags a few utilities, so 80% not 90%),
+or the snapshot is over 100 days old. Cash-flow items are filed year-to-date, so `sec_xbrl.cash_quarters()` differences
+the windows (Q2 = 6m - 3m); `sec_xbrl.series()` does NOT do this and returns only each year's Q1 for cash-flow measures.
+Universe = the eleven Select Sector SPDR holdings (GICS sector), deduplicated on CIK, today's members applied to all
+history. Contribution = (sector capex now - a year ago) / total capex a year ago, matched companies only.
+Check: `api/.venv/bin/python scripts/check_capex.py`.

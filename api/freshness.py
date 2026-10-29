@@ -871,6 +871,62 @@ def cot_check(today: Optional[dt.date] = None) -> dict:
         return {"problems": [], "n_problems": 1, "error": f"{type(exc).__name__}: {str(exc)[:160]}"}
 
 
+CAPEX_FILING_LAG_DAYS = 75     # 10-Q/10-K deadlines are 40-60 days; 75 leaves room for the late filers
+CAPEX_MIN_SHARE = 0.80         # share of capex reporters that must have the expected quarter
+CAPEX_MAX_AGE_DAYS = 100       # snapshot older than this: nobody has re-run capex_build.py
+
+
+def capex_problems(snap: Optional[dict], today: dt.date) -> dict:
+    """Pure part of the capex check. `snap` is the stored snapshot (or None).
+
+    BEHIND: the newest quarter that should be fully filed by now (quarter end + 75 days) is missing for more than
+    20% of the companies that report capex at all, i.e. the snapshot predates the last earnings season.
+    STALE: the snapshot itself is older than 100 days.
+    GAPS: more than 10% of the universe failed to load from the SEC."""
+    import capex_data
+
+    if not snap or not snap.get("companies"):
+        return {"problems": [{"check": "missing", "detail": "no capex snapshot stored; run capex_build.py --upload"}],
+                "n_problems": 1}
+    comps = snap["companies"]
+    reporters = [c for c in comps if c.get("cq")]
+    expected = None
+    for q in capex_data.q_range("2024Q1", "2030Q4")[::-1]:
+        y, k = int(q[:4]), int(q[5])
+        end = dt.date(y, k * 3, 30 if k in (2, 3) else 31)
+        if end + dt.timedelta(days=CAPEX_FILING_LAG_DAYS) <= today:
+            expected = q
+            break
+    have = sum(1 for c in reporters if expected in c["cq"]) if expected else 0
+    share = have / len(reporters) if reporters else 0.0
+    problems = []
+    if expected and share < CAPEX_MIN_SHARE:
+        problems.append({"check": "behind", "detail": (f"{have} of {len(reporters)} capex reporters have {expected} "
+                                                      f"({share:.0%}, need {CAPEX_MIN_SHARE:.0%}); re-run capex_build.py --upload")})
+    built = snap.get("built_at")
+    age = None
+    if built:
+        age = (today - dt.date.fromisoformat(built[:10])).days
+        if age > CAPEX_MAX_AGE_DAYS:
+            problems.append({"check": "stale", "detail": f"snapshot built {built[:10]}, {age} days ago"})
+    failed = len(snap.get("failed", []))
+    if snap.get("n_universe") and failed / snap["n_universe"] > 0.10:
+        problems.append({"check": "gaps", "detail": f"{failed} of {snap['n_universe']} companies failed to load"})
+    return {"problems": problems, "n_problems": len(problems), "expected_quarter": expected,
+            "share_with_expected": round(share, 3), "built_at": built, "age_days": age,
+            "n_reporters": len(reporters), "n_failed": failed}
+
+
+def capex_check(today: Optional[dt.date] = None) -> dict:
+    """S&P 500 capex snapshot freshness. Reads the stored snapshot only; never touches the SEC."""
+    import capex_data
+
+    try:
+        return capex_problems(capex_data.read_snapshot(), today or dt.date.today())
+    except Exception as exc:  # noqa: BLE001 -- additive; never break the page
+        return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
+
+
 def build_freshness(today: Optional[dt.date] = None) -> dict:
     erp = erp_check(today)
     fred = fred_crosscheck(today)
@@ -882,6 +938,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     jumps = price_jumps(today)
     ref = referee(beat.pop("referee_bars", None), today)
     cot = cot_check(today)
+    capex = capex_check(today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
@@ -894,9 +951,10 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "referee": ref,
         "erp": erp,
         "cot": cot,
+        "capex": capex,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

@@ -67,6 +67,21 @@ export const COLORS = {
   vintageThird: "#A78BFA",
 };
 
+// One colour per GICS sector for the capex chart. Plotly takes these as JS values, not class names.
+export const CAPEX_SECTOR_COLORS: Record<string, string> = {
+  "Communication Services": "#D1D5DB",
+  "Information Technology": "#2563EB",
+  "Consumer Discretionary": "#DC6B2F",
+  Utilities: "#A855F7",
+  "Real Estate": "#6D4C8F",
+  Energy: "#EAB308",
+  Financials: "#22C55E",
+  "Health Care": "#EC4899",
+  Industrials: "#14B8A6",
+  "Consumer Staples": "#F59E0B",
+  Materials: "#A3A33C",
+};
+
 export const DOT_PLOT_COLORS: Record<string, string> = {
   "2026": "#60A5FA",
   "2027": "#34D399",

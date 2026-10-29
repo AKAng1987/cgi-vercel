@@ -1225,3 +1225,42 @@ export interface CustomerLinksResponse {
     n_named?: number;
   }[];
 }
+
+export interface CapexQuarter {
+  q: string;
+  total_yoy_pct: number | null;
+  contrib: Record<string, number>;
+  coverage: number;
+  partial: boolean;
+  n_matched: number;
+  n_prior: number;
+  total_capex_usd_b?: number;
+}
+
+export interface CapexSpender {
+  ticker: string;
+  name: string | null;
+  sector: string;
+  last_q: string;
+  capex_ttm_b: number;
+  capex_last_q_b: number;
+  yoy_pct: number | null;
+  capex_to_ocf: number | null;
+  capex_to_revenue: number | null;
+  outspends_cash_flow: boolean | null;
+}
+
+export interface CapexResponse {
+  available: boolean;
+  reason?: string;
+  caveat: string;
+  schema?: number;
+  built_at?: string;
+  sectors?: string[];
+  newest_quarter?: string;
+  n_companies?: number;
+  n_reporting_capex?: number;
+  n_failed?: number;
+  quarters?: CapexQuarter[];
+  spenders?: { top: CapexSpender[]; top5_share_pct: number | null; n_with_ttm: number; ttm_total_b: number };
+}

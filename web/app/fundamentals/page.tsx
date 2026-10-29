@@ -2,7 +2,9 @@ import { apiFetch } from "@/lib/api";
 import { TvListLink } from "../components/TvListLink";
 import { WatchlistsResponse, findList, LIST_EARN } from "@/lib/tvLists";
 import { PricedIn } from "../components/fundamentals/PricedIn";
-import { FundamentalsResponse, FundRollup, CustomerLinksResponse } from "@/lib/types";
+import { FundamentalsResponse, FundRollup, CustomerLinksResponse, CapexResponse } from "@/lib/types";
+import { CapexContribution } from "../components/fundamentals/CapexContribution";
+import { CapexSpenders } from "../components/fundamentals/CapexSpenders";
 import { EarningsLedger } from "../components/fundamentals/EarningsLedger";
 import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
 
@@ -123,8 +125,10 @@ function RollupRow({ label, r, wide, fallback, fit }: { label: string; r: FundRo
 }
 
 export default async function FundamentalsPage() {
-  const [d, tvLists, cust] = await Promise.all([
+  const [d, capex, tvLists, cust] = await Promise.all([
     apiFetch<FundamentalsResponse>("/api/fundamentals"),
+    // Capex is arithmetic on a stored SEC snapshot: a failure drops the section, never the page.
+    apiFetch<CapexResponse>("/api/capex").catch(() => null),
     // Only for the link to the TradingView list: a failure just drops the link.
     apiFetch<WatchlistsResponse>("/api/watchlists").catch(() => null),
     // 10-K customer candidates: optional. The cache is filled by scripts/fill_customer_links.py, never by a page
@@ -156,6 +160,44 @@ export default async function FundamentalsPage() {
           The top 15 by revenue acceleration (quarterly filers, exchange-listed only) as a TradingView
           watchlist, rewritten when it changes: <TvListLink list={earn} />
         </p>
+      )}
+
+      {capex && capex.available && capex.quarters && capex.sectors && capex.spenders && (
+        <section className="mb-7">
+          <div className="mb-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">
+            Capex: who is spending · S&amp;P 500, by sector
+          </div>
+          <p className="mb-2 text-[0.7rem] leading-relaxed text-slate-400">
+            Each bar is the year-over-year growth in S&amp;P 500 capital spending, split into how many{" "}
+            <span className="text-slate-200">points each sector contributed</span> (they add up to the dotted total).
+            Capex is one company&apos;s spending and another&apos;s revenue; the question is whether it earns a return.
+            The table below shows who funds it from cash flow and who does not. Faded bars are quarters where under 90% of last
+            year&apos;s capex is matched by filings so far
+            {(() => {
+              const qs = capex.quarters;
+              const shown = qs.filter((r) => r.coverage >= 0.5);
+              const lastDrawn = shown[shown.length - 1];
+              const hidden = qs.filter((r) => r.coverage < 0.5);
+              return (
+                <>
+                  {lastDrawn && lastDrawn.partial ? ` (${lastDrawn.q}: ${Math.round(lastDrawn.coverage * 100)}%)` : ""}
+                  {hidden.length > 0
+                    ? `; ${hidden.map((r) => r.q).join(", ")} is left out until half the spenders have filed (${Math.round(hidden[hidden.length - 1].coverage * 100)}% now)`
+                    : ""}
+                  .
+                </>
+              );
+            })()}
+          </p>
+          <CapexContribution quarters={capex.quarters.filter((r) => r.coverage >= 0.5)} sectors={capex.sectors} />
+          <div className="mt-3">
+            <CapexSpenders top={capex.spenders.top} top5Share={capex.spenders.top5_share_pct} />
+          </div>
+          <p className="mt-2 text-[0.62rem] leading-relaxed text-slate-600">
+            {capex.caveat} {capex.n_reporting_capex} of {capex.n_companies} companies report capex
+            {capex.built_at ? `; snapshot built ${capex.built_at.slice(0, 10)}` : ""}.
+          </p>
+        </section>
       )}
 
       {d.changes && d.changes.length > 0 && (

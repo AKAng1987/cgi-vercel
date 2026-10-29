@@ -20,6 +20,7 @@ import policy_watch
 import notes_data
 import freshness
 import fundamentals_data
+import capex_data
 import brief_data
 import customer_links
 import liquidity_data
@@ -314,6 +315,16 @@ def technicals():
 @app.get("/api/themes", dependencies=[Depends(require_bearer_token)])
 def themes():
     return cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
+
+
+@app.get("/api/capex", dependencies=[Depends(require_bearer_token)])
+def capex():
+    """S&P 500 capex by sector (contribution to YoY growth) and the top spenders.
+
+    Arithmetic on a snapshot that ~/market-dashboard/scripts/capex_build.py
+    stores after each earnings season, so a request never touches the SEC.
+    """
+    return cache.get_or_fetch_bg("capex", capex_data.build_capex_response)
 
 
 @app.get("/api/fundamentals", dependencies=[Depends(require_bearer_token)])

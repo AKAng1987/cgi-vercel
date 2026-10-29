@@ -120,6 +120,10 @@ CONCEPTS: dict[str, list[str]] = {
     "interest_expense": ["InterestExpense", "InterestExpenseDebt", "InterestIncomeExpenseNet"],
     "op_cash_flow": ["NetCashProvidedByUsedInOperatingActivities"],
     "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
+    # Filers that tag the same cash outflow differently (Amazon: ProductiveAssets).
+    # Read only by cash_quarters() for the capex view, merged after "capex".
+    "capex_alt": ["PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements",
+                  "PaymentsToAcquireOtherPropertyPlantAndEquipment"],
     # instant (balance sheet) concepts
     "assets": ["Assets"],
     "liabilities": ["Liabilities"],
@@ -396,6 +400,54 @@ def series(facts: dict, measure: str) -> dict[str, float]:
         inside = [(d, v) for d, v in out.items() if st < d <= e]
         if len(inside) == 3 and e not in out:
             out[e] = tot - sum(v for _d, v in inside)
+    return out
+
+
+_CUM_WINDOWS = ((1, 80, 100), (2, 165, 200), (3, 255, 290), (4, 350, 380))
+
+
+def cash_quarters(facts: dict, measures: tuple[str, ...]) -> dict[str, tuple[float, str]]:
+    """end_date -> (quarter value, latest filed date) for CASH-FLOW measures.
+
+    series() cannot be used for these: a 10-Q reports cash flow year-to-date
+    (Q2 = six months, Q3 = nine), so only Q1 has a three-month window and the
+    other quarters are silently missing. Here each quarter is the difference of
+    two cumulative windows that share a fiscal-year start (Q2 = 6m - 3m, Q3 =
+    9m - 6m, Q4 = 12m - 9m); a directly tagged three-month window wins when the
+    filer provides one. A quarter whose two windows are not both present is
+    left out, never estimated. `measures` are merged in order, earlier first.
+    The filed date is the latest among the windows used, i.e. when the figure
+    was knowable.
+    """
+    out: dict[str, tuple[float, str]] = {}
+    for m in measures:
+        for _tag, node in _nodes(facts, m):
+            cum: dict[tuple[str, int], tuple[str, str, float]] = {}  # (start, k) -> (end, filed, val)
+            for r in _usd_rows(node):
+                st, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
+                if not (st and e) or v is None:
+                    continue
+                n = _days(st, e)
+                k = next((k for k, lo, hi in _CUM_WINDOWS if lo <= n <= hi), None)
+                if k is None:
+                    continue
+                key = (st, k)
+                if key not in cum or filed > cum[key][1]:
+                    cum[key] = (e, filed, float(v))
+            starts = {s for s, _k in cum}
+            for s in starts:
+                for k in (1, 2, 3, 4):
+                    cur = cum.get((s, k))
+                    if cur is None:
+                        continue
+                    if k == 1:
+                        val, filed = cur[2], cur[1]
+                    else:
+                        prev = cum.get((s, k - 1))
+                        if prev is None:
+                            continue
+                        val, filed = cur[2] - prev[2], max(cur[1], prev[1])
+                    out.setdefault(cur[0], (val, filed))
     return out
 
 
