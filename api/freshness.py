@@ -873,7 +873,7 @@ def cot_check(today: Optional[dt.date] = None) -> dict:
 
 CAPEX_FILING_LAG_DAYS = 75     # 10-Q/10-K deadlines are 40-60 days; 75 leaves room for the late filers
 CAPEX_MIN_SHARE = 0.80         # share of capex reporters that must have the expected quarter
-CAPEX_MAX_AGE_DAYS = 100       # snapshot older than this: nobody has re-run capex_build.py
+CAPEX_MAX_AGE_DAYS = 9         # weekly launchd job (Sunday 09:00 Manila); older than this means it did not run
 
 
 def capex_problems(snap: Optional[dict], today: dt.date) -> dict:
@@ -881,7 +881,7 @@ def capex_problems(snap: Optional[dict], today: dt.date) -> dict:
 
     BEHIND: the newest quarter that should be fully filed by now (quarter end + 75 days) is missing for more than
     20% of the companies that report capex at all, i.e. the snapshot predates the last earnings season.
-    STALE: the snapshot itself is older than 100 days.
+    STALE: the snapshot itself is older than 9 days (the weekly refresh did not run).
     GAPS: more than 10% of the universe failed to load from the SEC."""
     import capex_data
 

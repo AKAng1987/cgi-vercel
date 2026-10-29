@@ -451,6 +451,21 @@ def cash_quarters(facts: dict, measures: tuple[str, ...]) -> dict[str, tuple[flo
     return out
 
 
+def cash_series(facts: dict, measure: str) -> dict[str, float]:
+    """end_date -> quarterly value for a cash-flow measure ("capex", "buybacks", "dividends", "op_cash_flow").
+
+    Use this, not series(), for anything that comes from the cash-flow statement: filers report it year-to-date, so
+    series() finds only the three-month Q1 window and returns one value a year (found 2026-10-29: AMZN's capex "latest
+    quarter" was 2017, NVDA's 2020). Falls back to series() when the filer tags no year-to-date windows at all (IFRS
+    filers that report half-years, handled by series()'s own annual/semiannual modes).
+    """
+    measures = (measure, "capex_alt") if measure == "capex" else (measure,)
+    got = cash_quarters(facts, measures)
+    if got:
+        return {e: v for e, (v, _filed) in got.items()}
+    return series(facts, measure)
+
+
 def tags_used(facts: dict, measure: str) -> list[str]:
     """Which tags actually fed a measure -- for auditing a filer that switched."""
     return [t for t, _ in _nodes(facts, measure)]

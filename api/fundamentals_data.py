@@ -321,6 +321,20 @@ def _ttm(s: dict[str, float], n: int = 4) -> Optional[float]:
     return sum(s[d] for d in sorted(s, reverse=True)[:n])
 
 
+def _ttm_cash(s: dict[str, float]) -> Optional[float]:
+    """Trailing four quarters of a cash-flow series, only if they are the latest four CONSECUTIVE quarters.
+
+    Four values spread over more than ~290 days are not a year (a missing quarter, or a series that stopped), so
+    the answer is None -- "no data" -- rather than a sum of mismatched periods."""
+    if len(s) < 4:
+        return None
+    ends = sorted(s, reverse=True)[:4]
+    span = (dt.date.fromisoformat(ends[0]) - dt.date.fromisoformat(ends[3])).days
+    if span > 290:
+        return None
+    return sum(s[d] for d in ends)
+
+
 def _seasonal_qoq(f: dict) -> dict:
     """Latest sequential growth against that company's own median for the same
     fiscal quarter. Descriptive -- see SEASONAL_PCTL for why it is not a signal."""
@@ -407,8 +421,8 @@ def _company(sym: str) -> dict:
     out["operating_income"] = _trend(sx.yoy(sx.series(f, "operating_income")), "operating income")
 
     # 3 return to shareholders, as a share of the cash actually generated.
-    bb, dv, ocf = (sx.series(f, k) for k in ("buybacks", "dividends", "op_cash_flow"))
-    t_bb, t_dv, t_ocf = _ttm(bb), _ttm(dv), _ttm(ocf)
+    bb, dv, ocf = (sx.cash_series(f, k) for k in ("buybacks", "dividends", "op_cash_flow"))
+    t_bb, t_dv, t_ocf = _ttm_cash(bb), _ttm_cash(dv), _ttm_cash(ocf)
     if t_ocf and t_ocf > 0:
         returned = (t_bb or 0.0) + (t_dv or 0.0)
         out["return_to_shareholders"] = {
@@ -475,7 +489,7 @@ def _company(sym: str) -> dict:
                             if deficit else
                             "Asset-light balance sheets still score high; read the band loosely.")),
             }
-    cap = _ttm(sx.series(f, "capex"))
+    cap = _ttm_cash(sx.cash_series(f, "capex"))
     if t_ocf is not None and cap is not None:
         fcf = t_ocf - cap
         ruin = dict(ruin)

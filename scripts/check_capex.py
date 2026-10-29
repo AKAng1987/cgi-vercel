@@ -135,12 +135,28 @@ r = fr.capex_problems(snap, dt.date(2026, 10, 29))
 check("2026Q2 expected on 29 Oct 2026", r["expected_quarter"], "2026Q2")
 check("all have it: no problem", r["n_problems"], 0)
 r = fr.capex_problems(snap, dt.date(2026, 12, 20))
-check("2026Q3 expected after 14 Dec, snapshot lacks it -> behind", [p["check"] for p in r["problems"]], ["behind"])
+check("2026Q3 expected after 14 Dec, snapshot lacks it -> behind", "behind" in [p["check"] for p in r["problems"]], True)
+check("9 days old is fine", fr.capex_problems(snap, dt.date(2026, 10, 29))["n_problems"], 0)
+check("10 days old is stale", [p["check"] for p in fr.capex_problems(snap, dt.date(2026, 10, 30))["problems"]], ["stale"])
 snap["built_at"] = "2026-05-01T00:00:00+00:00"
 r = fr.capex_problems(snap, dt.date(2026, 10, 29))
 check("old snapshot -> stale", [p["check"] for p in r["problems"]], ["stale"])
 snap["failed"] = ["a", "b"]
 check("20% failed -> gaps", "gaps" in [p["check"] for p in fr.capex_problems(snap, dt.date(2026, 10, 29))["problems"]], True)
 check("no snapshot -> one problem", fr.capex_problems(None, dt.date(2026, 10, 29))["n_problems"], 1)
+
+# 11. cash_series: year-to-date windows give consecutive quarters; falls back to series() when none are tagged
+f = facts_for(T, [
+    row("2025-01-01", "2025-03-31", 10e9, "2025-04-30"), row("2025-01-01", "2025-06-30", 25e9, "2025-07-30"),
+    row("2025-01-01", "2025-09-30", 45e9, "2025-10-30"), row("2025-01-01", "2025-12-31", 70e9, "2026-02-01"),
+])
+cs = sx.cash_series(f, "capex")
+check("cash_series returns four quarters", sorted(cs.values()), [10e9, 15e9, 20e9, 25e9])
+import fundamentals_data as fd  # noqa: E402
+check("TTM cash = 70bn for four consecutive quarters", fd._ttm_cash(cs), 70e9)
+check("TTM cash refuses a gap (Q1 2024 + three of 2025)", fd._ttm_cash({"2024-03-31": 1.0, "2025-03-31": 2.0, "2025-06-30": 3.0, "2025-09-30": 4.0}), None)
+check("TTM cash needs four values", fd._ttm_cash({"2025-03-31": 1.0, "2025-06-30": 3.0}), None)
+old = sx.series(f, "capex")
+check("series() alone returns just Q1 for cash flow (the bug this replaces)", list(old.values()), [10e9])
 
 sys.exit(1 if fails else 0)

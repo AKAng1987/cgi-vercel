@@ -477,10 +477,15 @@ will need to know.
 
 `/api/capex` is arithmetic on a snapshot that `~/market-dashboard/scripts/capex_build.py --upload` writes to
 `Cache/macro/capex/capex_quarterly.json` (500 SEC companyfacts payloads, about 8 minutes, so never in a request).
-Re-run it in earnings seasons (late Jan, Apr, Jul, Oct) and two weeks later for the late filers; the freshness block
-`capex` goes amber if the newest fully-filed quarter (quarter end + 75 days) is missing for more than 20% of reporters (the SEC feed often lags a few utilities, so 80% not 90%),
-or the snapshot is over 100 days old. Cash-flow items are filed year-to-date, so `sec_xbrl.cash_quarters()` differences
-the windows (Q2 = 6m - 3m); `sec_xbrl.series()` does NOT do this and returns only each year's Q1 for cash-flow measures.
+It refreshes itself every Sunday 09:00 Manila time from launchd (`~/Library/LaunchAgents/com.arvin.capex-build.plist`, log
+`~/.cgi/capex_build.log`; a Mac that was asleep runs it on wake), so Monday's page is current. A build that has lost
+more than 5% of the companies is refused and a macOS notification is raised. The freshness block `capex` goes amber if
+the snapshot is over 9 days old (the job did not run) or the newest fully-filed quarter (quarter end + 75 days) is
+missing for more than 20% of reporters (the SEC feed often lags a few utilities, so 80% not 90%). Run by hand:
+`api/.venv/bin/python ~/market-dashboard/scripts/capex_build.py --upload`. Cash-flow items are filed year-to-date, so `sec_xbrl.cash_quarters()` differences
+the windows (Q2 = 6m - 3m); `sec_xbrl.series()` does NOT do this and returns only each year's Q1 for cash-flow measures, so
+anything from the cash-flow statement (capex, op cash flow, buybacks, dividends) must use `sec_xbrl.cash_series()`. This was
+wrong in FUNDAMENTALS' return-to-shareholders and free-cash-flow figures until 2026-10-29 (fundamentals schema 13).
 Universe = the eleven Select Sector SPDR holdings (GICS sector), deduplicated on CIK, today's members applied to all
 history. Contribution = (sector capex now - a year ago) / total capex a year ago, matched companies only.
 Check: `api/.venv/bin/python scripts/check_capex.py`.
