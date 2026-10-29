@@ -22,6 +22,7 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
   );
   const [view, setView] = useState<TapeView>("table");
   const [horizon, setHorizon] = useState<HKey>("pct_1m");
+  const [grp, setGrp] = useState<string | null>(null); // Rotation and Stretch group; null = open on the sectors
 
   // The view and horizon live in the URL (?view=heatmap&h=3m) so a link reopens the same screen.
   useEffect(() => {
@@ -31,13 +32,16 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
     if (v && VIEWS.some((x) => x.key === v)) setView(v as TapeView);
     const hk = HORIZONS.find((x) => x.label.toLowerCase() === h);
     if (hk) setHorizon(hk.key);
+    const g = p.get("grp");
+    if (g) setGrp(g);
   }, []);
 
-  function remember(v: TapeView, h: HKey) {
+  function remember(v: TapeView, h: HKey, g: string | null = grp) {
     try {
       const p = new URLSearchParams(window.location.search);
       p.set("view", v);
       p.set("h", (HORIZONS.find((x) => x.key === h)?.label ?? "1M").toLowerCase());
+      if (g) p.set("grp", g); else p.delete("grp");
       window.history.replaceState(null, "", `?${p.toString()}`);
     } catch {
       /* a URL we cannot edit is not worth failing the page over */
@@ -74,9 +78,9 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
       {view === "heatmap" && (
         <TapeHeatmap groups={data.hud_groups} order={data.hud_group_order} latest={common} horizon={horizon} onSelect={select} />
       )}
-      {view === "rotation" && <TapeRotation groups={data.hud_groups} latest={common} onSelect={select} />}
+      {view === "rotation" && <TapeRotation groups={data.hud_groups} latest={common} onSelect={select} group={grp} onGroup={(g) => { setGrp(g); remember(view, horizon, g); }} />}
       {view === "stretch" && (
-        <TapeStretch groups={data.hud_groups} order={data.hud_group_order} latest={common} onSelect={select} />
+        <TapeStretch groups={data.hud_groups} order={data.hud_group_order} latest={common} onSelect={select} group={grp} onGroup={(g) => { setGrp(g); remember(view, horizon, g); }} />
       )}
       <div id="tape-chart">
         <TradingViewChart symbol={selectedSymbol} />

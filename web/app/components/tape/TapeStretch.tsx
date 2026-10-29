@@ -1,26 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import { HudGroup } from "@/lib/types";
 import { isPriceGroup, isStale, num, stretchZ } from "@/lib/tapeMath";
 import { asOfLabel } from "./format";
 
 const SCALE = 3; // bars run ±3 standard deviations
 
+const DEFAULT_GROUP = "SECTOR ETF";
+
 export function TapeStretch({
   groups,
   order,
   latest,
   onSelect,
+  group,
+  onGroup,
 }: {
   groups: HudGroup[];
   order: string[];
   latest: string;
   onSelect: (symbol: string) => void;
+  group: string | null;
+  onGroup: (g: string) => void;
 }) {
   const usable = order.map((n) => groups.find((g) => g.name === n)).filter((g): g is HudGroup => !!g && isPriceGroup(g) && g.tickers.length > 0);
-  const [name, setName] = useState<string>(usable[0]?.name ?? "");
-  const g = usable.find((x) => x.name === name) ?? usable[0];
+  // Opens on the sectors, then whatever the link or the picker chose; an unknown name falls back to the first group.
+  const g = usable.find((x) => x.name === group) ?? usable.find((x) => x.name === DEFAULT_GROUP) ?? usable[0];
   const rows = (g?.tickers ?? [])
     .map((t) => ({ t, z: stretchZ(t) }))
     .sort((a, b) => (num(b.z) ? b.z : -99) - (num(a.z) ? a.z : -99));
@@ -32,12 +37,12 @@ export function TapeStretch({
         <select
           id="stretch-group"
           value={g?.name ?? ""}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => onGroup(e.target.value)}
           className="rounded border border-[var(--cgi-rule)] bg-[var(--cgi-surface)] px-2 py-1 text-[0.72rem] text-slate-200"
         >
           {usable.map((x) => (<option key={x.name} value={x.name}>{x.name}</option>))}
         </select>
-        <span className="text-[0.62rem] text-slate-500">price minus its 7-day average, in 7-day standard deviations; marks at ±2</span>
+        <span className="text-[0.62rem] text-slate-500">price against its 7-day average, in units of the latest daily move (the std of the last 7 daily % moves); marks at ±2</span>
       </div>
       <div className="max-w-3xl text-[0.76rem]">
         {rows.map(({ t, z }) => {

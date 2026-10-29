@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { HudGroup, HudTicker } from "@/lib/types";
 import { benchmarkRow, isPriceGroup, isStale, mean, num, quadrant, Quadrant, relStrength } from "@/lib/tapeMath";
 import { fmtSigned } from "./format";
@@ -16,17 +16,26 @@ const Q_NOTE: Record<Quadrant, string> = {
   lagging: "behind over 3M and 1M",
 };
 
+const DEFAULT_GROUP = "SECTOR ETF";
+
 export function TapeRotation({
   groups,
   latest,
   onSelect,
+  group,
+  onGroup,
 }: {
   groups: HudGroup[];
   latest: string;
   onSelect: (symbol: string) => void;
+  group: string | null;
+  onGroup: (g: string) => void;
 }) {
   const priceGroups = groups.filter((g) => isPriceGroup(g) && g.tickers.length > 0);
-  const [mode, setMode] = useState<string>("__groups__"); // "__groups__" or a group name
+  // Opens on the sectors; "__groups__" is the overview of every group against SPX. An unknown name falls back the same way.
+  const known = (n: string | null) => n === "__groups__" || priceGroups.some((g) => g.name === n);
+  const mode = known(group) ? (group as string) : priceGroups.some((g) => g.name === DEFAULT_GROUP) ? DEFAULT_GROUP : "__groups__";
+  const setMode = onGroup;
   const spx = benchmarkRow(groups, "SPX");
 
   const { dots, benchName, excluded } = useMemo(() => {

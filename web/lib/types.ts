@@ -31,6 +31,16 @@ export interface HudTicker {
   pct_1y: number | null;
   as_of: string | null;
   stale_days: number | null;
+  /** Std of the last 7 daily percent moves, in percent, the same unit on every row. sd_7d mixes two units: do not use it. */
+  sd_pct_7d?: number | null;
+  /** Change in points (not percent) over each window; set on yield, spread and macro rows built from price-history. */
+  chg_1d?: number | null;
+  chg_5d?: number | null;
+  chg_7d?: number | null;
+  chg_1m?: number | null;
+  chg_3m?: number | null;
+  chg_6m?: number | null;
+  chg_1y?: number | null;
   /** Last ~60 closes, oldest first, for the sparkline; null or absent when the API has no history for the row. */
   spark?: number[] | null;
 }

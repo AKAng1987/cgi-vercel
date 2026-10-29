@@ -49,15 +49,16 @@ export function relStrength(t: HudTicker, bench: HudTicker | undefined, key: HKe
   return num(a) && num(b) ? a - b : null;
 }
 
-/** Price against its 7-day EMA, in 7-day standard deviations of price. Null when the spread is missing or zero. */
+/**
+ * How far price sits from its 7-day EMA, in units of the latest daily move: ((price / EMA - 1) x 100) / sd_pct_7d, where
+ * sd_pct_7d is the std of the last 7 daily percent moves. Same unit on every row (the old price-based spread mixed two
+ * units). Null when an input is missing or the spread is zero; above 10 it is shown as a gap, not a reading.
+ */
 export function stretchZ(t: HudTicker): number | null {
-  const { current, ema_7d, sd_7d } = t;
-  if (!num(current) || !num(ema_7d) || !num(sd_7d) || sd_7d <= 0) return null;
-  const z = (current - ema_7d) / sd_7d;
-  // With one consistent unit, a value over 7 closes cannot sit more than about 2.5 standard deviations from their
-  // average. A bigger number means the row's spread came in another unit (seen 2026-10-28 on RUT, USDKRW, USDIDR,
-  // BTC and ETH, which carry workbook values): show a gap, not a made-up reading.
-  return Math.abs(z) > 4 ? null : z;
+  const { current, ema_7d, sd_pct_7d } = t;
+  if (!num(current) || !num(ema_7d) || !num(sd_pct_7d) || sd_pct_7d <= 0 || ema_7d === 0) return null;
+  const z = ((current / ema_7d - 1) * 100) / sd_pct_7d;
+  return Math.abs(z) > 10 ? null : z;
 }
 
 export function mean(xs: (number | null)[]): number | null {
@@ -124,4 +125,21 @@ export function benchmarkRow(groups: HudGroup[], symbol: string | null | undefin
   if (!symbol) return undefined;
   for (const g of groups) for (const t of g.tickers) if (t.symbol === symbol) return t;
   return undefined;
+}
+
+/** Yield, spread and macro rows: the return of a level is not a price return. Show points when the level is small. */
+export const CHG_KEY: Record<HKey, "chg_1d" | "chg_5d" | "chg_1m" | "chg_3m" | "chg_6m" | "chg_1y"> = {
+  pct_1d: "chg_1d", pct_5d: "chg_5d", pct_1m: "chg_1m", pct_3m: "chg_3m", pct_6m: "chg_6m", pct_1y: "chg_1y",
+};
+/** Points that fill a tile completely, per window (a yield moving 0.4 points in a month is a big month). */
+export const POINT_CAPS: Record<HKey, number> = { pct_1d: 0.1, pct_5d: 0.2, pct_1m: 0.4, pct_3m: 0.75, pct_6m: 1, pct_1y: 1.5 };
+
+/** Index-like levels (CPI 336, GDP 32,563, MOVE 94) read better in percent; yields and spreads (under 30) in points. */
+export function showsPoints(t: HudTicker): boolean {
+  return num(t.current) && Math.abs(t.current) < 30;
+}
+
+/** One neutral hue shaded by size: a rising yield is not good news and a falling one is not bad news. */
+export function neutralTileColor(strength: number): string {
+  return `color-mix(in srgb, var(--cgi-accent) ${Math.round(Math.min(1, Math.max(0, strength)) * 60)}%, var(--cgi-surface-alt))`;
 }

@@ -4,6 +4,7 @@ import { HudGroup } from "@/lib/types";
 import { HUD_DISPLAY_COLUMNS, pctColor } from "@/lib/regimeConstants";
 import { TapeLadder } from "./tape/TapeLadder";
 import { TapeSpark } from "./tape/TapeSpark";
+import { CHG_KEY, HKey, isPriceGroup, showsPoints } from "@/lib/tapeMath";
 
 function fmtPrice(v: number | null): string {
   if (v === null || v === undefined) return "—";
@@ -14,6 +15,11 @@ function fmtPrice(v: number | null): string {
 function fmtPct(v: number | null): string {
   if (v === null || v === undefined || Number.isNaN(v)) return "—";
   return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+}
+
+function fmtPoints(v: number | null): string {
+  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -36,7 +42,7 @@ export function HudTable({
     return null;
   }
 
-  const denomLabel = group.default_rs_denom ? `RS vs ${group.default_rs_denom}` : "no RS";
+  const denomLabel = group.default_rs_denom ? `RS vs ${group.default_rs_denom}` : "no RS · changes in points (percent for index levels)";
 
   return (
     <div className="mt-3.5">
@@ -89,14 +95,17 @@ export function HudTable({
                 </td>
                 <td className="px-1.5 py-0.5 text-right text-slate-200">{fmtPrice(t.current)}</td>
                 {HUD_DISPLAY_COLUMNS.map((c) => {
-                  const v = t[c.key as keyof typeof t] as number | null;
+                  // Yields and spreads change in points: a percent change of a level near zero (T10Y3M +690% in a
+                  // year) says nothing. Index-like levels (CPI, GDP, MOVE) keep percent.
+                  const inPoints = !isPriceGroup(group) && showsPoints(t);
+                  const v = (inPoints ? t[CHG_KEY[c.key as HKey]] : t[c.key as keyof typeof t]) as number | null;
                   return (
                     <td
                       key={c.key}
                       className="px-1.5 py-0.5 text-right font-medium"
                       style={{ color: pctColor(v) }}
                     >
-                      {fmtPct(v)}
+                      {inPoints ? fmtPoints(v) : fmtPct(v)}
                     </td>
                   );
                 })}

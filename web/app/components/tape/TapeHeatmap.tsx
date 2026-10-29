@@ -1,8 +1,8 @@
 "use client";
 
 import { HudGroup, HudTicker } from "@/lib/types";
-import { HKey, HORIZONS, isPriceGroup, isStale, tileColor } from "@/lib/tapeMath";
-import { fmtPct, asOfLabel } from "./format";
+import { CHG_KEY, HKey, HORIZONS, POINT_CAPS, isPriceGroup, isStale, neutralTileColor, num, showsPoints, tileColor } from "@/lib/tapeMath";
+import { fmtPct, fmtSigned, asOfLabel } from "./format";
 import { TapeSpark } from "./TapeSpark";
 
 function tip(t: HudTicker): string {
@@ -39,13 +39,21 @@ export function TapeHeatmap({
               {g.name}
               {!isPriceGroup(g) && (
                 <span className="ml-2 text-[0.6rem] font-normal normal-case tracking-normal text-[var(--cgi-muted-blue)]">
-                  % change of the level, not a price return
+                  change in points for yields and spreads (percent for index levels), shaded by size only
                 </span>
               )}
             </div>
             <div className="grid grid-cols-3 gap-1 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9">
               {g.tickers.map((t) => {
                 const stale = isStale(t, latest);
+                // Yields, spreads and macro rows: points when the level is small, percent for index-like levels, one
+                // neutral hue shaded by size (a rising yield is not "good"), and a gap when the window has no change.
+                const rate = !isPriceGroup(g);
+                const pts = rate && showsPoints(t) ? t[CHG_KEY[horizon]] : null;
+                const val = rate ? (showsPoints(t) ? pts : t[horizon]) : t[horizon];
+                const strength = !num(val) ? 0 : rate && showsPoints(t) ? Math.min(1, Math.abs(val) / POINT_CAPS[horizon]) : Math.min(1, Math.abs(val) / (HORIZONS.find((h) => h.key === horizon)?.cap ?? 5));
+                const bg = rate ? (num(val) ? neutralTileColor(strength) : "var(--cgi-surface-alt)") : tileColor(t[horizon], horizon);
+                const shown = rate && showsPoints(t) ? (num(pts) ? `${fmtSigned(pts, 2)} pts` : "—") : fmtPct(t[horizon], 1);
                 return (
                   <button
                     key={t.symbol}
@@ -53,10 +61,10 @@ export function TapeHeatmap({
                     title={tip(t)}
                     onClick={() => onSelect(t.symbol)}
                     className="relative rounded px-1 py-1.5 text-center hover:ring-1 hover:ring-[var(--cgi-accent)]"
-                    style={{ background: tileColor(t[horizon], horizon), opacity: stale ? 0.5 : 1 }}
+                    style={{ background: bg, opacity: stale ? 0.5 : 1 }}
                   >
                     <div className="truncate text-[0.72rem] font-semibold text-slate-100">{t.symbol}</div>
-                    <div className="text-[0.68rem] text-slate-200">{fmtPct(t[horizon], 1)}</div>
+                    <div className="text-[0.68rem] text-slate-200">{shown}</div>
                     {t.spark && t.spark.length > 1 && (
                       <div className="mt-0.5 flex justify-center opacity-80">
                         <TapeSpark values={t.spark} width={56} height={12} muted={stale} />
