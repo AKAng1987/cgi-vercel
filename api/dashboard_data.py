@@ -11,6 +11,7 @@ column (index 15) that parse_hud never read, for per-ticker stale_days.
 
 from __future__ import annotations
 
+import collections
 import datetime
 import logging
 import re
@@ -525,8 +526,10 @@ def attach_spark(hud_groups: list[dict]) -> None:
         import cache as _cache
 
         symbols = [t["symbol"] for g in hud_groups for t in g["tickers"]]
-        _px = _recent_closes("SPY", limit=1)
-        px_date = _px[-1][0] if _px else None
+        # Rebuild whenever ANY row's close date changes, not just SPY's: feeds publish at different times (2026-10-29:
+        # the VIX and SPX had the 28th while the ETFs were still on the 27th), and a SPY-keyed copy served the VIX
+        # line without its newest close for hours.
+        px_date = ",".join(f"{d}:{n}" for d, n in sorted(collections.Counter(t.get("as_of") or "" for g in hud_groups for t in g["tickers"]).items()))
 
         def _compute() -> dict:
             return {"px_date": px_date, "series": _spark_series(symbols)}
