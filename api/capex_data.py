@@ -38,7 +38,7 @@ import sec_xbrl as sx
 
 _logger = logging.getLogger("cgi_api.capex")
 
-SCHEMA_VERSION = 3   # 3: rows also carry as-first-reported capex/OCF and first-filed dates (cq1, ocfq1, filed1) for the capex_state study; 2: ocfq
+SCHEMA_VERSION = 4   # 4: ofiled1 (OCF's own first-filed dates); 3: rows also carry as-first-reported capex/OCF and first-filed dates (cq1, ocfq1, filed1) for the capex_state study; 2: ocfq
 KEY = "capex/capex_quarterly.json"          # under cache.PREFIX
 FIRST_QUARTER = "2011Q1"                    # stored; YoY therefore exists from 2012Q1 (XBRL cash-flow facts begin ~2009)
 SHOW_FROM = "2022Q1"                        # first quarter drawn (matches the chart)
@@ -123,6 +123,7 @@ def company_record(ticker: str, sector: str) -> Optional[dict]:
         "cq1": {q: round(v[0] / 1e6, 1) for q, v in cap1.items() if q >= FIRST_QUARTER},
         "filed1": {q: v[1] for q, v in cap1.items() if q >= FIRST_QUARTER},
         "ocfq1": {q: round(v[0] / 1e6, 1) for q, v in ocf1.items() if q >= FIRST_QUARTER},
+        "ofiled1": {q: v[1] for q, v in ocf1.items() if q >= FIRST_QUARTER},   # OCF's OWN first-filed dates (can be later than capex's)
         "ocf_ttm": _round_m(_ttm({q: v[0] for q, v in ocf.items()})),
         "rev_ttm": _round_m(_ttm(rev_q)),
     }

@@ -59,11 +59,11 @@ def quarters_upto(date: str) -> list[str]:
 
 # ── as-known features ───────────────────────────────────────────────────────
 
-def _known(c: dict, q: str, key: str, cutoff: str):
+def _known(c: dict, q: str, key: str, cutoff: str, filed_key: str = "filed1"):
     """Value of company c's quarter q AS FIRST REPORTED (cq1 / ocfq1), if first filed on or before `cutoff` (YYYY-MM-DD), else None.
     (The snapshot's cq / ocfq carry the latest restatement dated by the latest re-filing, a year late: not usable for this.)"""
     v = c.get(key, {}).get(q)
-    f = c.get("filed1", {}).get(q)
+    f = c.get(filed_key, {}).get(q)
     if v is None or f is None or f > cutoff:
         return None
     return v
@@ -108,7 +108,7 @@ def features_at(companies: list[dict], decision_date: str) -> dict:
     for c in companies:
         qs = [q_shift(reported, -i) for i in range(4)]
         cv = [_known(c, q, "cq1", cutoff) for q in qs]
-        ov = [_known(c, q, "ocfq1", cutoff) for q in qs]
+        ov = [_known(c, q, "ocfq1", cutoff, "ofiled1") for q in qs]
         if any(v is None for v in cv) or any(v is None for v in ov):
             continue
         o = sum(ov)

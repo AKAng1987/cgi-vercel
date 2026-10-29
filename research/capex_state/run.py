@@ -32,6 +32,9 @@ def qend(q):
 
 
 ages = [(dt.date.fromisoformat(r["date"]) - qend(r["q"])).days for r in have]
+lags = [(dt.date.fromisoformat(f) - qend(q)).days for c in companies for q, f in c.get("filed1", {}).items()]
+olags = [(dt.date.fromisoformat(f) - qend(q)).days for c in companies for q, f in c.get("ofiled1", {}).items()]
+print(f"first-filing lag (days after quarter end): capex median {np.median(lags):.0f}, operating cash flow median {np.median(olags):.0f}")
 print(f"age of the reported quarter at the decision date: median {np.median(ages):.0f} days (p10 {np.percentile(ages, 10):.0f}, p90 {np.percentile(ages, 90):.0f})")
 for k in ("g1", "acc", "gap"):
     v = [r[k] for r in rows if r[k] is not None]

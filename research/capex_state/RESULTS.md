@@ -8,19 +8,20 @@ snapshot with `api/.venv/bin/python ~/market-dashboard/scripts/capex_build.py --
 
 **No. Out of sample, neither capex growth, nor its acceleration, nor the funding gap improved a forecast of the S&P 500's next
 1-month or 3-month return, 3-month worst drawdown, or 3-month volatility beyond regime + 20-day volatility. 0 of 12 comparisons
-helped; the candidate was worse than the baseline in all 12, and clearly worse (CI wholly below zero) in 7.** Primary (capex growth
+helped; the candidate was worse than the baseline in all 12, and clearly worse (CI wholly below zero) in 5.** Primary (capex growth
 tercile -> 3-month worst drawdown): the candidate's squared error was 6.4% higher, CI of the paired difference [-6.2, +0.7] (negative
-= worse). Secondary (funding gap tercile -> 3-month return): 11.9% higher, CI [-11.0, -0.1]. With 12 comparisons in this run
+= worse). Secondary (funding gap tercile -> 3-month return): 6.6% higher, CI [-8.6, +0.5]. With 12 comparisons in this run
 about 0.6 false claims were expected (0.3 given the one-sided rule); none was made.
 
-**There were two runs, and the first was wrong.** Run 1 dated each quarter by the date of the LATEST filing that repeats it
+**There were three runs, and the first two had date bugs.** Run 1 dated each quarter by the date of the LATEST filing that repeats it
 (next year's 10-Q carries it as a comparative), so the features were about 15 months stale, and the "funding gap" came from a
-median of 13 companies. A cold audit found this. Run 2 (this one) uses each quarter's FIRST filing date and the value as first
+median of 13 companies. A cold audit found this. Run 2 used each quarter's FIRST filing date and the value as first
 reported, requires 80% coverage for both quarters used in the acceleration and 150 companies for the funding gap. The reported
 quarter is now a median 92 days old at the decision date (p10 61, p90 123), the first-filing lag is a median 34 days for Q1-Q3 and
-52 for Q4, and a growth figure exists for all 168 months. Run 1 also reached 0 of 12 (11 of 12 worse); 24 comparisons were run in
-all. Run 1's descriptive hint (low capex growth followed by lower returns, CI [-7.8, -1.1]) reversed sign in run 2 (bottom tercile
-+2.6 points, CI [-0.7, +5.9]): it was an artefact of stale dates, which is why the tercile tables below are not read as a signal.
+52 for Q4, and a growth figure exists for all 168 months. A second cold audit found run 2 still dated operating cash flow by the capex filing date (3.4% of quarters, mostly a year
+late); run 3 (this one) gates it on its own first-filed date. Runs 1 and 2 also reached 0 of 12 (11 and 12 worse); 36 comparisons
+were run in all. Run 1's descriptive hint (low capex growth followed by lower returns, CI [-7.8, -1.1]) reversed sign in run 2 (bottom tercile
++2.6 points, CI [-0.7, +5.9] in runs 2 and 3): it was an artefact of stale dates, which is why the tercile tables below are not read as a signal.
 
 ## What was tested
 
@@ -38,7 +39,9 @@ Pre-registered before `run.py` was run (also in its docstring):
 - Capex and operating cash flow per company per calendar quarter from SEC filings as FIRST REPORTED
   (`sec_xbrl.cash_quarters_first`: for each year-to-date window the value from its earliest filing, differenced; quarter dated by
   the later of its two windows' first filings), 2011Q1 onward, 500 current S&P 500 members (469 report capex). Decision months
-  2012-09 to 2026-08 (168); a growth figure exists for every month; median matched coverage of prior-year capex 0.97.
+  2012-09 to 2026-08 (168); a growth figure exists for every month; median matched coverage of prior-year capex 0.97. The 150-company floor on the funding gap
+  never binds (at least 236 companies qualify in every month); some off-calendar fiscal years (e.g. a November quarter labelled
+  calendar Q4) are first-filed before their calendar quarter ends, which is not lookahead because the gate is the filing date.
 - A figure counts as known only if first filed 5 or more days before the decision date; a quarter counts as reported when filings
   on file match at least 80% of last year's capex for that quarter (and for the prior quarter in the acceleration).
 - SPX daily closes 1927-12-30 to 2026-10-28; compass 72 rows and grid 145 rows of model history.
@@ -55,8 +58,8 @@ months, so this study could not see a modest effect either way. SELFTEST OK.
 - ~30 independent quarters; the answer is "no evidence in 14 years", not "no effect".
 - Survivorship: today's members applied to 2012 onward; the sample is of companies that survived and stayed in the index.
 - Values are as first reported, so later restatements are not used (the right direction for a point-in-time test); the compass and
-  grid history are taken as they were stamped at the time. Operating cash flow uses its own first-filed dates.
-- Run 1's data are kept for the record in `data/snapshot_run1_stale_filing_dates.json` and `results_run1_stale_filing_dates.json`.
+  grid history are taken as they were stamped at the time. Operating cash flow uses its own first-filed dates (`ofiled1`, from run 3).
+- Earlier runs are kept for the record: `results_run1_stale_filing_dates.json`, `results_run2_ocf_capex_dates.json` (and the matching snapshots in `data/`).
 - Only the S&P 500 index outcomes were tested. The largest spenders' relative performance and sector breadth were not tested
   (they were listed as possible exploratory items in the plan and not built).
 
@@ -68,12 +71,14 @@ over regime + 20-day volatility; it is a description of the AI build-out and its
 
 ## Audit
 
-Cold audit of run 1 (2026-10-30): found the stale filing dates (blocking), the degenerate funding gap (median 13 companies), no
-coverage floor on the prior quarter, a wrong count ("6 of 12 clearly worse" was 5) and a wrong restatement caveat. Confirmed: the
-5-day lag, expanding terciles, training only on resolved months, entry and target timing, the arithmetic (three dates recomputed by
-hand), and that "candidate worse" is overfitting rather than a code fault (in-sample gains +0.4% to +10.6%). The auditor's own rerun
-with timely dates and with continuous features (one standardised feature instead of tercile dummies) also gave 0 of 12. Fixes applied
-before run 2: first-filing dates and first-reported values, the two coverage floors, the corrected counts and caveats, a real-data
-lag check printed by `run.py`, deterministic ordering in `cash_quarters`. **Run 2 was not re-audited by a second separate reader;
-its numbers were checked by me (lags above, comparison counts tabulated from results.json) and agree with the auditor's proxy
-rerun.** Nice-to-have not done: report the continuous-feature variant.
+Two cold audits (2026-10-30), by readers with no memory of the build. Audit 1 (run 1): stale filing dates (blocking), a degenerate
+funding gap (median 13 companies), no coverage floor on the prior quarter, a wrong "6 of 12" count and a wrong restatement caveat;
+confirmed the 5-day lag, expanding terciles, resolved-months-only training, entry and target timing, arithmetic recomputed by hand,
+and that "candidate worse" is overfitting (in-sample gains +0.4% to +10.6%); its own rerun with timely dates and with one
+continuous feature also gave 0 of 12. Audit 2 (run 2): confirmed `filed1` is the first filing (median lag 34 days Q1-Q3, 52 Q4; 40
+companies re-derived from live SEC data with 0 differences; AAPL, MSFT, AMZN, NVDA dates match), g1/acc/gap recomputed exactly on four
+dates, the 150 floor and the 80% floors do not change the verdict (floors 0, 100, 150, 250 and no g0 floor: 0 helps in all); found
+one new bug, operating cash flow gated by the capex filing date (3.4% of quarters), fixed in run 3 and the auditor's predicted
+numbers (secondary -6.6% [-8.6, +0.5], 5 clearly worse) were reproduced. **No unresolved finding.** Not done: the continuous-feature
+variant is not in `run.py` (the audit's version also gave 0 of 12); `cash_quarters_first` takes the first tag in its chain rather
+than the earliest-filed one, which can only make a date later, never earlier.

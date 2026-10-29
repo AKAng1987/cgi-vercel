@@ -5,8 +5,8 @@ import capex_study as C
 import erp_study as S
 
 # ── 1. feature unit checks (hand-computed) ──────────────────────────────────
-def co(t, cq, filed, ocfq=None):
-    return {"t": t, "cq1": cq, "filed1": filed, "ocfq1": ocfq or {}}
+def co(t, cq, filed, ocfq=None, ofiled=None):
+    return {"t": t, "cq1": cq, "filed1": filed, "ocfq1": ocfq or {}, "ofiled1": ofiled or {}}
 
 A = co("A", {"2024Q1": 100.0, "2025Q1": 150.0, "2025Q2": 120.0, "2024Q2": 100.0},
        {"2024Q1": "2024-05-01", "2024Q2": "2024-08-01", "2025Q1": "2025-05-01", "2025Q2": "2025-08-10"})
@@ -31,6 +31,15 @@ Z = {"t": "Z", "cq": {"2025Q1": 1.0}, "filed": {"2025Q1": "2026-05-01"}, "cq1": 
      "filed1": {"2025Q1": "2025-05-01", "2024Q1": "2024-05-01"}}
 g, cov = C.growth_at([Z], "2025Q1", "2025-06-01")
 assert g == 0.0 and cov == 1.0, ("first-filing dates are used, so Z is known by 1 June 2025", g, cov)
+# the funding gap gates operating cash flow on ITS OWN first-filed date, which can be a year later than capex's
+four = ["2024Q1", "2024Q2", "2024Q3", "2024Q4"]
+prior = ["2023Q1", "2023Q2", "2023Q3", "2023Q4"]
+G = co("G", {**{q: 10.0 for q in four}, **{q: 10.0 for q in prior}}, {**{q: "2025-01-15" for q in four}, **{q: "2024-02-01" for q in prior}},
+       {q: 20.0 for q in four}, {**{q: "2025-01-15" for q in four[:3]}, "2024Q4": "2026-02-01"})
+C.MIN_GAP_COMPANIES = 1
+assert C.features_at([G], "2025-03-01")["gap"] is None, "OCF for 2024Q4 not on file yet: no gap"
+assert abs(C.features_at([G], "2026-03-01")["gap"] - 0.5) < 1e-9, "all four OCF quarters filed: 40/80"
+C.MIN_GAP_COMPANIES = 150
 print("feature checks ok")
 
 # ── 2. planted effect ───────────────────────────────────────────────────────
