@@ -323,7 +323,11 @@ def parse_hud(ws) -> list[dict]:
             "sector": current_sector,
             "current": cur_val,
             "ema_7d": ema7d,
+            # The workbook's "STD - 7D" column is the std of the last 7 daily PERCENT moves (percent_diff_sd_7d), in %,
+            # while rows rebuilt from price-history carry the std of 7 PRICES in sd_7d: one field, two units. sd_pct_7d
+            # is the same thing on every row (in %); sd_7d is kept only for older readers.
             "sd_7d": row[18] if len(row) > 18 else None,
+            "sd_pct_7d": row[18] if len(row) > 18 else None,
             "pct_1d": _pct(cur_val, ref1d),
             "pct_5d": _pct(cur_val, ref5d),
             "pct_7d": _pct(cur_val, ref7d),
@@ -495,6 +499,78 @@ def _recent_closes(symbol: str, limit: int = 300) -> list[tuple[str, float]]:
 WEEKEND_TRADING = {"BTC", "ETH"}
 
 
+def _pstdev(xs: list) -> float:
+    m = sum(xs) / len(xs)
+    return (sum((x - m) ** 2 for x in xs) / len(xs)) ** 0.5
+
+
+def _sd_pct_7d(closes: list) -> Optional[float]:
+    """Population std of the last 7 daily percent moves, in percent: what the workbook's STD - 7D column holds
+    (generate_derived_metrics.__compute_percent_diff_std_7d: std of (1 + move) * 100 over 7 days)."""
+    if len(closes) < 8:
+        return None
+    w = closes[-8:]
+    if any(not x for x in w[:-1]):
+        return None
+    return round(_pstdev([(w[i] / w[i - 1] - 1) * 100 for i in range(1, 8)]), 5)
+
+
+# Calendar-day windows for series that do not publish daily (monthly and quarterly rates, CPI, GDP): a row offset is a
+# month or a quarter there, so "1M" by row offset meant 21 months (2026-10-29: JP10Y 1M +330%).
+_WINDOW_DAYS = {"pct_1d": 1, "pct_5d": 5, "pct_7d": 7, "pct_1m": 30, "pct_3m": 91, "pct_6m": 182, "pct_1y": 365}
+NON_PRICE_GROUPS = ("US INTEREST RATES", "SPREADS", "RATES", "FOREIGN RATES")
+
+
+def hud_rate_row(symbol: str, sector: str) -> Optional[dict]:
+    """A row for a yield, spread or macro series, built from price-history, with the change in POINTS (chg_*) beside the
+    percent change. A percent change of a level near zero is meaningless (T10Y3M 1Y +770%); points are not.
+    Daily series use the same row offsets as every other row. Series that publish less often than weekly use calendar
+    windows, and a window shorter than the series' spacing is null (no change was observed), never a row offset."""
+    rows = _recent_closes(symbol, limit=400)
+    if symbol not in WEEKEND_TRADING:
+        rows = [(d, c) for d, c in rows if datetime.date.fromisoformat(d).weekday() < 5]
+    if len(rows) < 2:
+        return None
+    dates = [d for d, _ in rows]
+    closes = [c for _, c in rows]
+    n, cur = len(closes), closes[-1]
+    as_of = datetime.date.fromisoformat(dates[-1])
+    gaps = sorted((datetime.date.fromisoformat(dates[i]) - datetime.date.fromisoformat(dates[i - 1])).days
+                  for i in range(max(1, n - 8), n))
+    spacing = gaps[len(gaps) // 2]
+    sparse = spacing > 4
+
+    out: dict = {"symbol": symbol, "sector": sector, "current": cur}
+    for field, back in _LOOKBACK.items():
+        ref = None
+        if not sparse:
+            j = n - 1 - back
+            ref = closes[j] if j >= 0 else None
+        elif _WINDOW_DAYS[field] >= spacing * 0.9:
+            target = as_of - datetime.timedelta(days=_WINDOW_DAYS[field])
+            for d, c in reversed(rows[:-1]):
+                if datetime.date.fromisoformat(d) <= target:
+                    ref = c
+                    break
+        out[field] = _pct(cur, ref) if ref else None
+        out["chg_" + field[4:]] = round(cur - ref, 6) if ref is not None else None
+
+    if sparse:
+        out["sd_7d"] = out["sd_pct_7d"] = out["ema_7d"] = None  # seven observations are seven months, not a week
+    else:
+        win = closes[-7:]
+        out["sd_7d"] = round(_pstdev(win), 4) if len(win) >= 2 else None
+        k = 2.0 / 8.0
+        ema = win[0]
+        for v in win[1:]:
+            ema = v * k + ema * (1 - k)
+        out["ema_7d"] = round(ema, 4) if len(win) >= 2 else None
+        out["sd_pct_7d"] = _sd_pct_7d(closes)
+    out["as_of"] = dates[-1]
+    out["stale_days"] = (datetime.date.today() - as_of).days
+    return out
+
+
 SPARK_POINTS = 60  # closes per sparkline (about three months of sessions)
 
 
@@ -572,6 +648,7 @@ def hud_from_price_history(symbol: str, sector: str) -> Optional[dict]:
     else:
         out["sd_7d"] = out["ema_7d"] = None
 
+    out["sd_pct_7d"] = _sd_pct_7d(closes)
     out["as_of"] = dates[-1]
     try:
         out["stale_days"] = (datetime.date.today() - datetime.date.fromisoformat(dates[-1])).days
@@ -667,11 +744,27 @@ def build_live_response(date_str: Optional[str] = None) -> dict:
             cached = _compute()
         extra_rows = cached.get("rows", {})
 
+    # Yields, spreads and macro series are rebuilt from price-history so they carry points, calendar windows for the
+    # monthly and quarterly ones, and a spread in one unit. Any failure leaves the workbook row in place.
+    rate_rows: dict[str, dict] = {}
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        pending = [(t, g) for g in NON_PRICE_GROUPS for t in HUD_GROUPS.get(g, ([], None))[0]]
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            for (sym, _g), row in zip(pending, ex.map(lambda b: hud_rate_row(b[0], b[1]), pending)):
+                if row:
+                    rate_rows[sym] = row
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("[live] rate rows from price-history failed; serving workbook rows")
+
     hud_groups = []
     for group_name, (tickers, rs_denom) in HUD_GROUPS.items():
         group_tickers = []
         for t in tickers:
-            if t in hud_by_symbol:
+            if group_name in NON_PRICE_GROUPS and t in rate_rows:
+                group_tickers.append(rate_rows[t])
+            elif t in hud_by_symbol:
                 group_tickers.append(hud_by_symbol[t])
             elif t in extra_rows:
                 group_tickers.append(extra_rows[t])

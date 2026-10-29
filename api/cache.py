@@ -144,8 +144,8 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "inflation": 1,
     "pce": 1,
     "dot_plot": 1,
-    "hud_extra": 3,  # 2026-10-09: 27 new universe tickers.  # 2026-10-07: payload carries px_date; weekend bars dropped
-    "hud_fallback": 1,
+    "hud_extra": 4,  # 2026-10-29: rows carry sd_pct_7d (std of the last 7 daily % moves, one unit on every row)
+    "hud_fallback": 2,  # 2026-10-29: rows carry sd_pct_7d
     "hud_spark": 1,
     "policy_watch": 1,
     "cot": 4,  # 2026-10-27: weekly final series, calendar-day windows, interim/cadence/publish fields. 3 (2026-10-03): dead E-mini names fixed; 22 -> 39 contracts
