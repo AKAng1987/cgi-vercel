@@ -695,7 +695,10 @@ def referee_problems(tv_bars: dict, ours: dict, today: Optional[dt.date] = None)
             problems.append({"check": "referee_weekend", "symbol": sym,
                              "detail": f"weekend-dated rows stored: {', '.join(weekend)}"})
         newest = max(mine)
-        newer = [d for d in theirs if d > newest and d <= today_iso]
+        # TradingView's FX bar for today is still OPEN (a currency day runs to 17:00 New York, after our nightly run), so for FX
+        # only dates before today count as newer. Without this, holding the last finished day flagged "behind" against {yesterday,
+        # today} whenever the threshold was two (2026-10-30: USDJPY).
+        newer = [d for d in theirs if d > newest and d <= today_iso and not (kind == "fx" and d >= today_iso)]
         if len(newer) >= REFEREE_BEHIND.get(kind, REFEREE_BEHIND_DEFAULT):
             problems.append({"check": "referee_behind", "symbol": sym,
                              "detail": f"we hold {newest}; {tv} already has {max(newer)}"})

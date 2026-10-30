@@ -528,3 +528,22 @@ snapshot (first-reported values: the snapshot rows carry `cq1`, `rq1`, `ocfq1` a
 `sec_xbrl.cash_quarters_first` takes the EARLIEST filing across tags). Descriptive only: `research/capex_flow/RESULTS.md` found no
 out-of-sample forecasting value beyond the suppliers' own trend, and the caption says so. Point-in-time studies from XBRL must use the
 first-filed fields, never `filed`/`cq` (latest restatement, a year late).
+
+## FX sources and dating (2026-10-30)
+
+- **All FX pairs that were on Alpha Vantage (15) now come from Yahoo**, with the six moved from FRED on 29 Oct (USDCAD MXN ZAR BRL TWD MYR). The
+  Alpha Vantage Lambda (00:12 UTC daily, free tier 25 calls, the docs' "02:15" was wrong) returned the previous day's bar for only some
+  pairs, which is what flagged 11 pairs "1 session behind SPY" and USDJPY at the referee. Its schedule is still enabled but has no symbols,
+  so it is a no-op; disable the rule `cmon-stage-backend-AlphaVantageUpdaterSchedule` once two nights have run clean. Rollback:
+  `~/market-dashboard/scripts/rollback_fx_alpha_pairs.py` (rows backed up in `data_manual/metrics_source_alpha_fx15_backup_2026-10-30.json`).
+- **Yahoo's daily FX bars must not be stored under their labels.** A completed daily bar dated D carries the previous New York day's close and
+  the bar dated today is live: stored as-is every row was a day off (measured against TradingView: 0.20% apart, 0.045% one weekday earlier).
+  `cmon-backend-service/src/external_api/fx_daily.py` builds the day from the HOURLY bars instead: the bar that starts at 16:00 ET (close at
+  17:00 New York), the nearest bar within two hours for thin pairs (PHP trades a bar every few hours), else the day is skipped. Measured:
+  0.016% from TradingView (USDCAD), 0.004-0.12% from the stored Alpha Vantage closes on all 15 pairs. Deployed by hand to
+  `cmon-stage-backend-yahoo-finance-updater` (zip of `src/`, commit 77e844b on branch `fix/stale-prices`; the pipeline watches master only).
+- **Re-dating the six pairs moved on 29 Oct.** Their 22 Yahoo-sourced rows each (3 Jul to 29 Oct) were a day off; replaced with correctly dated rows
+  (`scripts/fx_hourly_rebuild.py redate`, old rows in `data_manual/price_history_yahoo_fx_redate_backup_2026-10-30.json`); rows from FRED or
+  Alpha Vantage at a date were left alone. `fx_hourly_rebuild.py backfill` fills weekdays that hold no row (insert-if-absent).
+- **Referee**: for FX only dates BEFORE today count as "newer" than our newest, because TradingView's bar for today is still open (a currency day
+  ends 17:00 New York, after our nightly run). Check: `scripts/check_freshness_fx.py`.
