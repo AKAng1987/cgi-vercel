@@ -16,7 +16,10 @@ Dates are hardcoded from the official schedules. VERIFY when extending:
   CPI  : https://www.bls.gov/schedule/news_release/cpi.htm
   GDP  : https://www.bea.gov/news/schedule
 
-Verified 2026-09-16 against the official pages: all CPI 2026, GDP
+FOMC 2027 = the eight meetings the Fed has published. Warsh floated six a year from 2027 (July 2026 minutes); as of 2026-10-30
+nothing was adopted. If the Fed changes the schedule, edit _FOMC and the compass calendar table together.
+2027 added 2026-10-30: CPI (BLS) and GDP (BEA) from the official schedules; SLOOS derived (see below); FOMC 2027 was already
+here. Verified 2026-09-16 against the official pages: all CPI 2026, GDP
 Sep-Dec 2026 (Sep 30 = Q2 third; Jan-Aug not shown on the page but
 06-25 and 07-30 match model-history transitions), all FOMC 2026 + 2027.
 SLOOS: the Fed page lists survey periods, not publication dates; credit
@@ -53,12 +56,23 @@ _GDP_2026 = [
     "2026-01-29", "2026-02-26", "2026-03-26", "2026-04-29", "2026-05-28", "2026-06-25",
     "2026-07-30", "2026-08-27", "2026-09-30", "2026-10-29", "2026-11-25", "2026-12-23",
 ]
+_CPI_2027 = [  # bls.gov/schedule/news_release/cpi.htm, read 2026-10-30
+    "2027-01-13", "2027-02-11", "2027-03-10", "2027-04-13", "2027-05-12", "2027-06-10",
+    "2027-07-14", "2027-08-11", "2027-09-14", "2027-10-14", "2027-11-10", "2027-12-10",
+]
+_GDP_2027 = [  # bea.gov/news/schedule/next-year, read 2026-10-30 (advance, second, third of each quarter)
+    "2027-01-28", "2027-02-25", "2027-03-31", "2027-04-29", "2027-05-27", "2027-06-25",
+    "2027-07-29", "2027-08-25", "2027-09-30", "2027-10-28", "2027-11-24", "2027-12-22",
+]
 _FOMC = [  # decision day (second day of the meeting); 2026 + 2027
     "2026-01-28", "2026-03-18", "2026-04-29", "2026-06-17",
     "2026-07-29", "2026-09-16", "2026-10-28", "2026-12-09",
         "2027-01-27", "2027-03-17", "2027-04-28", "2027-06-09", "2027-07-28", "2027-09-15", "2027-10-27", "2027-12-08",
 ]
 _SLOOS_2026 = ["2026-02-02", "2026-05-04", "2026-08-03", "2026-11-02"]
+# 2027: DERIVED, not read from a Fed page (it lists survey periods only): the Monday after the Jan/Apr/Jul/Oct FOMC, the
+# same rule that gives every 2026 date above. Re-check against model-history after the Feb 2027 print.
+_SLOOS_2027 = ["2027-02-01", "2027-05-03", "2027-08-02", "2027-11-01"]
 
 
 # BEA publishes three estimates of each quarter, one a month: the advance in
@@ -93,7 +107,8 @@ def _rows(kind: str, dates: list[str]) -> list[dict]:
 
 
 RELEASES: list[dict] = sorted(
-    _rows("CPI", _CPI_2026) + _rows("GDP", _GDP_2026) + _rows("FOMC", _FOMC) + _rows("SLOOS", _SLOOS_2026),
+    _rows("CPI", _CPI_2026 + _CPI_2027) + _rows("GDP", _GDP_2026 + _GDP_2027) + _rows("FOMC", _FOMC)
+    + _rows("SLOOS", _SLOOS_2026 + _SLOOS_2027),
     key=lambda r: r["date"],
 )
 

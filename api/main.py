@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timezone
+import datetime as dt
 import logging
 import threading
 from typing import Optional
@@ -32,6 +33,7 @@ import mixture as mixture_data
 import regime_matrix
 import release_calendar
 import country_calendar
+import us_consensus
 import context_tables
 import country_data
 import priced_in
@@ -285,7 +287,14 @@ def freshness_heartbeat(body: dict = Body(default={})):
 def country_calendar_get():
     """The stored country release calendar (rates, inflation, GDP for the Countries page countries). Read-only; the rows are
     already visible on the Countries page. The refresh routine reads it to decide which series are due."""
-    return country_calendar.read()
+    body = country_calendar.read()
+    try:
+        import release_calendar as _rc
+        body["us_forecast_missing"] = us_consensus.missing_forecasts(
+            dt.datetime.now(dt.timezone.utc).date(), us_consensus.read(), _rc.RELEASES)
+    except Exception:  # noqa: BLE001 -- additive
+        body["us_forecast_missing"] = []
+    return body
 
 
 @app.post("/api/country_calendar")
@@ -296,13 +305,17 @@ def country_calendar_post(body: dict = Body(default={})):
     secret. What it can store is bounded here: known countries, rows classified and validated in code, a 52-day window,
     at most 600 rows, short titles. A post that keeps NO rows is refused so a bad run cannot wipe a good snapshot.
     """
-    rows, report = country_calendar.clean(body.get("rows") if isinstance(body, dict) else None)
+    raw_rows = body.get("rows") if isinstance(body, dict) else None
+    rows, report = country_calendar.clean(raw_rows)
+    # The routine's list now carries US rows too: the countries page ignores them (clean drops them), us_consensus keeps
+    # the GDP/CPI ones as a growing history (forecast, previous, actual) for the consensus-implied read on release cards.
+    us_report = us_consensus.ingest(raw_rows)
     if not rows:
         raise HTTPException(status_code=400, detail={"error": "no valid rows; stored calendar left as it was", "report": report})
     try:
         written = country_calendar.write(rows)
         cache.invalidate("countries")
-        return {"ok": True, "at": written["at"], "report": report}
+        return {"ok": True, "at": written["at"], "report": report, "us": us_report}
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"could not store the calendar: {exc}")
 

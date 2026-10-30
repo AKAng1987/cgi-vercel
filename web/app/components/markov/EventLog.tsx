@@ -158,6 +158,7 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                 <th className={`${TH} text-right`}>Brier H / S / D</th>
                 <th className={`${TH} text-left`}>Call · stored</th>
                 <th className={`${TH} text-left`}>Call · drivers</th>
+                <th className={`${TH} text-left`} title="GDP advance and CPI: did the stored consensus imply a flip, and was it right">Consensus</th>
                 <th className={`${TH} text-left`}>Registered</th>
               </tr>
             </thead>
@@ -181,6 +182,11 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)} <span className="text-slate-600">/</span> {brier(e.brier_drivers ?? null)}</td>
                   <td className={TD} title="above the base rate is a flip call, at or below is a no-change call"><CallCell e={e} p={e.p_market} /></td>
                   <td className={TD} title="above the base rate is a flip call, at or below is a no-change call"><CallCell e={e} p={e.p_drivers ?? null} /></td>
+                  <td className={`${TD} text-[0.68rem]`}>
+                    {e.consensus_implied == null ? <span className="text-slate-600">—</span> : (
+                      <span className={e.consensus_hit ? "text-[var(--cgi-up)]" : "text-[var(--cgi-down)]"}>{e.consensus_implied ? "flip" : "no flip"} · {e.consensus_hit ? "right" : "wrong"}</span>
+                    )}
+                  </td>
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.pre_registered_on
                       ? <span className={e.pre_registration_note ? "text-[var(--cgi-gold)]" : "text-[var(--cgi-up)]"} title={e.pre_registration_note ?? "both probabilities were in DynamoDB before the release"}>{e.pre_registered_on.replace("T", " ").replace("Z", "Z")}</span>

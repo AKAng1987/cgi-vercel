@@ -49,7 +49,7 @@ MIN_TERCILE_N = 8   # a tercile needs this many windows before its rate is used
 # Bump when the payload's shape or the way readings are taken changes. cache.py
 # reads this constant, so the bump cannot be forgotten in a second file.
 #   11: readings are taken at (date - publication lag), not at the stamped date
-SCHEMA_VERSION = 15  # 15: display levels per driver + headline anchors per axis (no probability change)
+SCHEMA_VERSION = 16  # 16: per-cell n_current, ci95 and noise flag (no probability change); 15: display levels per driver + headline anchors per axis (no probability change)
 
 # A monthly series is STAMPED at its period start but published weeks later: the
 # August CPI is dated 08-01 and released mid-September. Reading "the value stamped
@@ -383,6 +383,26 @@ def _reading(spec: tuple, series: _Series, date: str) -> Optional[float]:
 
 # ── stats ────────────────────────────────────────────────────────────────────
 
+def wilson(p: float, n: int, z: float = 1.96) -> tuple[float, float]:
+    """Wilson score interval for a rate p seen in n windows (z = 1.96: 95%; 90% would flag about one driver in ten by chance alone, and the tables hold 8-12 drivers). The plain +/- formula is wrong at small n
+    and near 0 or 1; this is the standard small-sample interval."""
+    if n <= 0:
+        return (0.0, 1.0)
+    d = 1 + z * z / n
+    c = p + z * z / (2 * n)
+    r = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)
+    return ((c - r) / d, (c + r) / d)
+
+
+def is_noise(p: Optional[float], n: int, base: float) -> Optional[bool]:
+    """True when the driver's own base rate sits inside the 95% interval of today's cell: the cell is not telling us
+    anything the base rate does not. None when there is no cell rate."""
+    if p is None or not n:
+        return None
+    lo, hi = wilson(p, n)
+    return bool(lo <= base <= hi)
+
+
 def _tercile_bounds(vals: list[float]) -> tuple[float, float]:
     s = sorted(vals)
     n = len(s)
@@ -458,6 +478,9 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                     "current_value": cur, "current_bucket": cur,
                     "p_current": round(p_cur, 3) if p_cur is not None else None,
                     "base_rate": round(sum(f for _, f in pairs) / len(pairs), 3),
+                    "n_current": by[cur][0] if cur in by else None,
+                    "ci95": ([round(x, 3) for x in wilson(p_cur, by[cur][0])] if p_cur is not None else None),
+                    "noise": is_noise(p_cur, by[cur][0] if cur in by else 0, sum(f for _, f in pairs) / len(pairs)),
                     "window_start": next(w[0] for w in ws if w[3][label] is not None),
                 })
                 continue
@@ -493,6 +516,10 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
                 "current_tercile": cur_t,
                 "p_current": round(p_cur, 3) if p_cur is not None else None,
                 "base_rate": round(drv_base, 3),
+                # How much to believe the cell: windows behind it, its 95% interval, and whether the base rate sits inside it.
+                "n_current": by_t[cur_t][0] if cur_t is not None else None,
+                "ci95": ([round(x, 3) for x in wilson(p_cur, by_t[cur_t][0])] if p_cur is not None else None),
+                "noise": is_noise(p_cur, by_t[cur_t][0] if cur_t is not None else 0, drv_base),
                 "window_start": next(w[0] for w in ws if w[3][label] is not None),
             })
         used = [d["p_current"] for d in drv_out if d.get("p_current") is not None]
@@ -503,6 +530,7 @@ def _axis_stats(axis: str, model: str, rows: list[tuple[str, int]], events: list
             "drivers": drv_out,
             "conditioned_p_flip": round(sum(used) / len(used), 3) if used else None,
             "n_drivers_used": len(used),
+            "n_drivers_noise": sum(1 for d in drv_out if d.get("noise") is True),
         }
     return out
 

@@ -85,6 +85,21 @@ export function UpcomingReleases({
                 </div>
               )}
 
+              {u.consensus && (
+                <div className="mt-2 border-t border-slate-800 pt-2" title={u.consensus.track ?? ""}>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-[0.65rem] uppercase tracking-wide text-slate-500">Consensus</div>
+                    <div className={`text-sm font-bold ${u.consensus.implied_flip ? "text-[var(--cgi-gold)]" : "text-slate-100"}`}>
+                      {u.consensus.implied_flip ? "implies a flip" : "implies no flip"}{u.consensus.tie && <span className="ml-1 text-[0.6rem] font-normal text-slate-500">(tie)</span>}
+                    </div>
+                  </div>
+                  <div className="text-[0.65rem] text-slate-500">
+                    expects {u.consensus.forecast}% vs previous {u.consensus.previous}% · {u.consensus.kind === "gdp" ? "24 of 27 flipped when implied, 4 of 27 when not" : "thin sample, no claim"}
+                  </div>
+                  <div className="text-[0.6rem] text-slate-600">what the market expects for the print; not a forecast of markets</div>
+                </div>
+              )}
+
               {u.gap !== null && (
                 <div className={`mt-2 text-[0.68rem] ${bigGap ? "font-bold text-[var(--cgi-gold)]" : "text-slate-500"}`}>
                   gap {u.gap > 0 ? "+" : ""}{Math.round(u.gap * 100)} pts ·{" "}

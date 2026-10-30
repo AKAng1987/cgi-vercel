@@ -78,6 +78,8 @@ function AnchorRows({ anchors }: { anchors?: AxisAnchor[] }) {
   );
 }
 
+const NOISE_TIP = "within the range chance gives around this driver's base rate: not a signal";
+
 function pct(p: number | null | undefined): string {
   return p === null || p === undefined ? "—" : `${Math.round(p * 100)}%`;
 }
@@ -104,11 +106,12 @@ function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipU
     const curB = b[cur];
     const tip = Object.entries(b).map(([k, v]) => `${CURVE_WORD[k] ?? k}: ${pct(v.p_flip)} (n=${v.n})`).join(" · ");
     const thin = !curB || curB.n < 8;
+    const noiseC = d.noise === true;
     return (
       <tr className="border-t border-slate-800/60" title={tip}>
         <td className={TD}><span className="font-medium text-slate-200">{name}</span> <span className="text-[0.62rem] text-slate-600">{kind}</span></td>
         <td className={`${TD} text-right font-semibold text-[var(--cgi-gold)]`} colSpan={2}>{CURVE_WORD[cur] ?? cur ?? "—"}</td>
-        <td className={`${TD} text-right ${thin ? "text-slate-600" : "font-bold text-slate-100"}`}>{pct(curB?.p_flip)}{thin && <span className="ml-1 text-[0.6rem] font-normal">n={curB?.n ?? 0}</span>}</td>
+        <td className={`${TD} text-right ${thin || noiseC ? "text-slate-500" : "font-bold text-slate-100"}`} title={noiseC ? NOISE_TIP : undefined}>{pct(curB?.p_flip)}<span className="ml-1 text-[0.6rem] font-normal text-slate-600">n={curB?.n ?? 0}</span></td>
         <td className={`${TD} text-right text-slate-500`}>{pct(base)}</td>
       </tr>
     );
@@ -121,8 +124,11 @@ function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipU
   const where = cur === 0 ? `low · below ${fmt(t0, d.name)}` : cur === 2 ? `high · above ${fmt(t1, d.name)}` : cur === 1 ? `mid · ${fmt(t0, d.name)} to ${fmt(t1, d.name)}` : "—";
   const pc = cur === null ? null : p[cur];
   const lift = pc !== null && base !== null && base > 0 ? pc / base : null;
-  const tone = lift === null ? "text-slate-300" : lift >= 1.3 ? "font-bold text-[var(--cgi-gold)]" : lift <= 0.7 ? "text-slate-500" : "font-bold text-slate-100";
-  const tip = `low ${pct(p[0])} (n=${n[0]}) · mid ${pct(p[1])} (n=${n[1]}) · high ${pct(p[2])} (n=${n[2]})`;
+  // A cell whose 95% interval contains the driver's own base rate says nothing the base rate does not: no amber, no bold.
+  const noise = d.noise === true;
+  const tone = noise ? "text-slate-400" : lift === null ? "text-slate-300" : lift >= 1.3 ? "font-bold text-[var(--cgi-gold)]" : lift <= 0.7 ? "text-slate-500" : "font-bold text-slate-100";
+  const ci = d.ci95 ? ` · 95% range ${pct(d.ci95[0])} to ${pct(d.ci95[1])}` : "";
+  const tip = `low ${pct(p[0])} (n=${n[0]}) · mid ${pct(p[1])} (n=${n[1]}) · high ${pct(p[2])} (n=${n[2]})${ci}${noise ? ` · ${NOISE_TIP}` : ""}`;
   return (
     <tr className="border-t border-slate-800/60" title={tip}>
       <td className={TD}><span className="font-medium text-slate-200">{name}</span> <span className="text-[0.62rem] text-slate-600">{kind}</span>{d.n < 40 && <span className="ml-1 text-[0.6rem] text-slate-600">n={d.n}</span>}</td>
@@ -132,7 +138,7 @@ function Row({ d, axis, flipUp, asOf }: { d: AxisDriver; axis: MarkovAxis; flipU
         <LevelLine levels={d.levels} />
       </td>
       <td className={`${TD} text-slate-400`}>{where}</td>
-      <td className={`${TD} text-right ${tone}`}>{pct(pc)}</td>
+      <td className={`${TD} text-right ${tone}`}>{pct(pc)}<span className="ml-1 text-[0.6rem] font-normal text-slate-600">n={d.n_current ?? (cur === null ? 0 : n[cur])}</span></td>
       <td className={`${TD} text-right text-slate-500`}>{pct(base)}</td>
     </tr>
   );
@@ -178,7 +184,10 @@ export function AxisDriversPanel({ drivers, futures = null }: {
                 <div className="text-xs text-slate-400">
                   {word} <span className="text-slate-200">{pct(c.base_rate)}</span> of the time
                   <span className="mx-1 text-slate-600">→</span>
-                  today <span className={`font-bold ${dir !== null && Math.abs(dir) >= 0.08 ? "text-[var(--cgi-gold)]" : "text-slate-100"}`}>{pct(c.conditioned_p_flip)}</span>
+                  today <span className={`font-bold ${dir !== null && Math.abs(dir) >= 0.08 && (c.n_drivers_noise ?? 0) < c.n_drivers_used ? "text-[var(--cgi-gold)]" : "text-slate-100"}`}>{pct(c.conditioned_p_flip)}</span>
+                  {c.n_drivers_noise !== undefined && c.n_drivers_used > 0 && (
+                    <span className="ml-2 text-[0.62rem] text-slate-500" title={NOISE_TIP}>{c.n_drivers_noise} of {c.n_drivers_used} cells inside noise</span>
+                  )}
                 </div>
               </div>
               {axis === "liquidity" && futures && (

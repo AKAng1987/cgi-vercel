@@ -489,3 +489,20 @@ wrong in FUNDAMENTALS' return-to-shareholders and free-cash-flow figures until 2
 Universe = the eleven Select Sector SPDR holdings (GICS sector), deduplicated on CIK, today's members applied to all
 history. Contribution = (sector capex now - a year ago) / total capex a year ago, matched companies only.
 Check: `api/.venv/bin/python scripts/check_capex.py`.
+
+## Release calendar runs to 2027; driver-table noise flag; consensus-implied read (2026-10-30)
+
+- **Dates.** `api/release_calendar.py` now holds CPI (BLS) and GDP (BEA) for 2027 from the official schedules, FOMC 2027 (the eight
+  the Fed published; Warsh floated six, nothing adopted as of this date), and SLOOS 2027 DERIVED as the Monday after the
+  Jan/Apr/Jul/Oct FOMC (the rule that gives every 2026 date); re-check against model-history after the Feb 2027 print.
+  `freshness.calendar_check` goes amber when FOMC, CPI, GDP or SLOOS has no date in the next 75 days, so a runs-out is loud, not silent.
+  Check: `scripts/check_release_calendar.py`.
+- **Driver tables** (`/cgi`, "what moves each axis"): every cell shows the windows behind it (`n=`) and a cell whose 95% Wilson interval
+  contains the driver's own base rate is plain, not amber or bold ("noise"; tooltip says so); the header says "x of y cells inside
+  noise". With 8-14 drivers per table a looser interval would flag about one in ten by chance. Check: `scripts/check_axis_drivers_noise.py`.
+- **Consensus-implied** (release cards, scorecard column, `get_release_scorecard`): GDP ADVANCE prints and CPI only. Source:
+  TradingView's US calendar via the routine's weekly post (`US` is in `CAL_COUNTRIES`, an 11th row field carries the actual);
+  `api/us_consensus.py` upserts a growing history (`calendar/us_consensus.json`, GET `/api/country_calendar` also returns
+  `us_forecast_missing` so the routine refetches while a print within 4 days has no stored forecast, because TradingView posts
+  the consensus only days ahead). Pre-registered before the release in the same store as the drivers figure; scored after.
+  Evidence and limits: `research/consensus_gap/RESULTS.md`. Check: `scripts/check_us_consensus.py`.

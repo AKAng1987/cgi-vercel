@@ -34,6 +34,7 @@ import boto3
 
 import cache
 import cgi_state
+import us_consensus
 import macro_data
 import release_calendar as cal
 import signals_data
@@ -310,6 +311,20 @@ def _snapshot_drivers(upcoming: list, today: str, hour_utc: int) -> None:
                 continue
             store[key] = {**new, "taken_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
             changed = True
+        # The consensus-implied read is pre-registered the same way (own sub-record, so a missing drivers figure does not
+        # stop it): last value before the print stands, never after it.
+        for u in upcoming:
+            c = u.get("consensus")
+            if not c or u["date"] < today or (u["date"] == today and hour_utc >= 11):
+                continue
+            key = f"{u['date']}|{u['type']}"
+            rec = store.get(key) or {}
+            new_c = {"snapshot_date": today, "implied_flip": c["implied_flip"], "forecast": c["forecast"], "previous": c["previous"]}
+            if (rec.get("consensus") or {}) == new_c:
+                continue
+            rec["consensus"] = new_c
+            store[key] = rec
+            changed = True
         if changed:
             cgi_state.put(PREREG_KEY, store)
     except Exception:  # noqa: BLE001 -- additive; never break the page
@@ -337,6 +352,10 @@ def build_markov_response() -> dict:
         drivers = None
 
     # ── upcoming: one forecast per next release, history + market side by side
+    try:
+        us_snap = us_consensus.read()
+    except Exception:  # noqa: BLE001
+        us_snap = {"at": None, "rows": []}
     upcoming = []
     for r in cal.next_releases(after=today):
         axis, model = r["axis"], r["model"]
@@ -351,6 +370,14 @@ def build_markov_response() -> dict:
         else:
             market = _market_from_drivers(drivers, axis) or _market_from_classifier(latest, axis, s)
         gap = round(market["p_flip"] - p, 3) if market else None
+        # The consensus-implied read: GDP advance prints (the validated case) and CPI (labelled thin). Never for second/third
+        # GDP estimates (no clear difference in the study), FOMC (futures already) or SLOOS (no consensus).
+        consensus = None
+        if r["type"] == "CPI" or (r["type"] == "GDP" and r.get("subtype") == "advance"):
+            try:
+                consensus = us_consensus.implied("cpi" if r["type"] == "CPI" else "gdp", r["date"], s, us_snap)
+            except Exception:  # noqa: BLE001 -- additive; never break the page
+                consensus = None
         upcoming.append({
             "date": r["date"],
             "type": r["type"],
@@ -365,6 +392,7 @@ def build_markov_response() -> dict:
             "drivers": drivers_read,
             "gap": gap,
             "context": _gdpnow_context() if axis == "growth" else None,
+            "consensus": consensus,
         })
 
     _snapshot_drivers(upcoming, today, dt.datetime.now(dt.timezone.utc).hour)
@@ -469,6 +497,10 @@ def build_markov_response() -> dict:
             "p_drivers_note": (prereg.get(f"{r['date']}|{r['type']}") or {}).get("detail"),
             "brier_drivers": (round(((prereg[f"{r['date']}|{r['type']}"]["p_drivers"]) - y) ** 2, 4)
                               if (prereg.get(f"{r['date']}|{r['type']}") or {}).get("p_drivers") is not None else None),
+            # consensus-implied (pre-registered): did the consensus say flip, and was it right
+            "consensus_implied": ((prereg.get(f"{r['date']}|{r['type']}") or {}).get("consensus") or {}).get("implied_flip"),
+            "consensus_hit": ((((prereg.get(f"{r['date']}|{r['type']}") or {}).get("consensus") or {}).get("implied_flip") == flipped)
+                              if ((prereg.get(f"{r['date']}|{r['type']}") or {}).get("consensus") or {}).get("implied_flip") is not None else None),
         })
     claimed = {(e["flip_recorded_on"], e["axis"]) for e in log if e.get("flip_recorded_on")}
     for e in events:
@@ -480,6 +512,7 @@ def build_markov_response() -> dict:
                 "flipped": True, "quadrant_after": None, "brier": None, "brier_market": None,
                 "hit": None, "hit_market": None,
                 "p_drivers": None, "p_drivers_note": None, "brier_drivers": None,
+                "consensus_implied": None, "consensus_hit": None,
             })
     log.sort(key=lambda x: x["date"], reverse=True)
 
@@ -496,6 +529,8 @@ def build_markov_response() -> dict:
         "n_market_scored": len(mkt_scored),
         "brier_market": round(sum(x["brier_market"] for x in mkt_scored) / len(mkt_scored), 4) if mkt_scored else None,
         "hit_rate_market": round(sum(1 for x in mkt_scored if x["hit_market"]) / len(mkt_scored), 3) if mkt_scored else None,
+        "n_consensus_scored": sum(1 for x in scored if x.get("consensus_hit") is not None),
+        "n_consensus_hits": sum(1 for x in scored if x.get("consensus_hit") is True),
         "track_start": TRACK_START,
     }
 

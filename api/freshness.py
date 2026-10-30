@@ -927,6 +927,36 @@ def capex_check(today: Optional[dt.date] = None) -> dict:
         return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
 
 
+CALENDAR_HORIZON_DAYS = 75     # every release type needs a scheduled date inside this window
+
+
+def calendar_problems(today: dt.date, releases: Optional[list[dict]] = None) -> dict:
+    """Pure part of the release-calendar check. The release dates are hardcoded (release_calendar.py); when a type runs
+    out, its cards, per-release P(flip), pre-registration and scorecard go silent without any error. This says so early:
+    a problem when FOMC, CPI, GDP or SLOOS has no scheduled date within the next CALENDAR_HORIZON_DAYS days."""
+    import release_calendar as rc
+
+    rel = rc.RELEASES if releases is None else releases
+    end = (today + dt.timedelta(days=CALENDAR_HORIZON_DAYS)).isoformat()
+    t0 = today.isoformat()
+    problems, nxt = [], {}
+    for kind in ("FOMC", "CPI", "GDP", "SLOOS"):
+        dates = sorted(r["date"] for r in rel if r["type"] == kind and r["date"] >= t0)
+        nxt[kind] = dates[0] if dates else None
+        if not dates or dates[0] > end:
+            problems.append({"check": kind, "detail": (f"no {kind} release scheduled in the next {CALENDAR_HORIZON_DAYS} days "
+                                                       f"(next: {dates[0] if dates else 'none'}); add the new year to release_calendar.py")})
+    last = max((r["date"] for r in rel), default=None)
+    return {"problems": problems, "n_problems": len(problems), "next": nxt, "last_date": last}
+
+
+def calendar_check(today: Optional[dt.date] = None) -> dict:
+    try:
+        return calendar_problems(today or dt.date.today())
+    except Exception as exc:  # noqa: BLE001 -- additive; never break the page
+        return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
+
+
 def build_freshness(today: Optional[dt.date] = None) -> dict:
     erp = erp_check(today)
     fred = fred_crosscheck(today)
@@ -939,6 +969,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     ref = referee(beat.pop("referee_bars", None), today)
     cot = cot_check(today)
     capex = capex_check(today)
+    calendar = calendar_check(today)
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
@@ -952,9 +983,10 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "erp": erp,
         "cot": cot,
         "capex": capex,
+        "release_calendar": calendar,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

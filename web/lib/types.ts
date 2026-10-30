@@ -209,6 +209,20 @@ export interface UpcomingRelease {
   drivers?: MarketRead | null;
   gap: number | null;
   context: { gdpnow: number | null; as_of: string | null } | null;
+  /** GDP advance and CPI only: what the consensus implies for this axis (forecast vs the previous print). */
+  consensus?: ConsensusRead | null;
+}
+
+export interface ConsensusRead {
+  kind: "gdp" | "cpi";
+  forecast: number;
+  previous: number;
+  implied_flip: boolean;
+  gap: number;
+  tie: boolean;
+  row_date: string;
+  as_of: string | null;
+  track: string | null;
 }
 
 export interface MarkovEvent {
@@ -235,6 +249,9 @@ export interface MarkovEvent {
   p_drivers?: number | null;
   p_drivers_note?: string | null;
   brier_drivers?: number | null;
+  /** The consensus-implied read, stored before the release, and whether it matched the outcome. */
+  consensus_implied?: boolean | null;
+  consensus_hit?: boolean | null;
 }
 
 export interface AxisDriver {
@@ -254,6 +271,10 @@ export interface AxisDriver {
   current_tercile?: 0 | 1 | 2 | null;
   p_current?: number | null;
   base_rate?: number | null;
+  /** Windows behind today's cell, its 95% interval, and whether the driver's base rate sits inside it (a cell that tells us nothing). */
+  n_current?: number | null;
+  ci95?: [number, number] | null;
+  noise?: boolean | null;
   window_start?: string | null;
   categorical?: boolean;
   buckets?: Record<string, { n: number; p_flip: number | null }>;
@@ -267,6 +288,7 @@ export interface AxisDriverState {
   drivers: AxisDriver[];
   conditioned_p_flip: number | null;
   n_drivers_used: number;
+  n_drivers_noise?: number;
 }
 
 export interface DriverLevel {
