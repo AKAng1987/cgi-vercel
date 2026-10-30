@@ -38,7 +38,7 @@ import sec_xbrl as sx
 
 _logger = logging.getLogger("cgi_api.capex")
 
-SCHEMA_VERSION = 4   # 4: ofiled1 (OCF's own first-filed dates); 3: rows also carry as-first-reported capex/OCF and first-filed dates (cq1, ocfq1, filed1) for the capex_state study; 2: ocfq
+SCHEMA_VERSION = 6   # 6: response carries `flow` (spender capex vs receiver revenue growth); 5: rq1/rfiled1 (revenue as first reported, for the capex_flow study); 4: ofiled1 (OCF's own first-filed dates); 3: rows also carry as-first-reported capex/OCF and first-filed dates (cq1, ocfq1, filed1) for the capex_state study; 2: ocfq
 KEY = "capex/capex_quarterly.json"          # under cache.PREFIX
 FIRST_QUARTER = "2011Q1"                    # stored; YoY therefore exists from 2012Q1 (XBRL cash-flow facts begin ~2009)
 SHOW_FROM = "2022Q1"                        # first quarter drawn (matches the chart)
@@ -112,6 +112,7 @@ def company_record(ticker: str, sector: str) -> Optional[dict]:
     rev = sx.series(f, "revenue")
     rev_q = {cal_quarter(e): v for e, v in rev.items()}
     cap1 = _by_cal_quarter(sx.cash_quarters_first(f, ("capex", "capex_alt")))
+    rev1 = _by_cal_quarter(sx.cash_quarters_first(f, ("revenue",)))   # income-statement windows difference the same way
     ocf1 = _by_cal_quarter(sx.cash_quarters_first(f, ("op_cash_flow",)))
     cq = {q: round(v[0] / 1e6, 1) for q, v in cap.items() if q >= FIRST_QUARTER}
     filed = {q: v[1] for q, v in cap.items() if q >= FIRST_QUARTER}
@@ -123,7 +124,9 @@ def company_record(ticker: str, sector: str) -> Optional[dict]:
         "cq1": {q: round(v[0] / 1e6, 1) for q, v in cap1.items() if q >= FIRST_QUARTER},
         "filed1": {q: v[1] for q, v in cap1.items() if q >= FIRST_QUARTER},
         "ocfq1": {q: round(v[0] / 1e6, 1) for q, v in ocf1.items() if q >= FIRST_QUARTER},
-        "ofiled1": {q: v[1] for q, v in ocf1.items() if q >= FIRST_QUARTER},   # OCF's OWN first-filed dates (can be later than capex's)
+        "ofiled1": {q: v[1] for q, v in ocf1.items() if q >= FIRST_QUARTER},
+        "rq1": {q: round(v[0] / 1e6, 1) for q, v in rev1.items() if q >= FIRST_QUARTER},      # revenue, first reported
+        "rfiled1": {q: v[1] for q, v in rev1.items() if q >= FIRST_QUARTER},   # OCF's OWN first-filed dates (can be later than capex's)
         "ocf_ttm": _round_m(_ttm({q: v[0] for q, v in ocf.items()})),
         "rev_ttm": _round_m(_ttm(rev_q)),
     }
@@ -291,6 +294,65 @@ def spenders(companies: list[dict], n: int = 10) -> dict:
             "n_with_ttm": len(rows), "ttm_total_b": round(total, 1)}
 
 
+# ── where the money goes: spender capex growth beside receivers' revenue growth ──────────────────────────
+# Same definitions as research/capex_flow (first-reported values, first-filed dates). Descriptive.
+SPENDERS = ("AMZN", "MSFT", "GOOGL", "META", "ORCL")
+# kept in step with fundamentals_data.AI_LAYERS (energy, chips, infrastructure); scripts/check_capex.py compares them
+AI_RECEIVERS = {"energy": ("VST", "CEG", "NRG", "ETN"), "chips": ("NVDA", "AMD", "AVGO", "MU"),
+                "infrastructure": ("VRT", "ANET", "DLR", "SMCI")}
+FLOW_SECTORS = ("Industrials", "Utilities", "Materials")
+FLOW_MIN_SHARE = 0.75
+
+
+def _yoy(members: list[dict], q: str, key: str, min_share: float) -> Optional[float]:
+    p = q_shift(q, -4)
+    now = prior = 0.0
+    n = 0
+    for c in members:
+        a, b = c.get(key, {}).get(q), c.get(key, {}).get(p)
+        if a is None or b is None or b <= 0:
+            continue
+        now += a
+        prior += b
+        n += 1
+    if not members or prior <= 0 or n < max(1, -(-int(min_share * 100 * len(members)) // 100)):
+        return None
+    return round((now / prior - 1) * 100, 1)
+
+
+def flow_view(companies: list[dict], newest: str) -> dict:
+    by = {c["t"]: c for c in companies}
+    spend = [by[t] for t in SPENDERS if t in by]
+    groups = {"AI receivers (12)": [by[t] for layer in AI_RECEIVERS.values() for t in layer if t in by]}
+    for sec in FLOW_SECTORS:
+        groups[sec] = [c for c in companies if c.get("sector") == sec and c["t"] not in SPENDERS]
+    qs = q_range(SHOW_FROM, newest)
+    series, corr = {}, {}
+    for name, members in groups.items():
+        rows = []
+        for q in qs:
+            rows.append({"q": q, "revenue_yoy": _yoy(members, q, "rq1", FLOW_MIN_SHARE),
+                         "spender_capex_yoy": _yoy(spend, q, "cq1", 1.0)})
+        series[name] = rows
+        # whole-sample, overlapping, descriptive: capex growth k quarters earlier vs revenue growth now
+        full = {r["q"]: r for r in [{"q": q, "r": _yoy(members, q, "rq1", FLOW_MIN_SHARE), "g": _yoy(spend, q, "cq1", 1.0)}
+                                      for q in q_range("2013Q1", newest)]}
+        c = {}
+        for k in range(0, 5):
+            pairs = [(full[q_shift(q, -k)]["g"], full[q]["r"]) for q in full
+                     if q_shift(q, -k) in full and full[q]["r"] is not None and full[q_shift(q, -k)]["g"] is not None]
+            if len(pairs) > 6:
+                xs, ys = zip(*pairs)
+                mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+                sxx = sum((x - mx) ** 2 for x in xs)
+                syy = sum((y - my) ** 2 for y in ys)
+                sxy = sum((x - mx) * (y - my) for x, y in pairs)
+                c[str(k)] = {"n": len(pairs), "corr": round(sxy / (sxx * syy) ** 0.5, 2) if sxx > 0 and syy > 0 else None}
+        corr[name] = c
+    return {"series": series, "lead_lag": corr, "spenders": [c["t"] for c in spend],
+            "members": {k: [c["t"] for c in v] for k, v in groups.items() if k.startswith("AI")}}
+
+
 # ── the response ────────────────────────────────────────────────────────────
 
 CAVEAT = ("Capex is cash paid for property, plant and equipment as filed with the SEC (finance leases and "
@@ -318,5 +380,6 @@ def build_capex_response() -> dict:
         "n_companies": len(comps), "n_reporting_capex": sum(1 for c in comps if c["cq"]),
         "n_failed": len(snap.get("failed", [])),
         "quarters": rows, "spenders": spenders(comps),
+        "flow": flow_view(comps, newest),
         "caveat": CAVEAT,
     }

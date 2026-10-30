@@ -1284,5 +1284,20 @@ export interface CapexResponse {
   n_reporting_capex?: number;
   n_failed?: number;
   quarters?: CapexQuarter[];
+  flow?: CapexFlow;
   spenders?: { top: CapexSpender[]; top5_share_pct: number | null; n_with_ttm: number; ttm_total_b: number };
+}
+
+export interface CapexFlowPoint {
+  q: string;
+  revenue_yoy: number | null;
+  spender_capex_yoy: number | null;
+}
+
+/** Where the money goes: the five hyperscalers' capex growth beside receivers' revenue growth (research/capex_flow). */
+export interface CapexFlow {
+  series: Record<string, CapexFlowPoint[]>;
+  lead_lag: Record<string, Record<string, { n: number; corr: number | null }>>;
+  spenders: string[];
+  members: Record<string, string[]>;
 }

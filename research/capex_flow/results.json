@@ -1,0 +1,611 @@
+{
+ "snapshot_built": "2026-10-30T04:11:22+00:00",
+ "last_quarter_with_revenue": "2026Q3",
+ "members": {
+  "AI receivers": [
+   "AMD",
+   "ANET",
+   "AVGO",
+   "CEG",
+   "DLR",
+   "ETN",
+   "MU",
+   "NRG",
+   "NVDA",
+   "SMCI",
+   "VRT",
+   "VST"
+  ],
+  "AI: energy": [
+   "VST",
+   "CEG",
+   "NRG",
+   "ETN"
+  ],
+  "AI: chips": [
+   "NVDA",
+   "AMD",
+   "AVGO",
+   "MU"
+  ],
+  "AI: infrastructure": [
+   "VRT",
+   "ANET",
+   "DLR",
+   "SMCI"
+  ],
+  "Industrials": [
+   "CAT",
+   "GE",
+   "RTX",
+   "GEV",
+   "UNP",
+   "DE",
+   "ETN",
+   "UBER",
+   "BA",
+   "LMT",
+   "PH",
+   "ADP",
+   "TT",
+   "CSX",
+   "JCI",
+   "EMR",
+   "VRT",
+   "PWR",
+   "GD",
+   "MMM",
+   "WM",
+   "UPS",
+   "HWM",
+   "NSC",
+   "NOC",
+   "CTAS",
+   "CMI",
+   "URI",
+   "ITW",
+   "HON",
+   "BE",
+   "FDX",
+   "TDG",
+   "FAST",
+   "GWW",
+   "AME",
+   "HONA",
+   "PCAR",
+   "ROK",
+   "LHX",
+   "DAL",
+   "WAB",
+   "FIX",
+   "CARR",
+   "RSG",
+   "FERG",
+   "PAYX",
+   "AXON",
+   "UAL",
+   "ODFL",
+   "EME",
+   "DOV",
+   "OTIS",
+   "IR",
+   "EXPD",
+   "VLTO",
+   "VRSK",
+   "CPRT",
+   "HUBB",
+   "LUV",
+   "EFX",
+   "XYL",
+   "BR",
+   "FTV",
+   "DD",
+   "SNA",
+   "J",
+   "IEX",
+   "LDOS",
+   "NDSN",
+   "JBHT",
+   "ALLE",
+   "SWK",
+   "MAS",
+   "CHRW",
+   "TXT",
+   "FDXF",
+   "GNRC",
+   "HII",
+   "LII",
+   "PNR",
+   "ROL",
+   "AOS"
+  ],
+  "Utilities": [
+   "NEE",
+   "SO",
+   "DUK",
+   "CEG",
+   "AEP",
+   "D",
+   "SRE",
+   "ETR",
+   "XEL",
+   "EXC",
+   "VST",
+   "ED",
+   "PEG",
+   "WEC",
+   "AEE",
+   "PCG",
+   "ATO",
+   "AWK",
+   "DTE",
+   "CNP",
+   "PPL",
+   "ES",
+   "FE",
+   "EIX",
+   "CMS",
+   "NI",
+   "NRG",
+   "EVRG",
+   "LNT",
+   "PNW",
+   "AES"
+  ],
+  "Materials": [
+   "LIN",
+   "NEM",
+   "FCX",
+   "ECL",
+   "VMC",
+   "NUE",
+   "APD",
+   "STLD",
+   "MLM",
+   "SHW",
+   "CRH",
+   "PPG",
+   "DOW",
+   "IFF",
+   "PKG",
+   "SW",
+   "AMCR",
+   "IP",
+   "CF",
+   "LYB",
+   "BALL",
+   "AVY",
+   "ALB",
+   "MOS"
+  ]
+ },
+ "compare": {
+  "AI receivers|lag0": {
+   "n": 17,
+   "first": "2022Q1",
+   "last": "2026Q1",
+   "mse_base": 215.44460710166356,
+   "mse_cand": 236.12672234938526,
+   "rel_gain_pct": -9.599736807504433,
+   "mean_diff": -20.682115247721722,
+   "ci95": [
+    -130.78219229941104,
+    41.53513930401728
+   ],
+   "helps": false,
+   "tier": "PRIMARY"
+  },
+  "Industrials|lag0": {
+   "n": 24,
+   "first": "2020Q2",
+   "last": "2026Q1",
+   "mse_base": 46.14197917370792,
+   "mse_cand": 43.52271615723433,
+   "rel_gain_pct": 5.676529406363362,
+   "mean_diff": 2.6192630164735933,
+   "ci95": [
+    -3.155465072117572,
+    6.505095908121942
+   ],
+   "helps": false,
+   "tier": "SECONDARY"
+  },
+  "Utilities|lag0": {
+   "n": 22,
+   "first": "2020Q3",
+   "last": "2025Q4",
+   "mse_base": 69.71435363480643,
+   "mse_cand": 69.30019647363748,
+   "rel_gain_pct": 0.5940773163278235,
+   "mean_diff": 0.4141571611689267,
+   "ci95": [
+    -8.105953448698774,
+    8.337385712487523
+   ],
+   "helps": false,
+   "tier": "SECONDARY"
+  },
+  "Materials|lag0": {
+   "n": 24,
+   "first": "2020Q2",
+   "last": "2026Q1",
+   "mse_base": 99.8842718057481,
+   "mse_cand": 102.1845120495791,
+   "rel_gain_pct": -2.302905354613216,
+   "mean_diff": -2.300240243830984,
+   "ci95": [
+    -9.066769509869651,
+    5.489741183584068
+   ],
+   "helps": false,
+   "tier": "SECONDARY"
+  },
+  "AI: energy|lag0": {
+   "n": 17,
+   "first": "2022Q1",
+   "last": "2026Q1",
+   "mse_base": 144.0792107230801,
+   "mse_cand": 184.2183506593079,
+   "rel_gain_pct": -27.859078165950745,
+   "mean_diff": -40.139139936227835,
+   "ci95": [
+    -197.82811354978173,
+    141.86308276550176
+   ],
+   "helps": false,
+   "tier": "exploratory"
+  },
+  "AI: chips|lag0": {
+   "n": 24,
+   "first": "2020Q2",
+   "last": "2026Q1",
+   "mse_base": 368.2842613612156,
+   "mse_cand": 390.34736384550223,
+   "rel_gain_pct": -5.990780709102039,
+   "mean_diff": -22.06310248428665,
+   "ci95": [
+    -116.36781418472397,
+    122.24769949519896
+   ],
+   "helps": false,
+   "tier": "exploratory"
+  },
+  "AI: infrastructure|lag0": {
+   "n": 24,
+   "first": "2020Q2",
+   "last": "2026Q1",
+   "mse_base": 322.89733629242477,
+   "mse_cand": 342.6587014441479,
+   "rel_gain_pct": -6.1200149182484065,
+   "mean_diff": -19.761365151723115,
+   "ci95": [
+    -57.36746035287431,
+    3.297778908115192
+   ],
+   "helps": false,
+   "tier": "exploratory"
+  },
+  "AI receivers|lag1": {
+   "n": 16,
+   "first": "2022Q2",
+   "last": "2026Q1",
+   "mse_base": 212.52354221677115,
+   "mse_cand": 231.3854586656805,
+   "rel_gain_pct": -8.87521271863163,
+   "mean_diff": -18.861916448909355,
+   "ci95": [
+    -61.577129199080716,
+    22.21927032830596
+   ],
+   "helps": false,
+   "tier": "exploratory"
+  },
+  "AI receivers|lag2": {
+   "n": 15,
+   "first": "2022Q3",
+   "last": "2026Q1",
+   "mse_base": 222.96957323641286,
+   "mse_cand": 248.55182541971269,
+   "rel_gain_pct": -11.473427433157068,
+   "mean_diff": -25.582252183299882,
+   "ci95": [
+    -114.62457982509747,
+    82.26098872292005
+   ],
+   "helps": false,
+   "tier": "exploratory"
+  }
+ },
+ "counts": {
+  "comparisons_run": 9,
+  "claimed": [],
+  "note": "9 comparisons at 95% (one-sided rule): expect about 0.2 false claims by chance"
+ },
+ "robustness": {},
+ "lead_lag": {
+  "AI receivers": {
+   "0": {
+    "n": 34,
+    "corr": 0.6193074283595018
+   },
+   "1": {
+    "n": 34,
+    "corr": 0.5752318630812993
+   },
+   "2": {
+    "n": 33,
+    "corr": 0.3788387922312284
+   },
+   "3": {
+    "n": 33,
+    "corr": 0.19973417394281168
+   },
+   "4": {
+    "n": 33,
+    "corr": 0.1305034390547423
+   }
+  },
+  "AI: chips": {
+   "0": {
+    "n": 41,
+    "corr": 0.6071071050513652
+   },
+   "1": {
+    "n": 40,
+    "corr": 0.42995027795032015
+   },
+   "2": {
+    "n": 39,
+    "corr": 0.23172985066556612
+   },
+   "3": {
+    "n": 38,
+    "corr": 0.05185382088406099
+   },
+   "4": {
+    "n": 37,
+    "corr": -0.10153787894924847
+   }
+  },
+  "AI: energy": {
+   "0": {
+    "n": 34,
+    "corr": 0.02074508302658605
+   },
+   "1": {
+    "n": 34,
+    "corr": 0.2659841215823679
+   },
+   "2": {
+    "n": 33,
+    "corr": 0.2563784923518188
+   },
+   "3": {
+    "n": 33,
+    "corr": 0.20414378304726627
+   },
+   "4": {
+    "n": 33,
+    "corr": 0.3202025129031592
+   }
+  },
+  "AI: infrastructure": {
+   "0": {
+    "n": 41,
+    "corr": 0.4432199816796439
+   },
+   "1": {
+    "n": 40,
+    "corr": 0.3689463908050813
+   },
+   "2": {
+    "n": 39,
+    "corr": 0.24362901120323932
+   },
+   "3": {
+    "n": 38,
+    "corr": 0.08559214294353866
+   },
+   "4": {
+    "n": 37,
+    "corr": 0.01875033626229294
+   }
+  },
+  "Industrials": {
+   "0": {
+    "n": 41,
+    "corr": 0.2768521779908929
+   },
+   "1": {
+    "n": 40,
+    "corr": 0.304345058258466
+   },
+   "2": {
+    "n": 39,
+    "corr": 0.43565325422045215
+   },
+   "3": {
+    "n": 38,
+    "corr": 0.3071969031590223
+   },
+   "4": {
+    "n": 37,
+    "corr": 0.3690765130066173
+   }
+  },
+  "Utilities": {
+   "0": {
+    "n": 39,
+    "corr": 0.06091748912551707
+   },
+   "1": {
+    "n": 39,
+    "corr": 0.2619359252036124
+   },
+   "2": {
+    "n": 38,
+    "corr": 0.2495365675785617
+   },
+   "3": {
+    "n": 37,
+    "corr": 0.09003517400250856
+   },
+   "4": {
+    "n": 36,
+    "corr": 0.330429392753264
+   }
+  },
+  "Materials": {
+   "0": {
+    "n": 41,
+    "corr": 0.3583358063105494
+   },
+   "1": {
+    "n": 40,
+    "corr": 0.37391090100744373
+   },
+   "2": {
+    "n": 39,
+    "corr": 0.4167578864801476
+   },
+   "3": {
+    "n": 38,
+    "corr": 0.33600021143684417
+   },
+   "4": {
+    "n": 37,
+    "corr": 0.2128623754896079
+   }
+  }
+ },
+ "latest": {
+  "AI receivers": [
+   {
+    "q": "2025Q1",
+    "revenue_growth": 37.3,
+    "spender_capex_growth": 69.2
+   },
+   {
+    "q": "2025Q2",
+    "revenue_growth": 31.6,
+    "spender_capex_growth": 74.9
+   },
+   {
+    "q": "2025Q3",
+    "revenue_growth": 35.5,
+    "spender_capex_growth": 72.9
+   },
+   {
+    "q": "2025Q4",
+    "revenue_growth": 51.4,
+    "spender_capex_growth": 71.2
+   },
+   {
+    "q": "2026Q1",
+    "revenue_growth": 68.7,
+    "spender_capex_growth": 90.8
+   },
+   {
+    "q": "2026Q2",
+    "revenue_growth": 96.9,
+    "spender_capex_growth": 86.5
+   }
+  ],
+  "Industrials": [
+   {
+    "q": "2025Q1",
+    "revenue_growth": -0.4,
+    "spender_capex_growth": 69.2
+   },
+   {
+    "q": "2025Q2",
+    "revenue_growth": 5.9,
+    "spender_capex_growth": 74.9
+   },
+   {
+    "q": "2025Q3",
+    "revenue_growth": 7.6,
+    "spender_capex_growth": 72.9
+   },
+   {
+    "q": "2025Q4",
+    "revenue_growth": 10.5,
+    "spender_capex_growth": 71.2
+   },
+   {
+    "q": "2026Q1",
+    "revenue_growth": 8.1,
+    "spender_capex_growth": 90.8
+   },
+   {
+    "q": "2026Q2",
+    "revenue_growth": 11.4,
+    "spender_capex_growth": 86.5
+   }
+  ],
+  "Utilities": [
+   {
+    "q": "2024Q4",
+    "revenue_growth": 1.7,
+    "spender_capex_growth": 73.1
+   },
+   {
+    "q": "2025Q1",
+    "revenue_growth": 11.9,
+    "spender_capex_growth": 69.2
+   },
+   {
+    "q": "2025Q2",
+    "revenue_growth": 6.6,
+    "spender_capex_growth": 74.9
+   },
+   {
+    "q": "2025Q3",
+    "revenue_growth": 9.3,
+    "spender_capex_growth": 72.9
+   },
+   {
+    "q": "2025Q4",
+    "revenue_growth": 12.2,
+    "spender_capex_growth": 71.2
+   },
+   {
+    "q": "2026Q1",
+    "revenue_growth": 10.4,
+    "spender_capex_growth": 90.8
+   }
+  ],
+  "Materials": [
+   {
+    "q": "2025Q1",
+    "revenue_growth": 2.8,
+    "spender_capex_growth": 69.2
+   },
+   {
+    "q": "2025Q2",
+    "revenue_growth": 7.5,
+    "spender_capex_growth": 74.9
+   },
+   {
+    "q": "2025Q3",
+    "revenue_growth": 3.2,
+    "spender_capex_growth": 72.9
+   },
+   {
+    "q": "2025Q4",
+    "revenue_growth": 6.2,
+    "spender_capex_growth": 71.2
+   },
+   {
+    "q": "2026Q1",
+    "revenue_growth": 10.8,
+    "spender_capex_growth": 90.8
+   },
+   {
+    "q": "2026Q2",
+    "revenue_growth": 8.0,
+    "spender_capex_growth": 86.5
+   }
+  ]
+ }
+}

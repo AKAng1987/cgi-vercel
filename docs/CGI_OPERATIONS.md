@@ -519,3 +519,12 @@ routine's freshness read triggers a refresh behind it), which gives the 1-week a
 `rate_path` is amber when fewer than 6 SOFR contracts or 3 meetings can be priced. Far fed funds contracts trade thinly (the
 card says so); the SOFR strip is the liquid shape beyond a year. Our own arithmetic; nothing copied from any third-party report.
 Check: `scripts/check_rate_path.py`.
+
+## Where the money goes (Fundamentals, under the spenders table; 2026-10-30)
+
+`capex_data.flow_view` draws the five spenders' capex growth beside the revenue growth of the 12 AI suppliers (lists kept equal to
+`fundamentals_data.AI_LAYERS`, checked by `scripts/check_capex.py`) and the Industrials/Utilities/Materials sectors, from the stored
+snapshot (first-reported values: the snapshot rows carry `cq1`, `rq1`, `ocfq1` and first-filed dates `filed1`, `rfiled1`, `ofiled1`;
+`sec_xbrl.cash_quarters_first` takes the EARLIEST filing across tags). Descriptive only: `research/capex_flow/RESULTS.md` found no
+out-of-sample forecasting value beyond the suppliers' own trend, and the caption says so. Point-in-time studies from XBRL must use the
+first-filed fields, never `filed`/`cq` (latest restatement, a year late).

@@ -458,10 +458,15 @@ def cash_quarters_first(facts: dict, measures: tuple[str, ...]) -> dict[str, tup
     year's 10-Q carries this year's quarter as a comparative, so its "filed" date is a year late. For asking what was known on
     a given day, take for each cumulative window the value from its EARLIEST filing, difference those, and date the quarter by
     the later of the two windows' first filings (Q1 alone: its own first filing).
+
+    A filer that switched tags (AWK) can report the same quarter under two tags; the candidate with the EARLIEST filing date
+    wins (ties: the earlier tag in the chain), so a quarter is dated by when it first appeared under any tag, not by tag order.
     """
-    out: dict[str, tuple[float, str]] = {}
+    cands: dict[str, list[tuple[str, int, float]]] = {}    # end -> [(filed, chain order, value)]
+    order = 0
     for m in measures:
         for _tag, node in _nodes(facts, m):
+            order += 1
             cum: dict[tuple[str, int], tuple[str, str, float]] = {}
             for r in _usd_rows(node):
                 st, e, filed, v = r.get("start"), r.get("end"), r.get("filed", ""), r.get("val")
@@ -474,20 +479,20 @@ def cash_quarters_first(facts: dict, measures: tuple[str, ...]) -> dict[str, tup
                 key = (st, k)
                 if key not in cum or filed < cum[key][1]:
                     cum[key] = (e, filed, float(v))
-            for s in sorted({s for s, _k in cum}):
+            for s_ in sorted({s_ for s_, _k in cum}):
                 for k in (1, 2, 3, 4):
-                    cur = cum.get((s, k))
+                    cur = cum.get((s_, k))
                     if cur is None:
                         continue
                     if k == 1:
                         val, filed = cur[2], cur[1]
                     else:
-                        prev = cum.get((s, k - 1))
+                        prev = cum.get((s_, k - 1))
                         if prev is None:
                             continue
                         val, filed = cur[2] - prev[2], max(cur[1], prev[1])
-                    out.setdefault(cur[0], (val, filed))
-    return out
+                    cands.setdefault(cur[0], []).append((filed, order, val))
+    return {e: (min(c)[2], min(c)[0]) for e, c in cands.items()}
 
 
 def cash_series(facts: dict, measure: str) -> dict[str, float]:

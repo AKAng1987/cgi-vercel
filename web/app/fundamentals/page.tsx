@@ -5,6 +5,7 @@ import { PricedIn } from "../components/fundamentals/PricedIn";
 import { FundamentalsResponse, FundRollup, CustomerLinksResponse, CapexResponse } from "@/lib/types";
 import { CapexContribution } from "../components/fundamentals/CapexContribution";
 import { CapexSpenders } from "../components/fundamentals/CapexSpenders";
+import { CapexFlow } from "../components/fundamentals/CapexFlow";
 import { EarningsLedger } from "../components/fundamentals/EarningsLedger";
 import { FundamentalsTable } from "../components/fundamentals/FundamentalsTable";
 
@@ -193,6 +194,7 @@ export default async function FundamentalsPage() {
           <div className="mt-3">
             <CapexSpenders top={capex.spenders.top} top5Share={capex.spenders.top5_share_pct} />
           </div>
+          {capex.flow && <CapexFlow flow={capex.flow} />}
           <p className="mt-2 text-[0.62rem] leading-relaxed text-slate-600">
             {capex.caveat} {capex.n_reporting_capex} of {capex.n_companies} companies report capex
             {capex.built_at ? `; snapshot built ${capex.built_at.slice(0, 10)}` : ""}.

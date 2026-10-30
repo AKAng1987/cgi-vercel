@@ -169,4 +169,20 @@ check("latest-filing reader: Q1 restated 11bn filed 2026-04-30", last["2025-03-3
 check("first-filing reader: Q1 10bn filed 2025-04-30", first["2025-03-31"], (10e9, "2025-04-30"))
 check("first-filing reader: Q2 = 25 - 10 = 15bn, dated by the later first filing", first["2025-06-30"], (15e9, "2025-07-30"))
 
+# 13. the flow view: group growth arithmetic, coverage floor, and the receiver lists match the Fundamentals layer cake
+import fundamentals_data as fdl  # noqa: E402
+for layer in ("energy", "chips", "infrastructure"):
+    check(f"AI receivers '{layer}' match fundamentals_data.AI_LAYERS", list(cd.AI_RECEIVERS[layer]), fdl.AI_LAYERS[layer])
+a = {"t": "A", "rq1": {"2024Q1": 100.0, "2025Q1": 130.0}}
+b = {"t": "B", "rq1": {"2024Q1": 100.0, "2025Q1": 110.0}}
+check("group yoy: (130+110)/(100+100) - 1 = 20%", cd._yoy([a, b], "2025Q1", "rq1", 0.75), 20.0)
+check("a member with no prior year drops out; 1 of 2 is under the 75% floor", cd._yoy([a, {"t": "C", "rq1": {"2025Q1": 5.0}}], "2025Q1", "rq1", 0.75), None)
+check("all five spenders required when the floor is 1.0", cd._yoy([a, {"t": "C", "rq1": {}}], "2025Q1", "rq1", 1.0), None)
+
+# 14. a quarter reported under two tags is dated by the EARLIEST filing, not by tag order
+f = {"facts": {"us-gaap": {
+    "PaymentsToAcquirePropertyPlantAndEquipment": {"units": {"USD": [row("2025-01-01", "2025-03-31", 10e9, "2026-04-30")]}},       # chain order 1, filed a year later
+    "PaymentsToAcquireProductiveAssets": {"units": {"USD": [row("2025-01-01", "2025-03-31", 9e9, "2025-04-30")]}}}}}             # chain order 2, filed first
+check("earliest filing across tags wins", sx.cash_quarters_first(f, ("capex", "capex_alt"))["2025-03-31"], (9e9, "2025-04-30"))
+
 sys.exit(1 if fails else 0)

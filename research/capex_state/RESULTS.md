@@ -8,19 +8,20 @@ snapshot with `api/.venv/bin/python ~/market-dashboard/scripts/capex_build.py --
 
 **No. Out of sample, neither capex growth, nor its acceleration, nor the funding gap improved a forecast of the S&P 500's next
 1-month or 3-month return, 3-month worst drawdown, or 3-month volatility beyond regime + 20-day volatility. 0 of 12 comparisons
-helped; the candidate was worse than the baseline in all 12, and clearly worse (CI wholly below zero) in 5.** Primary (capex growth
-tercile -> 3-month worst drawdown): the candidate's squared error was 6.4% higher, CI of the paired difference [-6.2, +0.7] (negative
-= worse). Secondary (funding gap tercile -> 3-month return): 6.6% higher, CI [-8.6, +0.5]. With 12 comparisons in this run
+helped; the candidate was worse than the baseline in all 12, and clearly worse (CI wholly below zero) in 4.** Primary (capex growth
+tercile -> 3-month worst drawdown): the candidate's squared error was 5.6% higher, CI of the paired difference [-5.3, +0.6] (negative
+= worse). Secondary (funding gap tercile -> 3-month return): 6.2% higher, CI [-10.2, +2.3]. With 12 comparisons in this run
 about 0.6 false claims were expected (0.3 given the one-sided rule); none was made.
 
-**There were three runs, and the first two had date bugs.** Run 1 dated each quarter by the date of the LATEST filing that repeats it
+**There were four runs, and the first three had date bugs.** Run 1 dated each quarter by the date of the LATEST filing that repeats it
 (next year's 10-Q carries it as a comparative), so the features were about 15 months stale, and the "funding gap" came from a
 median of 13 companies. A cold audit found this. Run 2 used each quarter's FIRST filing date and the value as first
 reported, requires 80% coverage for both quarters used in the acceleration and 150 companies for the funding gap. The reported
 quarter is now a median 92 days old at the decision date (p10 61, p90 123), the first-filing lag is a median 34 days for Q1-Q3 and
 52 for Q4, and a growth figure exists for all 168 months. A second cold audit found run 2 still dated operating cash flow by the capex filing date (3.4% of quarters, mostly a year
-late); run 3 (this one) gates it on its own first-filed date. Runs 1 and 2 also reached 0 of 12 (11 and 12 worse); 36 comparisons
-were run in all. Run 1's descriptive hint (low capex growth followed by lower returns, CI [-7.8, -1.1]) reversed sign in run 2 (bottom tercile
+late); run 3 gated it on its own first-filed date. A third audit (of the capex_flow study) found that a company that switched XBRL tags (AWK)
+was dated by tag order, not by first filing; run 4 (this one, 2026-10-30) takes the earliest filing across tags. Runs 1 to 3 also reached
+0 of 12 (11, 12 and 12 worse); 48 comparisons were run in all. Run 1's descriptive hint (low capex growth followed by lower returns, CI [-7.8, -1.1]) reversed sign in run 2 (bottom tercile
 +2.6 points, CI [-0.7, +5.9] in runs 2 and 3): it was an artefact of stale dates, which is why the tercile tables below are not read as a signal.
 
 ## What was tested
