@@ -506,3 +506,16 @@ Check: `api/.venv/bin/python scripts/check_capex.py`.
   `us_forecast_missing` so the routine refetches while a print within 4 days has no stored forecast, because TradingView posts
   the consensus only days ahead). Pre-registered before the release in the same store as the drivers figure; scored after.
   Evidence and limits: `research/consensus_gap/RESULTS.md`. Check: `scripts/check_us_consensus.py`.
+
+## Rate path priced by futures (MACRO, 2026-10-30)
+
+`api/rate_path.py`, `GET /api/rate-path` (6 h cache), card `RatePathCard` under the FOMC odds on MACRO, MCP `get_rate_path`.
+Fed funds futures (ZQ, EFFR basis): the expected rate after each meeting is reused from `macro_data.build_fomc_probabilities`
+(not recomputed). SOFR futures (SR3, SOFR basis, yfinance `SR3Z26.CME`): `100 - price` is the average SOFR over the contract's
+reference quarter (third Wednesday of the contract month to the third Wednesday three months on), 12 quarters out. The two
+strips are on different rates; the SOFR-EFFR gap (FRED SOFR vs EFFR) is shown, not netted, and each SOFR point is compared with
+the ZQ path where the ZQ path covers its quarter. A daily snapshot is appended to `Cache/macro/stir/history.json` (the morning
+routine's freshness read triggers a refresh behind it), which gives the 1-week and 4-week "moved" columns. Freshness block
+`rate_path` is amber when fewer than 6 SOFR contracts or 3 meetings can be priced. Far fed funds contracts trade thinly (the
+card says so); the SOFR strip is the liquid shape beyond a year. Our own arithmetic; nothing copied from any third-party report.
+Check: `scripts/check_rate_path.py`.

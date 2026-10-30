@@ -957,6 +957,33 @@ def calendar_check(today: Optional[dt.date] = None) -> dict:
         return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
 
 
+def rate_path_problems(payload: Optional[dict]) -> dict:
+    """Pure part of the rate-path check: enough futures quotes came back to draw a path."""
+    if not payload:
+        return {"problems": [{"check": "missing", "detail": "no rate path payload"}], "n_problems": 1}
+    problems = []
+    nq = payload.get("n_sr3_quoted", 0)
+    na = sum(1 for m in payload.get("meetings", []) if m.get("available"))
+    if nq < 6:
+        problems.append({"check": "sofr_futures", "detail": f"only {nq} of {payload.get('n_sr3')} SOFR futures quoted (yfinance)"})
+    if na < 3:
+        problems.append({"check": "fed_funds_futures", "detail": f"only {na} FOMC meetings priced from fed funds futures"})
+    return {"problems": problems, "n_problems": len(problems), "n_sr3_quoted": nq, "n_meetings_priced": na,
+            "history_days": payload.get("history_days"), "as_of": payload.get("as_of")}
+
+
+def rate_path_check() -> dict:
+    """Futures-implied rate path health. Also what keeps the daily snapshot going: the morning routine reads freshness every
+    day, and this refreshes the path behind it (non-blocking), which appends that day's snapshot."""
+    import cache
+    import rate_path
+
+    try:
+        return rate_path_problems(cache.get_or_fetch_bg("rate_path", rate_path.build_rate_path))
+    except Exception as exc:  # noqa: BLE001 -- additive; never break the page
+        return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
+
+
 def build_freshness(today: Optional[dt.date] = None) -> dict:
     erp = erp_check(today)
     fred = fred_crosscheck(today)
@@ -970,6 +997,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     cot = cot_check(today)
     capex = capex_check(today)
     calendar = calendar_check(today)
+    ratepath = rate_path_check()
     return {
         "as_of": (today or dt.date.today()).isoformat(),
         "automated": fred,
@@ -984,9 +1012,10 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "cot": cot,
         "capex": capex,
         "release_calendar": calendar,
+        "rate_path": ratepath,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"] + ratepath["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

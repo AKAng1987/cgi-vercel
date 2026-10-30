@@ -17,7 +17,7 @@ export const revalidate = 0;
 export const maxDuration = 60;
 
 const ALLOWED: RegExp[] = [
-  /^api\/(live|markov|countries|priced-in|freshness|watchlists|universe|mixture|themes|fundamentals|capex)$/,
+  /^api\/(live|markov|countries|priced-in|freshness|watchlists|universe|mixture|themes|fundamentals|capex|rate-path)$/,
   /^api\/cot\/public$/,
   /^api\/backtest\/current$/,
   /^api\/backtest\/[1-4]\/[1-4]$/,

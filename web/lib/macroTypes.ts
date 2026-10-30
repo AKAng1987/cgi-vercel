@@ -194,3 +194,60 @@ export interface GdpNowcastFreshness {
   reason?: string;
   note?: string;
 }
+
+/** /api/rate-path: what fed funds (ZQ) and SOFR (SR3) futures price for the policy rate. A market read, not a forecast. */
+export interface RatePathMeeting {
+  date: string;
+  available: boolean;
+  reason?: string | null;
+  post_rate?: number;
+  step_bp?: number;
+  cum_bp?: number | null;
+  p_hike?: number;
+  p_hold?: number;
+  p_cut?: number;
+  most_likely?: string;
+  confident?: boolean;
+  ticker?: string;
+}
+
+export interface RatePathSr3 {
+  ticker: string;
+  label: string;
+  start: string;
+  end: string;
+  price: number | null;
+  implied_sofr: number | null;
+  zq_path_avg?: number | null;
+  vs_zq_bp?: number | null;
+}
+
+export interface RatePathMove {
+  snapshot_date: string;
+  meetings: { date: string; was: number; now: number; change_bp: number }[];
+  sr3: { ticker: string; label: string; was: number; now: number; change_bp: number }[];
+}
+
+export interface RatePathExtreme {
+  date: string;
+  rate: number;
+  bp_vs_now: number | null;
+}
+
+export interface RatePath {
+  as_of: string;
+  effr: number | null;
+  target: [number | null, number | null];
+  sofr: { date: string; value: number } | null;
+  sofr_minus_effr_bp: number | null;
+  meetings: RatePathMeeting[];
+  sr3: RatePathSr3[];
+  peak_sofr: RatePathExtreme | null;
+  trough_sofr: RatePathExtreme | null;
+  peak_fed_funds: RatePathExtreme | null;
+  moved: { week: RatePathMove | null; four_weeks: RatePathMove | null };
+  n_sr3_quoted: number;
+  n_sr3: number;
+  history_days: number;
+  caveat: string;
+}

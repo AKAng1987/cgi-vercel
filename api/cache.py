@@ -57,6 +57,7 @@ TTL_HOURS: dict[str, float] = {
     "watchlists": 6.0,  # TradingView list contents for the cloud routine. Was 34h: a list built the morning of a release kept pointing at that release for a day after it printed (CPI 2026-10-14). 6h means the next morning run always rebuilds, so "if next flips" moves to the next release on its own.
     "mixture": 6.0,  # probability-weighted returns across now / if-next-flips; moves with p_flip
     "fundamentals": 24.0,  # quarterly data; 24h is ample and halves the SEC load
+    "rate_path": 6.0,  # futures-implied policy-rate path (ZQ + SR3 via yfinance); a daily snapshot is stored beside it
     "capex": 24.0,  # arithmetic on a stored SEC snapshot (capex_build.py); 24h is ample
     "etf_constituents": 168.0,  # ETF books move slowly; 7d, and the pull is ~90s
     "brief_daily": 6.0,
@@ -90,6 +91,7 @@ TTL_HOURS: dict[str, float] = {
 SCHEMA_FROM_MODULE: dict[str, str] = {
     "countries": "country_data:SCHEMA_VERSION",
     "capex": "capex_data:SCHEMA_VERSION",
+    "rate_path": "rate_path:SCHEMA_VERSION",
     "context_tables": "context_tables:SCHEMA_VERSION",
     # BOTH fomc keys point at the same constant. The scrape fix changed the
     # CALENDAR, and the probability method depends on how far that calendar
@@ -161,6 +163,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "customer_links": 1,
     "brief_weekly": 6,  # 2026-10-20: same. v5 2026-10-09: same as brief_daily.  # 2026-10-04: same
     "countries": 1,
+    "rate_path": 1,  # 2026-10-30: new; real version is rate_path.SCHEMA_VERSION
     "capex": 1,  # 2026-10-29: new (S&P 500 capex by sector); real version is capex_data.SCHEMA_VERSION
     "erp_sync": 1,
     "context_tables": 6,  # 2026-10-10b: erp history carries monthly S&P 500 for the chart overlay.  # 5: 2026-10-10: erp block (Damodaran implied ERP gauge).  # 4: 2026-09-26: NameError fix; v3 never actually served.  # 2026-09-26: Warsh added + chair carries a confirmation date.  # fed_episodes -> derived rate_cycles + balance_sheet

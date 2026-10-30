@@ -1,9 +1,10 @@
 import { apiFetch } from "@/lib/api";
-import type { RatesResponse } from "@/lib/macroTypes";
+import type { RatesResponse, RatePath } from "@/lib/macroTypes";
 import { SectionHeader, ErrorCard } from "./SectionHeader";
 import { LineChart } from "./LineChart";
 import { MetricStat } from "./MetricStat";
 import { FomcProbabilityPanel } from "./FomcProbabilityPanel";
+import { RatePathCard } from "./RatePathCard";
 import { YieldCurvePanel } from "./YieldCurvePanel";
 import { COLORS } from "@/lib/macroConstants";
 
@@ -16,12 +17,15 @@ import { COLORS } from "@/lib/macroConstants";
  */
 export async function RatesSection() {
   let data: RatesResponse;
+  // The futures-implied rate path is an extra: its failure drops that card only, never the rest of the section.
+  const pathPromise = apiFetch<RatePath>("/api/rate-path").catch(() => null);
   try {
     data = await apiFetch<RatesResponse>("/api/macro/rates");
   } catch (e) {
     return <ErrorCard label="Rates panels" message={e instanceof Error ? e.message : "Unknown error"} />;
   }
 
+  const ratePath = await pathPromise;
   const ffr = [...data.fed_funds_range].sort((a, b) => a.date.localeCompare(b.date));
   const latestFfr = ffr[ffr.length - 1];
 
@@ -58,6 +62,13 @@ export async function RatesSection() {
         <SectionHeader>FOMC Rate Probabilities (CME FedWatch)</SectionHeader>
         <FomcProbabilityPanel probs={data.fomc_probabilities} />
       </section>
+
+      {ratePath && (
+        <section>
+          <SectionHeader>Rate Path Priced by Futures (fed funds + SOFR)</SectionHeader>
+          <RatePathCard data={ratePath} />
+        </section>
+      )}
 
       <section>
         <SectionHeader>Treasury Yield Curve (FRED DGS)</SectionHeader>

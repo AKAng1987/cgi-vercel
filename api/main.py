@@ -22,6 +22,7 @@ import notes_data
 import freshness
 import fundamentals_data
 import capex_data
+import rate_path
 import brief_data
 import customer_links
 import liquidity_data
@@ -328,6 +329,13 @@ def technicals():
 @app.get("/api/themes", dependencies=[Depends(require_bearer_token)])
 def themes():
     return cache.get_or_fetch_bg("themes", themes_data.build_themes_response)
+
+
+@app.get("/api/rate-path", dependencies=[Depends(require_bearer_token)])
+def rate_path_get():
+    """What fed funds (ZQ) and SOFR (SR3) futures price for the policy rate after each FOMC meeting and a few years out, with
+    how the pricing moved over the last 1 and 4 weeks. Descriptive; a market read, not a forecast."""
+    return cache.get_or_fetch_bg("rate_path", rate_path.build_rate_path)
 
 
 @app.get("/api/capex", dependencies=[Depends(require_bearer_token)])
