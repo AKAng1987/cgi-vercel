@@ -960,6 +960,42 @@ def calendar_check(today: Optional[dt.date] = None) -> dict:
         return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
 
 
+GDP_GRACE_DAYS = 3     # the calendar may be a day or two off a shifted BEA date (stored 26 Aug, calendar 27 Aug); a miss is a whole release
+
+
+def gdp_problems(today: dt.date, newest_stored: Optional[str], releases: Optional[list[dict]] = None) -> dict:
+    """Pure part of the GDP-store check. gdp-history must hold a row at or after the latest GDP release that is at least two
+    days old (the updater reads ALFRED the day after a release). Before this check the scraper was blocked for three weeks
+    (10 Oct onward), the 29 Oct advance estimate never reached the Grid or the headline, and nothing said so."""
+    import release_calendar as rc
+
+    rel = rc.RELEASES if releases is None else releases
+    cutoff = (today - dt.timedelta(days=2)).isoformat()
+    due = sorted(r["date"] for r in rel if r["type"] == "GDP" and r["date"] <= cutoff)
+    latest = due[-1] if due else None
+    problems = []
+    if latest is not None:
+        need = (dt.date.fromisoformat(latest) - dt.timedelta(days=GDP_GRACE_DAYS)).isoformat()
+        if newest_stored is None or newest_stored < need:
+            problems.append({"check": "gdp_history", "detail": (f"GDP released {latest} but the newest stored row is "
+                                                                f"{newest_stored or 'none'}; the gdp-updater Lambda is not storing releases")})
+    return {"problems": problems, "n_problems": len(problems), "latest_release": latest, "newest_stored": newest_stored}
+
+
+def gdp_check(today: Optional[dt.date] = None) -> dict:
+    """Newest stored GDP release (DynamoDB gdp-history) against the release calendar."""
+    import boto3
+
+    try:
+        ddb = boto3.client("dynamodb", region_name="ap-southeast-1")
+        r = ddb.query(TableName="cmon-stage-backend-gdp-history", KeyConditionExpression="country = :c",
+                      ExpressionAttributeValues={":c": {"S": "US"}}, ScanIndexForward=False, Limit=1)
+        newest = r["Items"][0]["release_date"]["S"] if r.get("Items") else None
+        return gdp_problems(today or dt.date.today(), newest)
+    except Exception as exc:  # noqa: BLE001 -- additive; never break the page
+        return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
+
+
 def rate_path_problems(payload: Optional[dict]) -> dict:
     """Pure part of the rate-path check: enough futures quotes came back to draw a path."""
     if not payload:
@@ -1000,6 +1036,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     cot = cot_check(today)
     capex = capex_check(today)
     calendar = calendar_check(today)
+    gdp = gdp_check(today)
     ratepath = rate_path_check()
     return {
         "as_of": (today or dt.date.today()).isoformat(),
@@ -1015,10 +1052,11 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "cot": cot,
         "capex": capex,
         "release_calendar": calendar,
+        "gdp": gdp,
         "rate_path": ratepath,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"] + ratepath["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"] + gdp["n_problems"] + ratepath["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

@@ -40,7 +40,7 @@ neither — if the provider is down when the cache expires, there is nothing.
 | ~146 equity/ETF prices | marketstack | `price-updater` | daily 00:05 UTC |
 | ~50 macro series | FRED | `fred-data-updater` | daily 00:05 UTC |
 | 7 Treasury tenors (`US01Y`…`US30Y`) | FRED | `us-yield-updater` | daily 00:05 UTC |
-| GDP | FRED | `gdp-updater` | daily 00:05 UTC |
+| GDP (one row per BEA release, incl. unchanged estimates) | ALFRED `A191RL1Q225SBEA` at the BEA release dates in `gdp_release.py` | `gdp-updater` | daily 00:05 UTC, reads a release the day after it; raises on failure (the Trading Economics scrape was blocked from 10 Oct to 1 Nov); freshness `gdp` |
 | 8 index/FX | Yahoo | `yahoo-finance-updater` | daily 00:10 UTC |
 | inflation series | — | `inflation-rate-updater` | daily 00:15 UTC |
 | derived metrics | computed | `derived-metrics-updater` | daily 00:20 UTC |

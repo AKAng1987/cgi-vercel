@@ -141,7 +141,7 @@ CACHE_SCHEMA_VERSIONS: dict[str, int] = {
     "spreads": 2,  # 2026-09-11: fetch_spreads bp/percent fix (see macro_data.py)
     "lending_standards": 1,
     "challenger": 1,
-    "gdp": 1,
+    "gdp": 2,
     "gdp_nowcast": 1,
     "gdp_nowcast_freshness": 1,
     "freshness": 1,
