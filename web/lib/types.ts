@@ -1340,7 +1340,7 @@ export type PhDisclosure = {
   insider?: { name: string | null; position: string | null; net_shares: number; net_value: number; n: number; first: string; side: "bought" | "sold" | "flat" };
 };
 export type PhRebalRow = { s: string; ffmc: number; mc: number | null; fl: number | null; vt: number | null; ind: string | null; ret_3m: number | null; rank: number | null; vs_smallest_member?: number | null };
-export type PhScannerRow = PhLeader & { mc: number | null; v30: number | null; fl: number | null };
+export type PhScannerRow = PhLeader & { mc: number | null; v30: number | null; fl: number | null; pinned?: number };
 
 export type PhResponse = {
   schema_version: number;
@@ -1367,6 +1367,7 @@ export type PhResponse = {
     n_members: number; members: PhRebalRow[]; weakest_members: PhRebalRow[]; nearest_non_members: PhRebalRow[]; method: string;
   };
   scanner: PhScannerRow[];
+  pinned: PhPinned[];
   freshness: {
     prices: { asof: string | null; age_days: number | null; n: number; n_liquid: number };
     edge: { built_at: string | null; age_days: number | null; last_run: { n_failed?: number } | null };
@@ -1374,4 +1375,19 @@ export type PhResponse = {
     macro_pmi_months: number;
   };
   caveats: string[];
+};
+
+export type PhBar = [string, number, number, number, number, number];   // date, open, high, low, close, value traded (pesos)
+export type PhPinned = PhLeader & {
+  name: string | null; mc: number | null; v30: number | null; liquid: boolean; expected_report: { date: string; basis: string } | null;
+  last_result: PhResult | null; last_buyback: { report_date: string; shares: number; value: number; edge_no: string } | null;
+  disclosures: { announced: string; chip: string; title: string; subject?: string; insider?: PhDisclosure["insider"]; dividend?: PhDisclosure["dividend"]; edge_no: string }[];
+};
+export type PhSymbolView = {
+  symbol: string; name: string | null; sector?: string | null; subsector?: string | null; kind: "stock" | "index";
+  numbers: (PhLeader & { mc: number | null; v30: number | null; fl: number | null; h3: number | null; l3: number | null; liquid: boolean; pinned: number }) | Record<string, number | null> | null;
+  bars?: PhBar[]; ema?: Record<string, number[]>; n_stored?: number; line?: [string, number][];
+  expected_report?: { date: string; basis: string } | null;
+  results: PhResult[]; buybacks: { report_date: string; shares: number; avg_price: number; value: number; cumulative: number | null; edge_no: string }[];
+  disclosures: { announced: string; chip: string; title: string; subject?: string; dividend?: PhDisclosure["dividend"]; insider?: PhDisclosure["insider"]; edge_no: string; amend?: number }[];
 };

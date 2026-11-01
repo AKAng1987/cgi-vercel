@@ -95,6 +95,33 @@ pt = P.pmi_point({"pmi": {"2026-09": 49.6, "2026-10": 51.2}})
 check("pmi point", (pt["latest"], pt["prior"], pt["direction"], pt["as_of"]), (51.2, 49.6, "up", "2026-10-01"))
 import release_calendar as rc  # noqa: E402
 check("BSP next meeting from the schedule", P.bsp_meetings(dt.date(2026, 11, 1))["next"], "2026-12-17")
+# ── chart dock: symbol view, pinned, expected report
+import json, tempfile  # noqa: E402
+
+check("ema_series first value is the first close, then smooths", P.ema_series([10, 20], 3), [10, 15.0])
+cs = P.chart_series([["2026-10-%02d" % d, 1, 2, 0.5, 1 + d * 0.01, 1e6] for d in range(1, 31)] * 1, show=10)
+check("chart series: last 10 bars, six EMAs of the same length", (len(cs["bars"]), sorted(cs["ema"]), {len(v) for v in cs["ema"].values()}), (10, ["10", "100", "20", "200", "5", "50"], {10}))
+tmp = tempfile.mkdtemp()
+rowsd = [row("AAA", 10, 1e7, 5, ind="Mining"), dict(row("COL", 1.19, 2.4e6, -20), pinned=1), dict(row("CTS", 0.34, 3e5, 0), pinned=1)]
+edged = {"directory": {"COL": {"name": "COL Financial"}, "AAA": {"name": "A Corp", "sector": "Mining", "subsector": "Mining"}},
+         "filing_dates": {"COL": ["2025-11-17"]}, "results": [], "buybacks": [], "disclosures": [
+             {"symbol": "COL", "chip": "insider", "title": "Change in Shareholdings", "announced": "2026-10-09T10:00", "edge_no": "i1", "amend": 0}]}
+json.dump({"rows": rowsd, "psei_history": {"2026-10-29": 5700.0, "2026-10-30": 5680.35}, "psei_index": {"c": 5680.35}}, open(os.path.join(tmp, "screener.json"), "w"))
+json.dump(edged, open(os.path.join(tmp, "edge.json"), "w"))
+json.dump({"bars": {"AAA": [["2026-10-%02d" % d, 1, 2, 0.5, 1.5, 1e6] for d in range(1, 31)]}}, open(os.path.join(tmp, "bars.json"), "w"))
+os.environ["PH_LOCAL_DIR"] = tmp
+v = P.symbol_view("aaa", T)
+check("symbol view: stock with bars, numbers and name", (v["symbol"], v["name"], len(v["bars"]), v["numbers"]["liquid"]), ("AAA", "A Corp", 30, True))
+v = P.symbol_view("COL", T)
+check("symbol view: pinned illiquid name has no bars but numbers and disclosures", (v["bars"], v["numbers"]["liquid"], v["numbers"]["pinned"], len(v["disclosures"])), ([], False, 1, 1))
+check("symbol view: expected report from last year's filing date", v["expected_report"]["date"], "2026-11-17")
+v = P.symbol_view("PSEI", T)
+check("symbol view: index line", (v["kind"], len(v["line"])), ("index", 2))
+pv = P.pinned_view(rowsd, edged, T)
+check("pinned view: COL and CTS kept though illiquid", ([p["s"] for p in pv], [p["liquid"] for p in pv]), (["COL", "CTS"], [False, False]))
+check("pinned view: disclosures attached", len(pv[0]["disclosures"]), 1)
+del os.environ["PH_LOCAL_DIR"]
+
 # ── freshness
 import freshness as fr  # noqa: E402
 

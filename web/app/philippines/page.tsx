@@ -6,7 +6,10 @@ import { PhFeed } from "../components/ph/PhFeed";
 import { PhHeader } from "../components/ph/PhHeader";
 import { PhMacro } from "../components/ph/PhMacro";
 import { PhMarket } from "../components/ph/PhMarket";
+import { PhChartDock } from "../components/ph/PhChartDock";
+import { PhPinnedStrip } from "../components/ph/PhPinned";
 import { PhRebalance } from "../components/ph/PhRebalance";
+import { PhSelectProvider } from "../components/ph/PhSelect";
 import { PhScanner } from "../components/ph/PhScanner";
 
 // A cold API rebuild can take a while: give the page the full 60 s.
@@ -21,7 +24,8 @@ export default async function PhilippinesPage() {
   const d = await apiFetch<PhResponse>("/api/ph");
   const f = d.freshness;
   return (
-    <main className="mx-auto max-w-7xl p-6">
+    <PhSelectProvider>
+    <main id="ph-top" className="mx-auto max-w-7xl p-6">
       <h1 className="mb-1 text-2xl font-bold">PHILIPPINES</h1>
       <p className="mb-4 text-xs leading-relaxed text-slate-400">
         Prices to {f.prices.asof ?? "—"} · PSE EDGE disclosures refreshed {f.edge.built_at ? f.edge.built_at.slice(0, 10) : "—"}. Descriptive: what traded, what was filed, what is scheduled. Not a signal.
@@ -30,6 +34,7 @@ export default async function PhilippinesPage() {
         <p className="mb-4 rounded border border-amber-800 bg-amber-950/40 p-2 text-xs text-amber-300">Prices are {f.prices.age_days} days old: the daily PH price build has not run.</p>
       )}
       <PhHeader d={d} />
+      <PhPinnedStrip rows={d.pinned ?? []} />
       <PhMacro d={d} />
       <PhBreadthStrip data={d.breadth ?? undefined} />
       <PhMarket horizons={d.horizons} nLiquid={f.prices.n_liquid} asof={f.prices.asof} />
@@ -37,7 +42,9 @@ export default async function PhilippinesPage() {
       <PhEarnings next={d.earnings.next} reported={d.earnings.reported} buybacks={d.buybacks} />
       <PhRebalance rb={d.rebalance} />
       <PhScanner rows={d.scanner} />
+      <PhChartDock />
       <p className="mt-2 text-[0.65rem] leading-relaxed text-slate-600">{d.caveats.join(" ")}</p>
     </main>
+    </PhSelectProvider>
   );
 }

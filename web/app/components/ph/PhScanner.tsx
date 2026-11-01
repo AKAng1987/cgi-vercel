@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { PhScannerRow } from "@/lib/types";
 import { pctColor } from "@/lib/regimeConstants";
-import { peso, pct, price, tvSymbol } from "./phFormat";
+import { PhTicker } from "./PhSelect";
+import { peso, pct, price } from "./phFormat";
 
 type Key = "s" | "w" | "m" | "q" | "y" | "vs50" | "vs200" | "from_high3m" | "mc" | "v30" | "fl";
 const COLS: { key: Key; label: string; kind: "text" | "pct" | "peso" | "plain" }[] = [
@@ -34,7 +35,7 @@ export function PhScanner({ rows }: { rows: PhScannerRow[] }) {
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(shown.map((r) => tvSymbol(r.s)).join(","));
+      await navigator.clipboard.writeText(shown.map((r) => `PSE:${r.s}`).join(","));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -72,7 +73,7 @@ export function PhScanner({ rows }: { rows: PhScannerRow[] }) {
               <tr key={r.s} className="border-t border-slate-800/70">
                 {COLS.map((c) => {
                   const v = r[c.key as keyof PhScannerRow] as number | string | null;
-                  if (c.kind === "text") return <td key={c.key} className="py-1 pr-2 font-semibold text-slate-100"><a className="hover:underline" target="_blank" rel="noopener noreferrer" href={`https://www.tradingview.com/chart/?symbol=${tvSymbol(r.s)}`}>{r.s}</a>{r.psei ? <span className="ml-1 text-[0.55rem] text-slate-500">PSEi</span> : null}</td>;
+                  if (c.kind === "text") return <td key={c.key} className="py-1 pr-2 font-semibold text-slate-100"><PhTicker s={r.s} list={shown.map((x) => x.s)} className="hover:underline">{r.s}</PhTicker>{r.psei ? <span className="ml-1 text-[0.55rem] text-slate-500">PSEi</span> : null}{r.pinned ? <span className="ml-1 text-[0.55rem] text-amber-300">pinned</span> : null}</td>;
                   if (c.kind === "pct") return <td key={c.key} className="py-1 pr-2 text-right tabular-nums" style={{ color: pctColor(v as number | null) }}>{pct(v as number | null)}</td>;
                   if (c.kind === "peso") return <td key={c.key} className="py-1 pr-2 text-right tabular-nums text-slate-400">{peso(v as number | null)}</td>;
                   return <td key={c.key} className="py-1 pr-2 text-right tabular-nums text-slate-400">{v != null ? `${Math.round(v as number)}` : "—"}</td>;

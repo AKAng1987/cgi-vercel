@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PhDisclosure } from "@/lib/types";
+import { PhTicker } from "./PhSelect";
 import { CHIPS, dayLabel, edgeLink, num, peso, price } from "./phFormat";
 
 const CHIP_TONE: Record<string, string> = {
@@ -36,7 +37,7 @@ export function PhFeed({ rows, builtAt }: { rows: PhDisclosure[]; builtAt: strin
             {shown.map((r) => (
               <tr key={r.edge_no} className="border-t border-slate-800/70 align-top">
                 <td className="w-14 py-1 pr-2 tabular-nums text-slate-500">{dayLabel(r.announced)}</td>
-                <td className="w-16 py-1 pr-2 font-semibold text-slate-100">{r.symbol}</td>
+                <td className="w-16 py-1 pr-2"><PhTicker s={r.symbol} list={Array.from(new Set(shown.map((x) => x.symbol)))}>{r.symbol}</PhTicker></td>
                 <td className={`w-28 py-1 pr-2 ${CHIP_TONE[r.chip] ?? "text-slate-400"}`}>{CHIPS.find((c) => c.key === r.chip)?.label ?? r.chip}{r.amend ? ` (amend ${r.amend})` : ""}</td>
                 <td className="py-1 pr-2 text-slate-300">
                   {r.subject ?? r.title}

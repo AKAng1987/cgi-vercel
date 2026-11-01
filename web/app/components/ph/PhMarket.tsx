@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { PhHorizon, PhLeader, PhSegment } from "@/lib/types";
 import { pctColor } from "@/lib/regimeConstants";
-import { TradingViewChart } from "../TradingViewChart";
-import { peso, pct, price, tvSymbol } from "./phFormat";
+import { usePhSelect } from "./PhSelect";
+import { peso, pct, price } from "./phFormat";
 
 const HORIZONS = ["1W", "1M", "3M", "YTD"] as const;
 type H = (typeof HORIZONS)[number];
@@ -81,8 +81,11 @@ function Segments({ segs, onPick }: { segs: PhSegment[]; onPick: (s: string) => 
 export function PhMarket({ horizons, nLiquid, asof }: { horizons: Record<H, PhHorizon>; nLiquid: number; asof: string | null }) {
   const [h, setH] = useState<H>("1M");
   const [by, setBy] = useState<"ind" | "sec">("ind");
-  const [sel, setSel] = useState<string | null>(null);
+  const { select, selected } = usePhSelect();
   const d = horizons[h];
+  const list = [...d.leaders.top, ...d.leaders.bottom].map((r) => r.s);
+  const sel = selected;
+  const setSel = (s: string) => select(s, list);
   return (
     <section className="mb-4 rounded border border-slate-800 bg-slate-900/50 p-3">
       <div className="mb-3 flex flex-wrap items-baseline gap-3">
@@ -112,16 +115,6 @@ export function PhMarket({ horizons, nLiquid, asof }: { horizons: Record<H, PhHo
           </p>
         </div>
       </div>
-      {sel && (
-        <div className="mt-4">
-          <div className="mb-1 flex items-center gap-3 text-xs text-slate-400">
-            <span className="font-bold text-slate-100">{sel}</span>
-            <a className="underline hover:text-slate-200" target="_blank" rel="noopener noreferrer" href={`https://www.tradingview.com/chart/?symbol=${tvSymbol(sel)}`}>open in TradingView ↗</a>
-            <button className="ml-auto text-slate-500 hover:text-slate-200" onClick={() => setSel(null)}>close ✕</button>
-          </div>
-          <TradingViewChart symbol={tvSymbol(sel)} />
-        </div>
-      )}
     </section>
   );
 }

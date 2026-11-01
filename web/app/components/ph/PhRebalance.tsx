@@ -1,5 +1,6 @@
 import { PhRebalRow } from "@/lib/types";
 import { pctColor } from "@/lib/regimeConstants";
+import { PhTicker } from "./PhSelect";
 import { peso, pct } from "./phFormat";
 
 function Table({ title, rows, extra }: { title: string; rows: PhRebalRow[]; extra?: boolean }) {
@@ -16,7 +17,7 @@ function Table({ title, rows, extra }: { title: string; rows: PhRebalRow[]; extr
         <tbody>
           {rows.map((r) => (
             <tr key={r.s} className="border-t border-slate-800/70">
-              <td className="py-1 pr-2 font-semibold text-slate-100">{r.s}<span className="ml-1 text-[0.58rem] text-slate-500">{r.ind ?? ""}</span></td>
+              <td className="py-1 pr-2"><PhTicker s={r.s} list={rows.map((x) => x.s)}>{r.s}</PhTicker><span className="ml-1 text-[0.58rem] text-slate-500">{r.ind ?? ""}</span></td>
               <td className="py-1 pr-2 text-right tabular-nums text-slate-300">{peso(r.ffmc)}</td>
               <td className="py-1 pr-2 text-right tabular-nums text-slate-500">{r.fl != null ? `${r.fl.toFixed(0)}%` : "—"}</td>
               <td className="py-1 pr-2 text-right tabular-nums" style={{ color: pctColor(r.ret_3m) }}>{pct(r.ret_3m, 0)}</td>

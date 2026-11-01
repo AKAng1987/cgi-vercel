@@ -1,5 +1,6 @@
 import { PhBuyback, PhEarningsNext, PhResult } from "@/lib/types";
 import { pctColor } from "@/lib/regimeConstants";
+import { PhTicker } from "./PhSelect";
 import { dayLabel, edgeLink, num, peso, pct } from "./phFormat";
 
 function Yoy({ v, loss, swing }: { v: number | null; loss?: boolean; swing?: boolean }) {
@@ -27,7 +28,7 @@ export function PhEarnings({ next, reported, buybacks }: { next: PhEarningsNext[
               {reported.map((r) => (
                 <tr key={r.edge_no} className="border-t border-slate-800/70">
                   <td className="py-1 pr-2 tabular-nums text-slate-500">{dayLabel(r.announced)}</td>
-                  <td className="py-1 pr-2 font-semibold text-slate-100" title={r.ind ?? ""}>{r.s}<span className="ml-1 text-[0.58rem] text-slate-500">{r.kind === "A" ? "FY" : `Q to ${r.period.slice(5, 7)}/${r.period.slice(2, 4)}`}</span></td>
+                  <td className="py-1 pr-2" title={r.ind ?? ""}><PhTicker s={r.s} list={reported.map((x) => x.s)}>{r.s}</PhTicker><span className="ml-1 text-[0.58rem] text-slate-500">{r.kind === "A" ? "FY" : `Q to ${r.period.slice(5, 7)}/${r.period.slice(2, 4)}`}</span></td>
                   <td className="py-1 pr-2 text-right tabular-nums text-slate-300">{r.revenue ? peso(r.revenue) : "—"}</td>
                   <td className="py-1 pr-2 text-right tabular-nums" style={{ color: pctColor(r.rev_yoy) }}>{pct(r.rev_yoy)}</td>
                   <td className="py-1 pr-2 text-right tabular-nums text-slate-300">{peso(r.ni)}</td>
@@ -53,7 +54,7 @@ export function PhEarnings({ next, reported, buybacks }: { next: PhEarningsNext[
             {next.map((e) => (
               <li key={e.s} className="flex items-baseline gap-2" title={e.basis}>
                 <span className="w-14 tabular-nums text-slate-500">{dayLabel(e.date)}</span>
-                <span className="w-14 font-semibold text-slate-100">{e.s}</span>
+                <span className="w-14"><PhTicker s={e.s} list={next.map((x) => x.s)}>{e.s}</PhTicker></span>
                 <span className="text-slate-500">{e.ind ?? ""}{e.psei ? " · PSEi" : ""}</span>
               </li>
             ))}
@@ -73,7 +74,7 @@ export function PhEarnings({ next, reported, buybacks }: { next: PhEarningsNext[
             <tbody>
               {buybacks.map((b) => (
                 <tr key={b.s} className="border-t border-slate-800/70">
-                  <td className="py-1 pr-2 font-semibold text-slate-100">{b.s}</td>
+                  <td className="py-1 pr-2"><PhTicker s={b.s} list={buybacks.map((x) => x.s)}>{b.s}</PhTicker></td>
                   <td className="py-1 pr-2 text-right tabular-nums text-slate-300">{b.value_30d ? peso(b.value_30d) : "—"}</td>
                   <td className="py-1 pr-2 text-right tabular-nums text-slate-400">{b.pct_outstanding_30d != null ? `${b.pct_outstanding_30d.toFixed(3)}%` : "—"}</td>
                   <td className="py-1 pr-2 text-right tabular-nums text-slate-500">{b.cumulative ? `${num(b.cumulative / 1e6, 1)}M sh` : "—"}</td>

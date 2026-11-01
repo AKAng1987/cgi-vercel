@@ -6,6 +6,7 @@ Snapshots live in the same S3 folder as the other offline-built blobs (cache.PRE
   screener  built by ~/market-dashboard/scripts/ph_prices_build.py from EDGE's own daily bars (open/high/low/close/value traded)
             plus PSEi from Yahoo: returns, EMAs, 3-month range, 30-day average value traded, float and market cap
   breadth   exported from Pulse (export_ph_breadth.py)
+  bars      daily OHLC + value traded for the last 300 sessions of the liquid and pinned names (the page's chart dock)
   macro     PMI history, appended from the calendar's actuals (S&P Global PMI has no ECONOMICS series)
 EDGE's terms forbid storing or redistributing its data without PSE's consent: `edge` holds only titles, dates, the few
 figures the page shows and the link number back to the filing, never a copy of a filing.
@@ -17,7 +18,7 @@ import logging
 from typing import Optional
 
 _logger = logging.getLogger("cgi_api.ph")
-NAMES = ("edge", "screener", "breadth", "macro")
+NAMES = ("edge", "screener", "breadth", "macro", "bars")
 
 
 def _key(name: str) -> str:
@@ -109,35 +110,38 @@ def segments(rows: list[dict], key: str, by: str = "ind", min_n: int = 2) -> lis
     return out
 
 
+def expected_report(sym: str, edge: dict, today, days: int = 35) -> Optional[dict]:
+    """The estimated next reporting date for one company, or None when it already filed this season or has no history."""
+    import datetime as dt
+
+    dates = sorted((edge.get("filing_dates") or {}).get(sym, []))
+    last_res = max((r["announced"][:10] for r in edge.get("results", []) if r["symbol"] == sym), default="")
+    last = max(last_res, dates[-1] if dates else "")
+    if last and (today - dt.date.fromisoformat(last)).days < 45:
+        return None                                        # already reported this season
+    end = today + dt.timedelta(days=days)
+    cands = []
+    for d in dates:
+        est = dt.date.fromisoformat(d) + dt.timedelta(days=365)
+        while est.weekday() >= 5:
+            est += dt.timedelta(days=1)
+        if today <= est <= end:
+            cands.append((est, d))
+    if not cands:
+        return None
+    est, basis = min(cands)
+    return {"date": est.isoformat(), "basis": f"filed {basis} last year"}
+
+
 def earnings_next(rows: list[dict], edge: dict, today, days: int = 35) -> list[dict]:
     """Expected reporting dates for liquid names. EDGE publishes no calendar, so the estimate is last year's filing date for the
     same report plus 365 days (companies file within a few days of the same date each year); names that already filed this
     quarter are left out. Labelled as an estimate on the page."""
-    import datetime as dt
-
-    hist = edge.get("filing_dates", {})
-    res_latest = {}
-    for r in edge.get("results", []):
-        res_latest[r["symbol"]] = max(res_latest.get(r["symbol"], ""), r["announced"][:10])
-    end = today + dt.timedelta(days=days)
     out = []
     for r in liquid(rows):
-        dates = sorted(hist.get(r["s"], []))
-        last = max(res_latest.get(r["s"], ""), dates[-1] if dates else "")
-        if last and (today - dt.date.fromisoformat(last)).days < 45:
-            continue                                       # already reported this season
-        # a year-ago filing inside the window [today - 365, end - 365]; the earliest one still ahead of us
-        cands = []
-        for d in dates:
-            est = dt.date.fromisoformat(d) + dt.timedelta(days=365)
-            while est.weekday() >= 5:
-                est += dt.timedelta(days=1)
-            if today <= est <= end:
-                cands.append((est, d))
-        if cands:
-            est, basis = min(cands)
-            out.append({"s": r["s"], "date": est.isoformat(), "basis": f"filed {basis} last year", "mc": r.get("mc"),
-                        "psei": r.get("psei", 0), "ind": r.get("ind")})
+        e = expected_report(r["s"], edge, today, days)
+        if e:
+            out.append({"s": r["s"], **e, "mc": r.get("mc"), "psei": r.get("psei", 0), "ind": r.get("ind")})
     out.sort(key=lambda x: (x["date"], -(x["mc"] or 0)))
     return out
 
@@ -242,6 +246,83 @@ def rebalance_watch(rows: list[dict], n: int = 8) -> dict:
             "nearest_non_members": [dict(view(r), vs_smallest_member=round(ffmc(r) / smallest, 2) if smallest else None)
                                     for r in others[:n]],
             "method": "free-float market cap (market cap x float %) among liquid names; PSE also weighs value traded and trading days"}
+
+
+# ── one symbol (chart dock) and the pinned names ─────────────────────────────
+
+EMA_SPANS = (5, 10, 20, 50, 100, 200)
+_bars_memo: dict = {"at": 0.0, "blob": None}
+
+
+def ema_series(values: list[float], n: int) -> list[float]:
+    k = 2.0 / (n + 1)
+    out, e = [], None
+    for v in values:
+        e = v if e is None else v * k + e * (1 - k)
+        out.append(round(e, 4))
+    return out
+
+
+def _bars_blob() -> dict:
+    import time
+
+    if _bars_memo["blob"] is None or time.monotonic() - _bars_memo["at"] > 1800:
+        _bars_memo.update(blob=read_blob("bars") or {}, at=time.monotonic())
+    return _bars_memo["blob"]
+
+
+def chart_series(bars: list[list], show: int = 160) -> dict:
+    """Last `show` bars with the 5/10/20/50/100/200 EMAs computed over the whole stored series (so EMA200 is warmed up)."""
+    closes = [b[4] for b in bars]
+    emas = {str(n): ema_series(closes, n)[-show:] for n in EMA_SPANS}
+    return {"bars": bars[-show:], "ema": emas, "n_stored": len(bars)}
+
+
+def symbol_view(sym: str, today=None) -> dict:
+    """Everything the chart dock shows for one ticker: bars with EMAs, its snapshot numbers, the last results (with y/y),
+    buy-backs and disclosures, and its estimated next report date. 'PSEI' returns the index close history instead."""
+    import datetime as dt
+
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    sym = sym.upper()
+    shot = read_blob("screener") or {}
+    edge = read_blob("edge") or {}
+    if sym == "PSEI":
+        hist = shot.get("psei_history") or {}
+        return {"symbol": "PSEI", "name": "PSEi", "kind": "index", "line": [[d, v] for d, v in list(hist.items())[-160:]],
+                "numbers": shot.get("psei_index"), "disclosures": [], "results": [], "buybacks": []}
+    row = next((r for r in shot.get("rows", []) if r["s"] == sym), None)
+    bars = _bars_blob().get("bars", {}).get(sym, [])
+    directory = (edge.get("directory") or {}).get(sym, {})
+    res = results_view({"results": [r for r in edge.get("results", []) if r["symbol"] == sym]}, shot.get("rows", []), today, days=800)
+    bb = [b for b in edge.get("buybacks", []) if b["symbol"] == sym][:3]
+    disc = [d for d in edge.get("disclosures", []) if d["symbol"] == sym and d["chip"] != "other"][:12]
+    return {
+        "symbol": sym, "name": directory.get("name"), "sector": directory.get("sector"), "subsector": directory.get("subsector"), "kind": "stock",
+        "numbers": _row_view(row, "m") | {"mc": row.get("mc"), "v30": row.get("v30"), "fl": row.get("fl"), "h3": row.get("h3"), "l3": row.get("l3"),
+                                         "liquid": bool(row.get("v30") and row["v30"] >= LIQ_MIN), "pinned": row.get("pinned", 0)} if row else None,
+        **chart_series(bars), "expected_report": expected_report(sym, edge, today),
+        "results": res[:3], "buybacks": [{k: b.get(k) for k in ("report_date", "shares", "avg_price", "value", "cumulative", "edge_no")} for b in bb],
+        "disclosures": [{k: d.get(k) for k in ("announced", "chip", "title", "subject", "dividend", "insider", "edge_no", "amend")} for d in disc],
+    }
+
+
+def pinned_view(rows: list[dict], edge: dict, today) -> list[dict]:
+    """The names he asked for by name (COL, CTS): shown whatever they trade, with their latest filings and a liquidity flag."""
+    out = []
+    for r in rows:
+        if not r.get("pinned"):
+            continue
+        sym = r["s"]
+        res = results_view({"results": [x for x in edge.get("results", []) if x["symbol"] == sym]}, rows, today, days=800)
+        out.append({**_row_view(r, "m"), "name": (edge.get("directory") or {}).get(sym, {}).get("name"), "mc": r.get("mc"), "v30": r.get("v30"),
+                    "liquid": bool(r.get("v30") and r["v30"] >= LIQ_MIN), "expected_report": expected_report(sym, edge, today),
+                    "last_result": res[0] if res else None,
+                    "last_buyback": next(({k: b.get(k) for k in ("report_date", "shares", "value", "edge_no")} for b in edge.get("buybacks", []) if b["symbol"] == sym), None),
+                    "disclosures": [{k: d.get(k) for k in ("announced", "chip", "title", "subject", "insider", "dividend", "edge_no")}
+                                    for d in edge.get("disclosures", []) if d["symbol"] == sym and d["chip"] != "other"][:5]})
+    out.sort(key=lambda x: x["s"])
+    return out
 
 
 # ── macro, calendar, and the response ────────────────────────────────────────
@@ -407,7 +488,9 @@ def build_ph_response() -> dict:
         "buybacks": buyback_board(edge, today),
         "material": material_feed(edge, today),
         "rebalance": rebalance_watch(rows),
-        "scanner": [_row_view(r, "m") | {"mc": r.get("mc"), "v30": r.get("v30"), "fl": r.get("fl")} for r in liquid(rows)],
+        "pinned": pinned_view(rows, edge, today),
+        "scanner": [_row_view(r, "m") | {"mc": r.get("mc"), "v30": r.get("v30"), "fl": r.get("fl"), "pinned": r.get("pinned", 0)}
+                    for r in rows if (r.get("v30") or 0) >= LIQ_MIN or r.get("pinned")],
         "freshness": {"prices": {"asof": shot.get("asof"), "age_days": age_days(shot.get("asof"), today), "n": len(rows),
                                    "n_liquid": len(liquid(rows))},
                       "edge": {"built_at": edge.get("built_at"), "age_days": age_days(edge.get("built_at"), today),
@@ -422,4 +505,4 @@ def build_ph_response() -> dict:
     }
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2   # 2: pinned names, bars blob, expected_report helper

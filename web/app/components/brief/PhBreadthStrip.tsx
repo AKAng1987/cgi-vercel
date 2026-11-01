@@ -25,7 +25,7 @@ const ZONE: Record<string, string> = {
 export function PhBreadthStrip({ data }: { data?: unknown } = {}) {
   const d = (data ?? phData) as unknown as {
     as_of: string; built: string; universe: string; streak_days: number; net: number; ema_fast: number; ema_slow: number;
-    colour: string; series: PhSeries; gauges: PhGauge[];
+    colour: string; series: PhSeries; gauges: PhGauge[]; source?: string;
   };
   if (!d.series?.length) return null;
   const c = COLOUR[d.colour] ?? COLOUR.white;
@@ -84,7 +84,7 @@ export function PhBreadthStrip({ data }: { data?: unknown } = {}) {
       </div>
 
       <p className="mt-2 text-[0.65rem] leading-relaxed text-slate-600">
-        Computed in Pulse from TradingView bars and exported here, so it is as of {d.as_of}, not live. Net new highs are closes at a 52-week
+        {d.source ? `Computed by CGI from PSE EDGE daily bars (${d.universe}), refreshed each day the PH job runs, as of ${d.as_of}.` : `Computed in Pulse from TradingView bars and exported here, so it is as of ${d.as_of}, not live.`} Net new highs are closes at a 52-week
         high minus closes at a 52-week low across the liquid PSE names. The 30 and 70 lines are borrowed from the S&amp;P gauges and are not tested on the
         PSE. With about 65 names the net count is small, so read the percentages and the streak, not the size of the bars. Same colour rule as above.
       </p>

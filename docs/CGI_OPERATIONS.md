@@ -559,7 +559,8 @@ already holds; nothing in a request touches PSE EDGE.
 |---|---|---|
 | `edge.json` | `market-dashboard/scripts/ph_edge_build.py` | company directory (PSE sector/subsector), last 120 days of disclosures classified by form (material, buy-back, insider 13-1, dividend, corporate action, meetings, people, press), results parsed from 17-Q/17-A (revenue, net income to parent, EPS, prior-year column), buy-back reports (form 9-1: shares, price, cumulative), last two years of filing dates (for the expected-date estimate) |
 | `screener.json` | `market-dashboard/scripts/ph_prices_build.py` | per company: close, 1W/1M/3M/YTD, 50/200-day EMA, 3-month range, 30-session average value traded, float %, market cap (EDGE's own daily bars and Stock Data page) plus PSEi from Yahoo `PSEI.PS`; PSEi membership list is in the script (update after the February/August reviews) |
-| `breadth.json` | Pulse `export_ph_breadth.py` | PH breadth (PHFD/PHTW/PHFI/PHTH, net new highs); falls back to the file committed in `web/data/` |
+| `breadth.json` | `ph_prices_build.py` (from the same EDGE bars; same arithmetic as Pulse's `phBreadthCalc`) | PH breadth (PHFD/PHTW/PHFI/PHTH, net new highs with 8/20 EMAs); falls back to the file committed in `web/data/` (Pulse export) when absent |
+| `bars.json` | `ph_prices_build.py` | last 300 daily bars (open, high, low, close, pesos traded) for the liquid names and the pinned ones; read by `GET /api/ph/symbol` for the page's chart dock |
 | `macro.json` | `POST /api/country_calendar` | S&P Global PH manufacturing PMI history, from the calendar's actuals (no ECONOMICS series exists) |
 
 Daily run: `~/market-dashboard/scripts/ph_daily.sh` from launchd (`scripts/launchd/com.arvin.ph-daily.plist`, copy to
@@ -571,6 +572,8 @@ PH macro series (`PH_CORE_CPI`, `PH_CPI_MOM`, `PH_GDP_QOQ`, `PH_UNEMPLOYMENT`, `
 `series_write.ALLOWED` and load through the morning routine like the other PH series; each must be backfilled once
 (`load_country_series.py`) before the freshness worklist stops counting it as never loaded. The routine's calendar step also
 fetches PH at every importance level (PMI and the smaller releases are rated below medium).
+
+The chart dock at the bottom of `/philippines` draws the bars itself (candles, 5/10/20/50/100/200 EMAs, traded value) and steps through the list a ticker was clicked from (← → keys); TradingView's free embed does not carry PSE symbols, so TradingView opens in a new tab. **COL and CTS are pinned** (`ph_prices_build.PINNED`): always in the snapshot and shown in the Pinned strip whatever they trade. The `ph-desk` skill (`~/.claude/skills/ph-desk`) reads the same data through `mcp__cgi__get_ph`.
 
 PSE EDGE terms: personal, non-commercial use; storing or redistributing PSE data needs PSE's written consent. The snapshots keep only
 titles, dates, the figures shown and a link number back to the filing, never a copy of a filing. Ask PSE before sharing the page beyond

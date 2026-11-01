@@ -331,6 +331,16 @@ def ph():
     return cache.get_or_fetch_bg("ph", ph_data.build_ph_response)
 
 
+@app.get("/api/ph/symbol", dependencies=[Depends(require_bearer_token)])
+def ph_symbol(s: str):
+    """One Philippine ticker for the page's chart dock: daily bars with EMAs, its numbers, last results, buy-backs, disclosures."""
+    import re
+
+    if not re.fullmatch(r"[A-Za-z0-9]{1,8}", s):
+        raise HTTPException(status_code=400, detail="bad ticker")
+    return ph_data.symbol_view(s)
+
+
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
 def technicals():
     return cache.get_or_fetch_bg("technicals", technicals_data.build_technicals_response)
