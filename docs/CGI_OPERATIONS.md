@@ -565,8 +565,12 @@ already holds; nothing in a request touches PSE EDGE.
 | `macro.json` | `POST /api/country_calendar` | S&P Global PH manufacturing PMI history, from the calendar's actuals (no ECONOMICS series exists) |
 
 Daily run: `~/market-dashboard/scripts/ph_daily.sh` from launchd (`scripts/launchd/com.arvin.ph-daily.plist`, copy to
-`~/Library/LaunchAgents/`; **Monday to Friday 15:10 Manila**, just after the PSE close at 15:00; log `~/.cgi/ph_daily.log`). Order: EDGE builder, PSE circular watcher (`ph_index_watch.py`), prices/bars/breadth; Sundays are not scheduled (weekdays only), so run `ph_prices_build.py --full --upload` by hand now and then to refresh the whole listed universe. A run before 15:05 on a trading day drops today's bar (a session in progress is not a close). Results, many filings and BSP decisions come after 15:10 and show on the next day's run.
-Zero tokens. First run: `ph_edge_build.py --days 120 --history --upload` (about 45 minutes), then `ph_prices_build.py --full --upload`.
+`~/Library/LaunchAgents/`; the Mac's clock is Manila time). Slots: **Monday to Friday 15:10** (just after the PSE close at 15:00), **Monday to Friday
+18:30** (repeats the run: late filings, and a retry if EDGE had not published the close at 15:10), **Saturday 09:00** (with `--full`: every listed company is
+re-read, so a name that newly crosses the liquid line or a new listing enters). Order: EDGE builder, PSE circular watcher (`ph_index_watch.py`),
+prices/bars/breadth, then `ph_run_check.py` (one summary line in `~/.cgi/ph_daily.log`, `~/.cgi/ph_last_run.json`, and a macOS notification only when something is
+wrong: snapshot not stored, no bar for today after 15:10 [a PSE holiday looks the same], or many filings failing to parse). A run before 15:05 on a trading day
+drops today's bar (a session in progress is not a close). Results, many filings and BSP decisions come after 15:10 and show on the 18:30 run or the next day's. Log `~/.cgi/ph_daily.log`. Zero tokens. First run: `ph_edge_build.py --days 120 --history --upload` (about 45 minutes), then `ph_prices_build.py --full --upload`.
 `/api/freshness` has a `ph` block: prices more than 3 weekdays old, EDGE not rebuilt for 3 days, or more than 30% of filings failing to parse.
 
 PH macro series (`PH_CORE_CPI`, `PH_CPI_MOM`, `PH_GDP_QOQ`, `PH_UNEMPLOYMENT`, `PH_IP_YOY`, `PH_REMITTANCES`, `PH_FX_RESERVES`) are in

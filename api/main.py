@@ -361,6 +361,22 @@ def ph_index_events_post(body: dict = Body(default={})):
         raise HTTPException(status_code=502, detail=f"could not store the events: {exc}")
 
 
+@app.post("/api/ph/bsp_notes")
+def ph_bsp_notes_post(body: dict = Body(default={})):
+    """The decision-day task posts what the BSP Monetary Board decided and said (the BSP's own site refuses scripts). Unauthenticated like
+    /api/country_calendar; bounded in code (ph_data.clean_bsp_notes). A post that keeps nothing is refused."""
+    rows, report = ph_data.clean_bsp_notes(body)
+    if not rows:
+        raise HTTPException(status_code=400, detail={"error": "no valid notes; stored ones left as they were", "report": report})
+    try:
+        old = ph_data.read_blob("bsp") or {}
+        merged = ph_data.merge_bsp_notes(old.get("notes") or [], rows)
+        ph_data.write_blob("bsp", {"notes": merged, "at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(timespec="seconds")})
+        return {"ok": True, "report": report, "stored": len(merged)}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"could not store the notes: {exc}")
+
+
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
 def technicals():
     return cache.get_or_fetch_bg("technicals", technicals_data.build_technicals_response)

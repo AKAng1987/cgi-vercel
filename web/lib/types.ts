@@ -1368,6 +1368,7 @@ export type PhResponse = {
   };
   scanner: PhScannerRow[];
   index: PhIndex;
+  bsp: { notes: PhBspNote[]; next: { next: string | null; upcoming: string[] } };
   freshness: {
     prices: { asof: string | null; age_days: number | null; n: number; n_liquid: number };
     edge: { built_at: string | null; age_days: number | null; last_run: { n_failed?: number } | null };
@@ -1394,3 +1395,5 @@ export type PhIndexCal = {
 };
 export type PhIndexEvent = { provider: string; date: string; kind: "add" | "delete" | "note"; index: string; symbols: string[]; effective: string | null; source_url: string; note: string };
 export type PhIndex = { calendar: PhIndexCal[]; events: PhIndexEvent[]; psei_members_as_of?: string | null; circular?: { circular: string; date: string; effective: string | null; url: string } | null; note: string };
+
+export type PhBspNote = { date: string; decision: "hike" | "cut" | "hold"; rate: number; change_bp: number; lines: string[]; source_url: string };

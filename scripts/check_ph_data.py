@@ -160,6 +160,18 @@ check("digest: a price under P1 is marked, a normal one is not", (dg["movers"]["
 check("digest: preferred dividend is flagged, the other is not claimed as common", [d[3] for d in dg["dividends"]], ["preferred", "common or not stated"])
 check("digest: COL gets its latest real filing (the 'other' form is skipped), CTS with none stays empty", [(e["s"], e["last_filing"] and e["last_filing"][0]) for e in dg["extra_names"]], [("COL", "2026-10-09"), ("CTS", None)])
 
+# ── BSP notes
+nb = {"notes": [{"date": "2026-10-22", "decision": "hike", "rate": 5.5, "change_bp": 50, "lines": ["a", "b", "c", "d"], "source_url": "https://example.com/x"},
+                {"date": "2026-10-22", "decision": "maybe", "rate": 5.5, "change_bp": 50},
+                {"date": "2026-10-23", "decision": "cut", "rate": 99, "change_bp": -25},
+                {"date": "2026-01-01", "decision": "hold", "rate": 5.0, "change_bp": 0},
+                {"date": "2026-10-23", "decision": "hold", "rate": 5.5, "change_bp": 0, "source_url": "http://insecure"}]}
+nr, nrep = P.clean_bsp_notes(nb, dt.date(2026, 11, 2))
+check("BSP notes: valid kept (lines capped at 3), bad decision / rate / old date dropped, insecure source blanked", (nrep["kept"], nrep["dropped"], len(nr[0]["lines"]), nr[1]["source_url"]), (2, {"decision/rate/change": 2, "outside window": 1}, 3, ""))
+check("BSP notes: same date replaces", len(P.merge_bsp_notes(nr, [dict(nr[0], rate=5.25)])), 2)
+check("BSP note problem: Oct 22 meeting seen 11 days later without a note, then with one", (len(P.bsp_note_problems(dt.date(2026, 11, 2), [])), len(P.bsp_note_problems(dt.date(2026, 11, 2), [{"date": "2026-10-22"}]))), (1, 0))
+check("BSP note problem: not before 2 days or after 14", (len(P.bsp_note_problems(dt.date(2026, 10, 23), [])), len(P.bsp_note_problems(dt.date(2026, 11, 20), []))), (0, 0))
+
 # ── freshness
 import freshness as fr  # noqa: E402
 

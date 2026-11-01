@@ -7,6 +7,7 @@ Snapshots live in the same S3 folder as the other offline-built blobs (cache.PRE
             plus PSEi from Yahoo: returns, EMAs, 3-month range, 30-day average value traded, float and market cap
   breadth   exported from Pulse (export_ph_breadth.py)
   bars      daily OHLC + value traded for the last 300 sessions of the liquid and extra (COL, CTS) names (the page's chart dock)
+  bsp       what the Monetary Board said at each decision (posted by the decision-day task: the BSP's own site refuses scripts)
   index     announced index changes (PSE circulars read by ph_index_watch.py; MSCI/FTSE/WisdomTree rows posted on announcement days)
   macro     PMI history, appended from the calendar's actuals (S&P Global PMI has no ECONOMICS series)
 EDGE's terms forbid storing or redistributing its data without PSE's consent: `edge` holds only titles, dates, the few
@@ -19,7 +20,7 @@ import logging
 from typing import Optional
 
 _logger = logging.getLogger("cgi_api.ph")
-NAMES = ("edge", "screener", "breadth", "macro", "bars", "index")
+NAMES = ("edge", "screener", "breadth", "macro", "bars", "index", "bsp")
 
 
 def _key(name: str) -> str:
@@ -35,7 +36,7 @@ def write_blob(name: str, obj: dict) -> None:
 
     cache._s3.put_object(Bucket=cache.BUCKET, Key=_key(name), Body=json.dumps(obj, separators=(",", ":")).encode("utf-8"),
                          ContentType="application/json")
-    if name in ("edge", "screener", "breadth", "macro", "index"):
+    if name in ("edge", "screener", "breadth", "macro", "index", "bsp"):
         try:
             cache.invalidate("ph")          # the next warm-up (not a visitor) rebuilds the page from the new snapshot
         except Exception as e:  # noqa: BLE001 -- the snapshot is stored; the cache expires on its own within the hour
@@ -468,6 +469,19 @@ def bsp_meetings(today) -> dict:
     return {"next": up[0] if up else None, "upcoming": up[:3], "schedule_ends": dates[-1] if dates else None}
 
 
+def bsp_note_problems(today, notes: list[dict]) -> list[dict]:
+    """A Monetary Board meeting 2 to 14 days ago with no stored decision note (the decision-day task or a manual post is missing)."""
+    import datetime as dt
+    import release_calendar as rc
+
+    out = []
+    for d in sorted(x for ds in rc._BSP.values() for x in ds):
+        age = (today - dt.date.fromisoformat(d)).days
+        if 2 <= age <= 14 and not any(abs((dt.date.fromisoformat(n["date"]) - dt.date.fromisoformat(d)).days) <= 1 for n in notes):
+            out.append({"check": "bsp_note", "detail": f"BSP Monetary Board met on {d} but no decision note is stored: run the decision-day task or POST /api/ph/bsp_notes"})
+    return out
+
+
 def age_days(iso: Optional[str], today) -> Optional[int]:
     import datetime as dt
 
@@ -477,6 +491,58 @@ def age_days(iso: Optional[str], today) -> Optional[int]:
         return (today - dt.date.fromisoformat(iso[:10])).days
     except ValueError:
         return None
+
+
+BSP_DECISIONS = ("hike", "cut", "hold")
+
+
+def clean_bsp_notes(body, today=None) -> tuple[list[dict], dict]:
+    """Validate POST /api/ph/bsp_notes: {"notes": [{date, decision, rate, change_bp, lines[], source_url}]}. Dates from 120 days back to tomorrow, rate 0-25,
+    change in basis points within +-300, at most 3 lines of at most 160 characters, https source. Never raises on a bad row."""
+    import datetime as dt
+    import re
+
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    rep = {"received": 0, "kept": 0, "dropped": {}}
+
+    def drop(why):
+        rep["dropped"][why] = rep["dropped"].get(why, 0) + 1
+
+    rows = body.get("notes") if isinstance(body, dict) else None
+    if not isinstance(rows, list):
+        return [], {**rep, "error": "body needs notes (list)"}
+    rows = rows[:12]
+    rep["received"] = len(rows)
+    out = []
+    for r in rows:
+        if not isinstance(r, dict):
+            drop("malformed")
+            continue
+        try:
+            d = dt.date.fromisoformat(str(r.get("date"))[:10])
+        except ValueError:
+            drop("date")
+            continue
+        if not today - dt.timedelta(days=120) <= d <= today + dt.timedelta(days=1):
+            drop("outside window")
+            continue
+        dec = str(r.get("decision", "")).lower()
+        rate, bp = _f(r.get("rate")), _f(r.get("change_bp"))
+        if dec not in BSP_DECISIONS or rate is None or not 0 <= rate <= 25 or bp is None or abs(bp) > 300:
+            drop("decision/rate/change")
+            continue
+        lines = [str(x).strip()[:160] for x in (r.get("lines") or []) if str(x).strip()][:3]
+        url = str(r.get("source_url") or "")
+        out.append({"date": d.isoformat(), "decision": dec, "rate": round(rate, 3), "change_bp": int(bp), "lines": lines,
+                    "source_url": url if re.fullmatch(r"https://[^\s\"'<>]{4,190}", url) else ""})
+    rep["kept"] = len(out)
+    return out, rep
+
+
+def merge_bsp_notes(old: list[dict], new: list[dict]) -> list[dict]:
+    by = {n["date"]: n for n in old}
+    by.update({n["date"]: n for n in new})
+    return sorted(by.values(), key=lambda n: n["date"], reverse=True)[:12]
 
 
 def build_digest(resp: dict, edge: Optional[dict] = None) -> dict:
@@ -540,6 +606,7 @@ def build_digest(resp: dict, edge: Optional[dict] = None) -> dict:
         "material_counts_14d": counts,
         "material_latest": [[m["symbol"], (m.get("subject") or m["title"])[:90], m["announced"][:10]] for m in resp["material"] if m["chip"] == "material"][:8],
         "extra_names": extra, "breadth": resp.get("breadth") and {k: resp["breadth"].get(k) for k in ("as_of", "colour", "net", "streak_days")},
+        "bsp_last": (resp.get("bsp") or {}).get("notes", [None])[0] if (resp.get("bsp") or {}).get("notes") else None,
         "index_next": [[e["provider"], e["announce"] or e["effective"], e["event"][:40]] for e in resp.get("index", {}).get("calendar", []) if e["status"] != "done"][:4],
         "index_announced": [[e["provider"], e["date"], e["kind"], e["index"], e["symbols"][:8]] for e in resp.get("index", {}).get("events", [])][:6],
         "rebalance": {"weakest_members": [[x["s"], round(x["ffmc"] / 1e9, 1)] for x in resp["rebalance"]["weakest_members"][:3]],
@@ -601,6 +668,7 @@ def build_ph_response() -> dict:
     }
     import ph_index
 
+    resp["bsp"] = {"notes": (read_blob("bsp") or {}).get("notes", [])[:4], "next": rel["BSP"]["next"]}
     ix = read_blob("index") or {}
     resp["index"] = {"calendar": ph_index.calendar_view(today)[:14], "events": (ix.get("events") or [])[:40], "psei_members_as_of": ix.get("psei_members_as_of"),
                      "circular": ix.get("last_circular"), "note": "MSCI, FTSE and WisdomTree do not publish per-stock candidates, so there is no screen for them; "
@@ -609,4 +677,4 @@ def build_ph_response() -> dict:
     return resp
 
 
-SCHEMA_VERSION = 4   # 4: digest units, preferred dividends, extra-name filings, penny marks; 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper
+SCHEMA_VERSION = 5   # 5: BSP notes; 4: digest units, preferred dividends, extra-name filings, penny marks; 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper

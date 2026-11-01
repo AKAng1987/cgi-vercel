@@ -72,6 +72,17 @@ export function PhHeader({ d }: { d: PhResponse }) {
           </Stat>
         )}
       </div>
+      {d.bsp?.notes?.[0] && (() => {
+        const n = d.bsp.notes[0];
+        return (
+          <p className="mt-2 text-xs text-slate-300">
+            <span className="text-slate-500">BSP {dayLabel(n.date)}:</span>{" "}
+            <span className="font-semibold">{n.decision === "hold" ? `held at ${n.rate.toFixed(2)}%` : `${n.decision === "hike" ? "raised" : "cut"} ${Math.abs(n.change_bp)}bp to ${n.rate.toFixed(2)}%`}</span>
+            {n.lines.length > 0 && <span className="text-slate-400"> · {n.lines.join(" · ")}</span>}
+            {n.source_url && <a className="ml-1 text-slate-500 hover:text-slate-200" target="_blank" rel="noopener noreferrer" href={n.source_url}>source ↗</a>}
+          </p>
+        );
+      })()}
       <p className="mt-2 text-[0.65rem] leading-relaxed text-slate-600">
         The regime read is CGI&apos;s history of EPHE in this regime: a small sample, not a signal. Everything below describes what has happened or been filed.
       </p>

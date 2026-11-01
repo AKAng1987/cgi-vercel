@@ -1007,7 +1007,7 @@ def _weekdays_between(a: dt.date, b: dt.date) -> int:
 
 
 def ph_problems(today: dt.date, prices_asof: Optional[str], edge_built_at: Optional[str], edge_last_run: Optional[dict],
-                prices_n_liquid: int = 0, index_events: Optional[list] = None) -> dict:
+                prices_n_liquid: int = 0, index_events: Optional[list] = None, bsp_notes: Optional[list] = None) -> dict:
     """Pure part of the Philippines-tab check. The two snapshots are built daily by launchd on this Mac (ph_prices_build.py,
     ph_edge_build.py) and nothing else notices when they stop. Prices: the newest bar is more than 3 weekdays old (PSE holidays
     are rarely longer than that). EDGE: not rebuilt for 3 days. A parse failure rate above 30% of the filings tried means EDGE
@@ -1032,6 +1032,10 @@ def ph_problems(today: dt.date, prices_asof: Optional[str], edge_built_at: Optio
         import ph_index
 
         problems += ph_index.calendar_problems(today, index_events)["problems"]
+    if bsp_notes is not None:
+        import ph_data
+
+        problems += ph_data.bsp_note_problems(today, bsp_notes)
     lr = edge_last_run or {}
     tried, failed = lr.get("filings_tried", 0), lr.get("n_failed", 0)
     if tried >= 5 and failed > 0.3 * tried:
@@ -1053,7 +1057,7 @@ def ph_check(today: Optional[dt.date] = None) -> dict:
         shot = ph_data.read_blob("screener") or {}
         edge = ph_data.read_blob("edge") or {}
         n_liquid = len(ph_data.liquid(shot.get("rows", [])))
-        return ph_problems(today or dt.date.today(), shot.get("asof"), edge.get("built_at"), edge.get("last_run"), n_liquid, ph_data_index_events())
+        return ph_problems(today or dt.date.today(), shot.get("asof"), edge.get("built_at"), edge.get("last_run"), n_liquid, ph_data_index_events(), (ph_data.read_blob("bsp") or {}).get("notes") or [])
     except Exception as exc:  # noqa: BLE001 -- additive; never break the page
         return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
 
