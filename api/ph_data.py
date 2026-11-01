@@ -479,13 +479,26 @@ def age_days(iso: Optional[str], today) -> Optional[int]:
         return None
 
 
-def build_digest(resp: dict) -> dict:
+def build_digest(resp: dict, edge: Optional[dict] = None) -> dict:
     """The morning read in about 1,500 tokens, so a model asking 'what is going on in PH' does not pull the whole page (about 30,000):
     freshness, macro and the next releases, movers and segments, who reported, buy-backs, insider and dividend news, material subjects,
     and COL and CTS in one line each. Built from the response itself, nothing new is read."""
+    def row(r):
+        # a price under PHP 1 moves in whole ticks: say so, so the read does not treat it as a segment signal
+        return [r["s"], r["ret"], "under P1: tick-size noise"] if r["c"] < 1 else [r["s"], r["ret"]]
+
     def mv(h, n=5):
         L = resp["horizons"][h]["leaders"]
-        return {"up": [[r["s"], r["ret"]] for r in L["top"][:n]], "down": [[r["s"], r["ret"]] for r in L["bottom"][:n]]}
+        return {"up": [row(r) for r in L["top"][:n]], "down": [row(r) for r in L["bottom"][:n]]}
+
+    def macro_row(v):
+        """Levels (bank lending, M2, remittances, reserves) as year-on-year % plus the level in trillions or billions, not raw pesos."""
+        if v.get("kind") == "level":
+            lvl, cur = v["latest"], ("US$" if v.get("unit") == "USD" else "P")
+            txt = f"{cur}{lvl / 1e12:.2f}T" if lvl >= 1e12 else f"{cur}{lvl / 1e9:.2f}B"
+            yoy = v.get("yoy_pct")
+            return [v["label"], txt, None if yoy is None else f"{yoy:+.1f}% y/y", v["as_of"][:7]]
+        return [v["label"], v["latest"], v.get("prior"), v["as_of"][:7]]
 
     def segs(h, n=3):
         sg = resp["horizons"][h]["segments_industry"]
@@ -500,7 +513,9 @@ def build_digest(resp: dict) -> dict:
     extra = []
     for r in resp["scanner"]:
         if r.get("extra"):
-            last = next((m for m in resp["material"] if m["symbol"] == r["s"]), None)
+            # the latest filing at any age (the material feed only holds 14 days, and these two file rarely)
+            pool = (edge or {}).get("disclosures") or resp["material"]
+            last = next((m for m in pool if m.get("symbol") == r["s"] and m.get("chip") != "other"), None)
             extra.append({"s": r["s"], "c": r["c"], "d": r.get("d"), "m": r.get("m"), "v30": r.get("v30"),
                           "last_filing": last and [last["announced"][:10], (last.get("subject") or last["title"])[:80]]})
     counts = {}
@@ -511,7 +526,7 @@ def build_digest(resp: dict) -> dict:
         "as_of": resp["as_of"], "freshness": {"prices_asof": resp["freshness"]["prices"]["asof"], "edge_built_at": resp["freshness"]["edge"]["built_at"]},
         "header": {"psei": h["psei"], "usdphp": h["usdphp"] and h["usdphp"].get("last"), "bsp_rate": h["policy"] and h["policy"]["latest"], "bsp_next": h["bsp"]["next"],
                    "regime": h["regime"], "ephe_in_regime": h["equity"] and {k: h["equity"].get(k) for k in ("avg_return_pct", "hit_rate", "occurrences")}},
-        "macro": {k: [v["label"], v["latest"], v.get("prior"), v["as_of"][:7]] for k, v in resp["macro"].items()},
+        "macro": {k: macro_row(v) for k, v in resp["macro"].items()},
         "calendar_next": [[e["date"], e["kind"], e.get("previous"), e.get("forecast")] for e in resp["calendar"]["events"] if e["days_to_go"] >= 0][:6],
         "calendar_late": resp["calendar"]["late"],
         "movers": {"1D": mv("1D"), "1M": mv("1M")}, "segments_1M": segs("1M"), "segments_1D": segs("1D"),
@@ -519,7 +534,9 @@ def build_digest(resp: dict) -> dict:
         "expected_next": [[e["s"], e["date"]] for e in resp["earnings"]["next"][:8]],
         "buybacks_30d": [[b["s"], b["value_30d"], b["pct_outstanding_30d"], b["last_date"]] for b in resp["buybacks"][:5]],
         "insider": list(ins.values())[:8],
-        "dividends": [[m["symbol"], m["dividend"]["per_share"], m["dividend"].get("record")] for m in resp["material"] if m.get("dividend")][:6],
+        "dividends": [[m["symbol"], m["dividend"]["per_share"], m["dividend"].get("record"),
+                       "preferred" if "preferred" in (m.get("subject") or "").lower() else "common or not stated", (m.get("subject") or m["title"])[:60]]
+                      for m in resp["material"] if m.get("dividend")][:6],
         "material_counts_14d": counts,
         "material_latest": [[m["symbol"], (m.get("subject") or m["title"])[:90], m["announced"][:10]] for m in resp["material"] if m["chip"] == "material"][:8],
         "extra_names": extra, "breadth": resp.get("breadth") and {k: resp["breadth"].get(k) for k in ("as_of", "colour", "net", "streak_days")},
@@ -588,8 +605,8 @@ def build_ph_response() -> dict:
     resp["index"] = {"calendar": ph_index.calendar_view(today)[:14], "events": (ix.get("events") or [])[:40], "psei_members_as_of": ix.get("psei_members_as_of"),
                      "circular": ix.get("last_circular"), "note": "MSCI, FTSE and WisdomTree do not publish per-stock candidates, so there is no screen for them; "
                      "their Philippine changes appear here after each announcement"}
-    resp["digest"] = build_digest(resp)
+    resp["digest"] = build_digest(resp, edge)
     return resp
 
 
-SCHEMA_VERSION = 3   # 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper
+SCHEMA_VERSION = 4   # 4: digest units, preferred dividends, extra-name filings, penny marks; 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper

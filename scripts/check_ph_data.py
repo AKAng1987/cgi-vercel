@@ -131,6 +131,35 @@ check("chart events: result, buy-back and insider kept, press and out-of-range d
 check("chart event labels", (ev[0]["label"], ev[1]["label"], ev[1]["side"]), ("Q to 09/26: revenue +6.0%, net income loss", "J. Cruz sold 2,000 sh", "sold"))
 del os.environ["PH_LOCAL_DIR"]
 
+# ── digest
+def _lead(s, ret, c):
+    return {"s": s, "ret": ret, "c": c}
+
+
+resp = {
+    "as_of": "2026-11-02", "freshness": {"prices": {"asof": "2026-10-30"}, "edge": {"built_at": "x"}},
+    "header": {"psei": None, "usdphp": None, "policy": None, "bsp": {"next": None}, "regime": "C2G2", "equity": None},
+    "macro": {"loans": {"label": "Bank lending", "kind": "level", "unit": "level", "latest": 12731385030000.0, "prior": 1.0, "yoy_pct": 10.6, "as_of": "2026-08-01"},
+              "reserves": {"label": "FX reserves", "kind": "level", "unit": "USD", "latest": 100e9, "yoy_pct": None, "as_of": "2026-09-01"},
+              "policy": {"label": "BSP", "kind": "rate", "unit": "%", "latest": 5.5, "prior": 5.0, "as_of": "2026-10-01"}},
+    "calendar": {"events": [], "late": []},
+    "horizons": {h: {"leaders": {"top": [_lead("PHR", 155.4, 0.47), _lead("SGP", 19.3, 26.0)], "bottom": [_lead("ABG", -46.7, 22.7)]},
+                     "segments_industry": [{"name": "Banks", "median": 1.0, "n": 6}]} for h in ("1D", "1M")},
+    "earnings": {"reported": [], "next": []}, "buybacks": [],
+    "material": [{"symbol": "AC", "chip": "dividend", "title": "Declaration of Cash Dividends", "announced": "2026-10-30T12:04",
+                  "subject": "Declaration of the Fourth Quarter 2026 Cash Dividends on Outstanding Preferred A Shares", "dividend": {"per_share": 39.74, "record": "2026-11-16"}},
+                 {"symbol": "ALCO", "chip": "dividend", "title": "Declaration of Cash Dividends", "announced": "2026-10-29T12:04", "subject": "Cash dividend declaration", "dividend": {"per_share": 7.5, "record": "2026-11-12"}}],
+    "scanner": [{"s": "COL", "c": 1.19, "d": 0.0, "m": -20.7, "v30": 2.4e6, "extra": 1}, {"s": "CTS", "c": 0.34, "d": 0.0, "m": 0.0, "v30": 2.8e5, "extra": 1}],
+    "index": {"calendar": [], "events": []}, "rebalance": {"weakest_members": [], "nearest_non_members": []}, "breadth": None,
+}
+edge_dg = {"disclosures": [{"symbol": "COL", "chip": "insider", "title": "Change in Shareholdings", "announced": "2026-10-09T10:00", "edge_no": "i1"},
+                           {"symbol": "COL", "chip": "other", "title": "x", "announced": "2026-10-20T10:00", "edge_no": "o1"}]}
+dg = P.build_digest(resp, edge_dg)
+check("digest: levels as year-on-year and trillions, rates unchanged", (dg["macro"]["loans"], dg["macro"]["reserves"][1], dg["macro"]["policy"][1]), (["Bank lending", "P12.73T", "+10.6% y/y", "2026-08"], "US$100.00B", 5.5))
+check("digest: a price under P1 is marked, a normal one is not", (dg["movers"]["1D"]["up"][0], dg["movers"]["1D"]["up"][1]), (["PHR", 155.4, "under P1: tick-size noise"], ["SGP", 19.3]))
+check("digest: preferred dividend is flagged, the other is not claimed as common", [d[3] for d in dg["dividends"]], ["preferred", "common or not stated"])
+check("digest: COL gets its latest real filing (the 'other' form is skipped), CTS with none stays empty", [(e["s"], e["last_filing"] and e["last_filing"][0]) for e in dg["extra_names"]], [("COL", "2026-10-09"), ("CTS", None)])
+
 # ── freshness
 import freshness as fr  # noqa: E402
 
