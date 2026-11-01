@@ -1,5 +1,5 @@
 {
- "as_of": "2026-10-29",
+ "as_of": "2026-11-01",
  "claims": [
   {
    "baseline": 2.743,
@@ -48,6 +48,30 @@
    "result": null,
    "thread": "ai",
    "ticker": "TSM"
+  },
+  {
+   "baseline": 51.4,
+   "check_quarter": "2026Q4",
+   "claim": "Google capex keeps rising",
+   "date": "2026-11-01",
+   "direction": "up",
+   "id": "2026w44-ai-1",
+   "metric": "capex_bn",
+   "result": null,
+   "thread": "ai-infrastructure",
+   "ticker": "GOOGL"
+  },
+  {
+   "baseline": 18619,
+   "check_quarter": "2026Q4",
+   "claim": "D.R. Horton net orders keep falling",
+   "date": "2026-11-01",
+   "direction": "down",
+   "id": "2026w44-consumer-1",
+   "metric": "net_orders_homes",
+   "result": null,
+   "thread": "consumer-housing",
+   "ticker": "DHI"
   }
  ],
  "delta": [
@@ -243,6 +267,25 @@
   }
  ],
  "facts": {
+  "AMZN": {
+   "2026Q3": {
+    "filed": "2026-10-29",
+    "metrics": {
+     "aws_sales_bn": {
+      "note": "AWS sales, +39% y/y",
+      "unit": "$bn",
+      "value": 46.0
+     },
+     "ttm_capex_bn": {
+      "note": "trailing-12-month capex (net), +82%",
+      "unit": "$bn",
+      "value": 210.7
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000038/"
+   }
+  },
   "ASML": {
    "2026Q2": {
     "filed": "2026-07-15",
@@ -325,6 +368,25 @@
     "source": "https://www.sec.gov/Archives/edgar/data/70858/000007085826000481/"
    }
   },
+  "DHI": {
+   "2026Q3": {
+    "filed": "2026-10-29",
+    "metrics": {
+     "net_orders_homes": {
+      "note": "net sales orders, -7% y/y",
+      "unit": "homes",
+      "value": 18619
+     },
+     "revenue_usd_bn": {
+      "note": "fiscal Q4 consolidated revenue",
+      "unit": "$bn",
+      "value": 9.4
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/882184/000088218426000119/"
+   }
+  },
   "GOOGL": {
    "2026Q3": {
     "filed": "2026-10-28",
@@ -332,12 +394,22 @@
      "capex_bn": {
       "note": "purchases of property and equipment",
       "unit": "$bn",
-      "value": 51.355
+      "value": 51.4
      },
      "cloud_rev_bn": {
       "note": "Google Cloud revenue, +103%",
       "unit": "$bn",
       "value": 30.7
+     },
+     "cloud_revenue_bn": {
+      "note": "Google Cloud revenue, +103% y/y",
+      "unit": "$bn",
+      "value": 30.7
+     },
+     "revenue_usd_bn": {
+      "note": "total revenue, +25% y/y",
+      "unit": "$bn",
+      "value": 127.6
      }
     },
     "names": [],
@@ -378,6 +450,25 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/886982/000088698226000529/"
+   }
+  },
+  "INTC": {
+   "2026Q3": {
+    "filed": "2026-10-29",
+    "metrics": {
+     "datacenter_ai_bn": {
+      "note": "Data Center and AI revenue, +78%",
+      "unit": "$bn",
+      "value": 7.3
+     },
+     "revenue_usd_bn": {
+      "note": "total revenue, +21% y/y",
+      "unit": "$bn",
+      "value": 16.5
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/50863/000005086326000188/"
    }
   },
   "JPM": {
@@ -430,6 +521,25 @@
     "source": "https://www.sec.gov/Archives/edgar/data/319201/000031920126000032/"
    }
   },
+  "MA": {
+   "2026Q3": {
+    "filed": "2026-10-29",
+    "metrics": {
+     "net_revenue_bn": {
+      "note": "net revenue, +14%",
+      "unit": "$bn",
+      "value": 9.8
+     },
+     "purchase_volume_growth_pct": {
+      "note": "purchase volume, local currency",
+      "unit": "%",
+      "value": 9
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000122/"
+   }
+  },
   "MS": {
    "2026Q2": {
     "filed": "2026-10-14",
@@ -471,9 +581,14 @@
       "value": 63.9
      },
      "commercial_rpo_bn": {
-      "note": "commercial RPO, +73%",
+      "note": "commercial remaining performance obligation, +73%",
       "unit": "$bn",
       "value": 677
+     },
+     "revenue_usd_bn": {
+      "note": "total revenue, +19% y/y",
+      "unit": "$bn",
+      "value": 92.3
      }
     },
     "names": [],
@@ -638,6 +753,25 @@
     "source": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000726/"
    }
   },
+  "UNP": {
+   "2026Q3": {
+    "filed": "2026-10-22",
+    "metrics": {
+     "carload_growth_pct": {
+      "note": "revenue carloads",
+      "unit": "%",
+      "value": 6
+     },
+     "operating_revenue_bn": {
+      "note": "operating revenue, +15%",
+      "unit": "$bn",
+      "value": 7.2
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/100885/000010088526000319/"
+   }
+  },
   "USB": {
    "2026Q2": {
     "filed": "2026-07-16",
@@ -682,6 +816,25 @@
     },
     "names": [],
     "source": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000054/"
+   }
+  },
+  "V": {
+   "2026Q3": {
+    "filed": "2026-10-27",
+    "metrics": {
+     "net_revenue_bn": {
+      "note": "fiscal Q4 net revenue, +13%",
+      "unit": "$bn",
+      "value": 12.1
+     },
+     "payments_volume_growth_pct": {
+      "note": "payments volume growth, constant dollars",
+      "unit": "%",
+      "value": 9
+     }
+    },
+    "names": [],
+    "source": "https://www.sec.gov/Archives/edgar/data/1403161/000140316126000126/"
    }
   },
   "VRT": {
@@ -737,10 +890,10 @@
  },
  "note": "Company-published figures with their SEC source. Descriptive context, not a signal.",
  "scorecard": {
-  "claims": 4,
+  "claims": 6,
   "held": 0,
   "not_testable": 0,
   "tested": 0,
-  "waiting": 4
+  "waiting": 6
  }
 }
