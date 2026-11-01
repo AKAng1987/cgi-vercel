@@ -22,8 +22,8 @@ const ZONE: Record<string, string> = {
  * Pulse from TradingView bars and exported by scripts/export_ph_breadth.py into data/ph_breadth.json, so it is as of the
  * last export, not live. The 30 and 70 lines are borrowed from the S&P gauges and are untested on the PSE.
  */
-export function PhBreadthStrip() {
-  const d = phData as unknown as {
+export function PhBreadthStrip({ data }: { data?: unknown } = {}) {
+  const d = (data ?? phData) as unknown as {
     as_of: string; built: string; universe: string; streak_days: number; net: number; ema_fast: number; ema_slow: number;
     colour: string; series: PhSeries; gauges: PhGauge[];
   };

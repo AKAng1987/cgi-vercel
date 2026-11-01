@@ -1301,3 +1301,77 @@ export interface CapexFlow {
   spenders: string[];
   members: Record<string, string[]>;
 }
+
+// ── Philippines tab (/api/ph) ────────────────────────────────────────────────
+
+export type PhMacroPoint = {
+  symbol: string; label: string; unit: string; kind: string; as_of: string; latest: number; prior?: number;
+  change_since_prior?: number; direction?: "up" | "down" | "flat"; yoy_pct?: number; yoy_pp?: number; cadence?: string;
+  age_days?: number; note?: string;
+};
+export type PhCalEvent = {
+  country: string; date: string; title: string; kind: string; series: string | null; period: string | null;
+  previous: number | null; forecast: number | null; actual?: number | null; importance: number; days_to_go: number; loaded?: boolean;
+};
+export type PhLeader = {
+  s: string; ret: number | null; c: number; vs50: number | null; vs200: number | null; vt: number | null; ind: string | null;
+  sec: string | null; psei: number; from_high3m: number | null; w: number | null; m: number | null; q: number | null; y: number | null;
+};
+export type PhSegment = { name: string; n: number; median: number; pct_up: number; top: string; top_ret: number; members: string[] };
+export type PhHorizon = {
+  leaders: { horizon_key: string; n: number; top: PhLeader[]; bottom: PhLeader[] };
+  segments_industry: PhSegment[];
+  segments_sector: PhSegment[];
+};
+export type PhEarningsNext = { s: string; date: string; basis: string; mc: number | null; psei: number; ind: string | null };
+export type PhResult = {
+  s: string; kind: "Q" | "A"; period: string; announced: string; edge_no: string; revenue: number | null; rev_yoy: number | null;
+  ni: number | null; ni_yoy: number | null; ni_loss: boolean; ni_swing: boolean; ytd_ni_yoy: number | null; eps: number | null;
+  eps_prev: number | null; ind: string | null; ret_1m: number | null; psei: number;
+};
+export type PhBuyback = {
+  s: string; last_date: string; reports_30d: number; shares_30d: number; value_30d: number; avg_price_30d: number | null;
+  pct_outstanding_30d: number | null; cumulative: number | null; total_repurchased: number | null; edge_no: string;
+};
+export type PhDisclosure = {
+  symbol: string; company: string; chip: string; form: string; title: string; amend: number; announced: string; edge_no: string;
+  buyback?: { shares: number; avg_price: number; value: number }; period?: string; subject?: string;
+  dividend?: { per_share: number; record: string | null; payment: string | null; type?: string };
+  insider?: { name: string | null; position: string | null; net_shares: number; net_value: number; n: number; first: string; side: "bought" | "sold" | "flat" };
+};
+export type PhRebalRow = { s: string; ffmc: number; mc: number | null; fl: number | null; vt: number | null; ind: string | null; ret_3m: number | null; rank: number | null; vs_smallest_member?: number | null };
+export type PhScannerRow = PhLeader & { mc: number | null; v30: number | null; fl: number | null };
+
+export type PhResponse = {
+  schema_version: number;
+  as_of: string;
+  header: {
+    psei: { c: number | null; w: number | null; m: number | null; q: number | null; y: number | null; date?: string } | null;
+    usdphp: { last?: number; as_of?: string; ret_1m?: number; ret_3m?: number; local_3m?: string } | null;
+    regime: string; compass_q: number; grid_q: number; policy: PhMacroPoint | null;
+    bsp: { next: string | null; upcoming: string[]; schedule_ends: string | null };
+    equity: { avg_return_pct?: number; hit_rate?: number; occurrences?: number; symbol?: string } | null;
+    currency: Record<string, unknown> | null;
+    regime_ranking: { best?: unknown; worst?: unknown } | null;
+    curve: Record<string, unknown> | null; risk_premium: { erp_pct?: number; country_premium_pct?: number } | null;
+    market: Record<string, unknown> | null;
+  };
+  macro: Record<string, PhMacroPoint>;
+  calendar: { asof: string | null; events: PhCalEvent[]; late: string[]; note: string };
+  breadth: unknown | null;
+  horizons: Record<"1W" | "1M" | "3M" | "YTD", PhHorizon>;
+  earnings: { next: PhEarningsNext[]; reported: PhResult[] };
+  buybacks: PhBuyback[];
+  material: PhDisclosure[];
+  rebalance: {
+    n_members: number; members: PhRebalRow[]; weakest_members: PhRebalRow[]; nearest_non_members: PhRebalRow[]; method: string;
+  };
+  scanner: PhScannerRow[];
+  freshness: {
+    prices: { asof: string | null; age_days: number | null; n: number; n_liquid: number };
+    edge: { built_at: string | null; age_days: number | null; last_run: { n_failed?: number } | null };
+    breadth: { asof?: string | null };
+    macro_pmi_months: number;
+  };
+  caveats: string[];
+};

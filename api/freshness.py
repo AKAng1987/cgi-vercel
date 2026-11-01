@@ -996,6 +996,58 @@ def gdp_check(today: Optional[dt.date] = None) -> dict:
         return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
 
 
+def _weekdays_between(a: dt.date, b: dt.date) -> int:
+    """Weekdays after a up to and including b (0 when b <= a)."""
+    n, d = 0, a
+    while d < b:
+        d += dt.timedelta(days=1)
+        if d.weekday() < 5:
+            n += 1
+    return n
+
+
+def ph_problems(today: dt.date, prices_asof: Optional[str], edge_built_at: Optional[str], edge_last_run: Optional[dict],
+                prices_n_liquid: int = 0) -> dict:
+    """Pure part of the Philippines-tab check. The two snapshots are built daily by launchd on this Mac (ph_prices_build.py,
+    ph_edge_build.py) and nothing else notices when they stop. Prices: the newest bar is more than 3 weekdays old (PSE holidays
+    are rarely longer than that). EDGE: not rebuilt for 3 days. A parse failure rate above 30% of the filings tried means EDGE
+    changed its pages."""
+    problems = []
+    if not prices_asof:
+        problems.append({"check": "prices", "detail": "no PH price snapshot stored (run ph_prices_build.py --full --upload)"})
+    else:
+        age = _weekdays_between(dt.date.fromisoformat(prices_asof[:10]), today)
+        if age > 3:
+            problems.append({"check": "prices", "detail": f"PH prices end {prices_asof[:10]} ({age} weekdays ago): the daily ph_prices_build.py job has not run"})
+    if prices_asof and prices_n_liquid < 40:
+        problems.append({"check": "prices_coverage", "detail": f"only {prices_n_liquid} liquid PH names in the snapshot (expect 60+)"})
+    if not edge_built_at:
+        problems.append({"check": "edge", "detail": "no PSE EDGE snapshot stored (run ph_edge_build.py --days 120 --history --upload)"})
+    else:
+        built = dt.datetime.fromisoformat(edge_built_at.replace("Z", "+00:00"))
+        hours = (dt.datetime.combine(today, dt.time(12), tzinfo=dt.timezone.utc) - built).total_seconds() / 3600
+        if hours > 72:
+            problems.append({"check": "edge", "detail": f"PSE EDGE snapshot built {edge_built_at[:16]} ({hours / 24:.0f} days ago): the daily ph_edge_build.py job has not run"})
+    lr = edge_last_run or {}
+    tried, failed = lr.get("filings_tried", 0), lr.get("n_failed", 0)
+    if tried >= 5 and failed > 0.3 * tried:
+        problems.append({"check": "edge_parse", "detail": f"{failed} of {tried} EDGE filings failed to parse in the last run: EDGE may have changed its pages"})
+    return {"problems": problems, "n_problems": len(problems), "prices_asof": prices_asof, "edge_built_at": edge_built_at,
+            "n_liquid": prices_n_liquid}
+
+
+def ph_check(today: Optional[dt.date] = None) -> dict:
+    import ph_data
+
+    try:
+        shot = ph_data.read_blob("screener") or {}
+        edge = ph_data.read_blob("edge") or {}
+        n_liquid = len(ph_data.liquid(shot.get("rows", [])))
+        return ph_problems(today or dt.date.today(), shot.get("asof"), edge.get("built_at"), edge.get("last_run"), n_liquid)
+    except Exception as exc:  # noqa: BLE001 -- additive; never break the page
+        return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
+
+
 def rate_path_problems(payload: Optional[dict]) -> dict:
     """Pure part of the rate-path check: enough futures quotes came back to draw a path."""
     if not payload:
@@ -1037,6 +1089,7 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
     capex = capex_check(today)
     calendar = calendar_check(today)
     gdp = gdp_check(today)
+    ph = ph_check(today)
     ratepath = rate_path_check()
     return {
         "as_of": (today or dt.date.today()).isoformat(),
@@ -1053,10 +1106,11 @@ def build_freshness(today: Optional[dt.date] = None) -> dict:
         "capex": capex,
         "release_calendar": calendar,
         "gdp": gdp,
+        "ph": ph,
         "rate_path": ratepath,
         "n_problems": (fred["n_problems"] + manual["n_never_loaded"]
                        + (1 if beat.get("stale") else 0) + integrity["n_problems"]
-                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"] + gdp["n_problems"] + ratepath["n_problems"]),
+                       + pipeline["n_problems"] + peers["n_problems"] + jumps["n_problems"] + ref["n_problems"] + erp["n_problems"] + cot["n_problems"] + capex["n_problems"] + calendar["n_problems"] + gdp["n_problems"] + ph["n_problems"] + ratepath["n_problems"]),
         "schema_version": SCHEMA_VERSION,
         "what_this_is": (
             "Whether our data is BEHIND ITS SOURCE -- not whether it is old. "

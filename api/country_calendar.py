@@ -40,9 +40,20 @@ _NOT_A_DECISION = re.compile(
     r"readout|read-out|focus|council|senate|\b5y\b|deposit|facility", re.I)
 
 
-def classify(indicator: str, title: str, category: str) -> Optional[str]:
-    """rate | cpi | gdp, or None for everything else (PMI, trade, retail, jobs, confidence, minutes, press conferences)."""
+# Philippines tab: more releases are tracked for PH than the other countries (his home market). indicator -> kind.
+PH_EXTRA = {
+    "Unemployment Rate": "labor", "Manufacturing PMI": "pmi", "Industrial Production": "ip",
+    "Core Inflation Rate": "cpi_core", "Inflation Rate Mom": "cpi_mom", "Remittances": "remit",
+    "Foreign Exchange Reserves": "reserves",
+}
+
+
+def classify(indicator: str, title: str, category: str, country: Optional[str] = None) -> Optional[str]:
+    """rate | cpi | gdp (all countries); for PH also labor, pmi, ip, cpi_core, cpi_mom, remit, reserves. None for everything else
+    (trade, retail, confidence, minutes, press conferences)."""
     ind, ttl, cat = (indicator or "").strip(), (title or ""), (category or "").lower()
+    if country == "PH" and ind in PH_EXTRA:
+        return PH_EXTRA[ind]
     if ind == "Interest Rate" and _IS_A_DECISION.search(ttl) and not _NOT_A_DECISION.search(ttl):
         return "rate"
     if ind == "Inflation Rate":
@@ -94,6 +105,7 @@ def clean(rows: Any, today: Optional[dt.date] = None) -> tuple[list[dict], dict]
             drop("malformed")
             continue
         country, date_s, title, indicator, category, period, prev, fc, imp, ticker = (r + [None] * 10)[:10]
+        actual = r[10] if len(r) > 10 else None
         if country not in COUNTRIES:
             drop("country")
             continue
@@ -105,12 +117,12 @@ def clean(rows: Any, today: Optional[dt.date] = None) -> tuple[list[dict], dict]
         if not lo <= d <= hi:
             drop("outside window")
             continue
-        kind = classify(str(indicator or ""), str(title or ""), str(category or ""))
+        kind = classify(str(indicator or ""), str(title or ""), str(category or ""), country)
         if kind is None:
             drop("not rate/cpi/gdp")
             continue
         importance = imp if isinstance(imp, int) and not isinstance(imp, bool) else -1
-        if importance < 0:
+        if importance < 0 and not (country == "PH" and kind in PH_EXTRA.values()):
             drop("importance")
             continue
         tk = ticker if isinstance(ticker, str) and re.fullmatch(r"[A-Z0-9_]{2,12}:[A-Z0-9_.!]{2,24}", ticker) else None
@@ -121,7 +133,7 @@ def clean(rows: Any, today: Optional[dt.date] = None) -> tuple[list[dict], dict]
         seen.add(key)
         out.append({"country": country, "date": d.isoformat(), "title": str(title).strip()[:MAX_TITLE], "kind": kind,
                     "series": series_for(tk), "period": (str(period)[:12] if period else None),
-                    "previous": _num(prev), "forecast": _num(fc), "importance": importance})
+                    "previous": _num(prev), "forecast": _num(fc), "actual": _num(actual), "importance": importance})
     out.sort(key=lambda x: (x["date"], x["country"], x["kind"]))
     report["kept"] = len(out)
     return out, report
@@ -149,13 +161,17 @@ def read() -> dict:
         return {"at": None, "rows": [], "why": f"no calendar stored ({type(exc).__name__})"}
 
 
-def for_country(snapshot: dict, code: str, today: Optional[dt.date] = None, loaded: Optional[dict[str, str]] = None) -> list[dict]:
+BASIC_KINDS = ("rate", "cpi", "gdp")
+
+
+def for_country(snapshot: dict, code: str, today: Optional[dt.date] = None, loaded: Optional[dict[str, str]] = None,
+                all_kinds: bool = False) -> list[dict]:
     """This country's events, nearest first, each with days_to_go and, for a release that has already passed, whether CGI
     has loaded it. `loaded` maps a CGI series symbol to the date of its newest stored observation."""
     today = today or dt.datetime.now(dt.timezone.utc).date()
     out = []
     for r in snapshot.get("rows", []):
-        if r.get("country") != code:
+        if r.get("country") != code or (not all_kinds and r.get("kind") not in BASIC_KINDS):
             continue
         d = dt.date.fromisoformat(r["date"])
         e = dict(r, days_to_go=(d - today).days)

@@ -40,6 +40,7 @@ export default function RootLayout({
             { href: "/fundamentals", label: "FUNDAMENTALS", icon: "⊟" },
             { href: "/policy", label: "POLICY", icon: "✎" },
             { href: "/countries", label: "COUNTRIES", icon: "⊕" },
+            { href: "/philippines", label: "PHILIPPINES", icon: "◈" },
           ].map((t) => (
             <a
               key={t.href}

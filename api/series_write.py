@@ -146,6 +146,16 @@ ALLOWED = {
     "GB_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:GBGDPYY"),
     "EU_GDP_YOY":       ("tradingview", "1Q", -50.0, 50.0, "ECONOMICS:EUGDPYY"),
 
+    # Philippines tab (added 2026-11-01): the PH releases the page tracks beyond policy rate, CPI, GDP y/y and bank lending.
+    # Remittances and FX reserves come from TradingView in US dollars (raw units).
+    "PH_CORE_CPI":      ("tradingview", "1M", -25.0, 100.0, "ECONOMICS:PHCIR"),
+    "PH_CPI_MOM":       ("tradingview", "1M", -25.0, 25.0, "ECONOMICS:PHIRMM"),
+    "PH_GDP_QOQ":       ("tradingview", "1Q", -30.0, 30.0, "ECONOMICS:PHGDPQQ"),
+    "PH_UNEMPLOYMENT":  ("tradingview", "1M", 0.0, 50.0, "ECONOMICS:PHUR"),
+    "PH_IP_YOY":        ("tradingview", "1M", -80.0, 150.0, "ECONOMICS:PHIPYY"),
+    "PH_REMITTANCES":   ("tradingview", "1M", 0.0, 1e13, "ECONOMICS:PHREM"),
+    "PH_FX_RESERVES":   ("tradingview", "1M", 0.0, 1e13, "ECONOMICS:PHFER"),
+
     # Loan growth. Two different measures, and which one a country gets is
     # decided by what actually resolves, not by preference:
     #

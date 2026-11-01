@@ -60,6 +60,7 @@ neither — if the provider is down when the cache expires, there is nothing.
 | Company fundamentals | SEC XBRL | none (User-Agent) | FUNDAMENTALS |
 | ETF holdings | State Street, then SEC N-PORT | none | FUNDAMENTALS |
 | S&P 500 capex by sector | SEC XBRL cash-flow facts, stored snapshot | none | FUNDAMENTALS (top section) |
+| Philippines tab: prices, returns, float, disclosures, results, buy-backs | PSE EDGE (daily bars, filings) + Yahoo `PSEI.PS`, stored snapshots | none | PHILIPPINES |
 | Commitments of Traders | CFTC Socrata | none | POSITIONING |
 | Central bank press releases | RSS | none | POLICY |
 
@@ -547,3 +548,30 @@ first-filed fields, never `filed`/`cq` (latest restatement, a year late).
   Alpha Vantage at a date were left alone. `fx_hourly_rebuild.py backfill` fills weekdays that hold no row (insert-if-absent).
 - **Referee**: for FX only dates BEFORE today count as "newer" than our newest, because TradingView's bar for today is still open (a currency day
   ends 17:00 New York, after our nightly run). Check: `scripts/check_freshness_fx.py`.
+
+
+## Philippines tab (`/philippines`, `GET /api/ph`)
+
+One page for the PSE and the Philippine economy. `api/ph_data.py` is arithmetic on three stored snapshots plus the PH series CGI
+already holds; nothing in a request touches PSE EDGE.
+
+| Snapshot (`Cache/macro/ph/`) | Built by | Contents |
+|---|---|---|
+| `edge.json` | `market-dashboard/scripts/ph_edge_build.py` | company directory (PSE sector/subsector), last 120 days of disclosures classified by form (material, buy-back, insider 13-1, dividend, corporate action, meetings, people, press), results parsed from 17-Q/17-A (revenue, net income to parent, EPS, prior-year column), buy-back reports (form 9-1: shares, price, cumulative), last two years of filing dates (for the expected-date estimate) |
+| `screener.json` | `market-dashboard/scripts/ph_prices_build.py` | per company: close, 1W/1M/3M/YTD, 50/200-day EMA, 3-month range, 30-session average value traded, float %, market cap (EDGE's own daily bars and Stock Data page) plus PSEi from Yahoo `PSEI.PS`; PSEi membership list is in the script (update after the February/August reviews) |
+| `breadth.json` | Pulse `export_ph_breadth.py` | PH breadth (PHFD/PHTW/PHFI/PHTH, net new highs); falls back to the file committed in `web/data/` |
+| `macro.json` | `POST /api/country_calendar` | S&P Global PH manufacturing PMI history, from the calendar's actuals (no ECONOMICS series exists) |
+
+Daily run: `~/market-dashboard/scripts/ph_daily.sh` from launchd (`scripts/launchd/com.arvin.ph-daily.plist`, copy to
+`~/Library/LaunchAgents/`; 18:00 and 07:30 Manila; log `~/.cgi/ph_daily.log`). EDGE first, then prices; Sundays rebuild every company.
+Zero tokens. First run: `ph_edge_build.py --days 120 --history --upload` (about 45 minutes), then `ph_prices_build.py --full --upload`.
+`/api/freshness` has a `ph` block: prices more than 3 weekdays old, EDGE not rebuilt for 3 days, or more than 30% of filings failing to parse.
+
+PH macro series (`PH_CORE_CPI`, `PH_CPI_MOM`, `PH_GDP_QOQ`, `PH_UNEMPLOYMENT`, `PH_IP_YOY`, `PH_REMITTANCES`, `PH_FX_RESERVES`) are in
+`series_write.ALLOWED` and load through the morning routine like the other PH series; each must be backfilled once
+(`load_country_series.py`) before the freshness worklist stops counting it as never loaded. The routine's calendar step also
+fetches PH at every importance level (PMI and the smaller releases are rated below medium).
+
+PSE EDGE terms: personal, non-commercial use; storing or redistributing PSE data needs PSE's written consent. The snapshots keep only
+titles, dates, the figures shown and a link number back to the filing, never a copy of a filing. Ask PSE before sharing the page beyond
+personal use.

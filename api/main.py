@@ -34,6 +34,7 @@ import mixture as mixture_data
 import regime_matrix
 import release_calendar
 import country_calendar
+import ph_data
 import us_consensus
 import context_tables
 import country_data
@@ -316,9 +317,18 @@ def country_calendar_post(body: dict = Body(default={})):
     try:
         written = country_calendar.write(rows)
         cache.invalidate("countries")
-        return {"ok": True, "at": written["at"], "report": report, "us": us_report}
+        cache.invalidate("ph")
+        return {"ok": True, "at": written["at"], "report": report, "us": us_report, "ph_pmi": ph_data.pmi_update(rows)}
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"could not store the calendar: {exc}")
+
+
+@app.get("/api/ph", dependencies=[Depends(require_bearer_token)])
+def ph():
+    """The Philippines tab: PH macro and calendar, regime read, breadth, liquid-stock leaderboard and segments, earnings,
+    buy-backs, material disclosures (PSE EDGE) and a PSEi rebalance screen. Arithmetic on stored snapshots built daily from
+    PSE EDGE and Yahoo (ph_edge_build.py, ph_prices_build.py) and Pulse's breadth, plus the PH series CGI already holds."""
+    return cache.get_or_fetch_bg("ph", ph_data.build_ph_response)
 
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])
