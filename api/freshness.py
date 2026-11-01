@@ -1007,7 +1007,7 @@ def _weekdays_between(a: dt.date, b: dt.date) -> int:
 
 
 def ph_problems(today: dt.date, prices_asof: Optional[str], edge_built_at: Optional[str], edge_last_run: Optional[dict],
-                prices_n_liquid: int = 0) -> dict:
+                prices_n_liquid: int = 0, index_events: Optional[list] = None) -> dict:
     """Pure part of the Philippines-tab check. The two snapshots are built daily by launchd on this Mac (ph_prices_build.py,
     ph_edge_build.py) and nothing else notices when they stop. Prices: the newest bar is more than 3 weekdays old (PSE holidays
     are rarely longer than that). EDGE: not rebuilt for 3 days. A parse failure rate above 30% of the filings tried means EDGE
@@ -1028,12 +1028,22 @@ def ph_problems(today: dt.date, prices_asof: Optional[str], edge_built_at: Optio
         hours = (dt.datetime.combine(today, dt.time(12), tzinfo=dt.timezone.utc) - built).total_seconds() / 3600
         if hours > 72:
             problems.append({"check": "edge", "detail": f"PSE EDGE snapshot built {edge_built_at[:16]} ({hours / 24:.0f} days ago): the daily ph_edge_build.py job has not run"})
+    if index_events is not None:
+        import ph_index
+
+        problems += ph_index.calendar_problems(today, index_events)["problems"]
     lr = edge_last_run or {}
     tried, failed = lr.get("filings_tried", 0), lr.get("n_failed", 0)
     if tried >= 5 and failed > 0.3 * tried:
         problems.append({"check": "edge_parse", "detail": f"{failed} of {tried} EDGE filings failed to parse in the last run: EDGE may have changed its pages"})
     return {"problems": problems, "n_problems": len(problems), "prices_asof": prices_asof, "edge_built_at": edge_built_at,
             "n_liquid": prices_n_liquid}
+
+
+def ph_data_index_events() -> list:
+    import ph_data
+
+    return (ph_data.read_blob("index") or {}).get("events") or []
 
 
 def ph_check(today: Optional[dt.date] = None) -> dict:
@@ -1043,7 +1053,7 @@ def ph_check(today: Optional[dt.date] = None) -> dict:
         shot = ph_data.read_blob("screener") or {}
         edge = ph_data.read_blob("edge") or {}
         n_liquid = len(ph_data.liquid(shot.get("rows", [])))
-        return ph_problems(today or dt.date.today(), shot.get("asof"), edge.get("built_at"), edge.get("last_run"), n_liquid)
+        return ph_problems(today or dt.date.today(), shot.get("asof"), edge.get("built_at"), edge.get("last_run"), n_liquid, ph_data_index_events())
     except Exception as exc:  # noqa: BLE001 -- additive; never break the page
         return {"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}", "n_problems": 0}
 

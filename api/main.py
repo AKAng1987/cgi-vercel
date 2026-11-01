@@ -64,6 +64,7 @@ def _warm_up_caches() -> None:
             ("live", lambda: dashboard_data.build_live_response(date_str=None)),
             ("markov/axis_drivers", lambda: cache.get_or_fetch("axis_drivers", __import__("axis_drivers").compute_axis_drivers)),
             ("watchlists", lambda: cache.get_or_fetch_bg("watchlists", watchlists_data.build_watchlists_response)),
+            ("ph", lambda: cache.get_or_fetch_bg("ph", ph_data.build_ph_response)),
         ]:
             try:
                 fn()
@@ -339,6 +340,25 @@ def ph_symbol(s: str):
     if not re.fullmatch(r"[A-Za-z0-9]{1,8}", s):
         raise HTTPException(status_code=400, detail="bad ticker")
     return ph_data.symbol_view(s)
+
+
+@app.post("/api/ph/index_events")
+def ph_index_events_post(body: dict = Body(default={})):
+    """The announcement-day task posts the Philippine adds and deletes of an MSCI / FTSE / WisdomTree (or PSE) review. Unauthenticated for the
+    same reason as /api/country_calendar; bounded in code (ph_index.clean_events): provider allow-list, PSE tickers only, short text, https
+    source, dates from 90 days back to 30 ahead, at most 60 rows. A post that keeps nothing is refused."""
+    import ph_index
+
+    rows, report = ph_index.clean_events(body)
+    if not rows:
+        raise HTTPException(status_code=400, detail={"error": "no valid events; stored ones left as they were", "report": report})
+    try:
+        old = (ph_data.read_blob("index") or {})
+        merged = ph_index.merge_events(old.get("events") or [], rows)
+        ph_data.write_blob("index", {**old, "events": merged, "events_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(timespec="seconds")})
+        return {"ok": True, "report": report, "stored": len(merged)}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"could not store the events: {exc}")
 
 
 @app.get("/api/technicals", dependencies=[Depends(require_bearer_token)])

@@ -10,9 +10,15 @@ const EMA_STYLE: { n: string; cls: string }[] = [
   { n: "5", cls: "text-amber-300" }, { n: "10", cls: "text-red-300" }, { n: "20", cls: "text-blue-400" },
   { n: "50", cls: "text-violet-400" }, { n: "100", cls: "text-emerald-300" }, { n: "200", cls: "text-slate-300" },
 ];
-const W = 1000, H = 330, VH = 70, PAD_L = 6, PAD_R = 52;
+const W = 1000, H = 330, VH = 70, PAD_L = 6, PAD_R = 52, LANE = 20;
+type Ev = NonNullable<PhSymbolView["events"]>[number];
+const EV_STYLE: Record<Ev["type"], { cls: string; name: string }> = {
+  R: { cls: "text-blue-400", name: "results filed" }, B: { cls: "text-emerald-300", name: "buy-back report" },
+  I: { cls: "text-sky-300", name: "insider buy / sell" }, D: { cls: "text-violet-400", name: "dividend declared" },
+  M: { cls: "text-amber-300", name: "material information" }, C: { cls: "text-red-300", name: "corporate action" }, O: { cls: "text-slate-300", name: "ownership / tender report" },
+};
 
-function Chart({ v, hover, setHover }: { v: PhSymbolView; hover: number | null; setHover: (i: number | null) => void }) {
+function Chart({ v, hover, setHover, events }: { v: PhSymbolView; hover: number | null; setHover: (i: number | null) => void; events: Ev[] }) {
   const bars: PhBar[] = v.bars ?? [];
   const line = v.line ?? [];
   const n = v.kind === "index" ? line.length : bars.length;
@@ -29,7 +35,7 @@ function Chart({ v, hover, setHover }: { v: PhSymbolView; hover: number | null; 
   const dates = v.kind === "index" ? line.map((p) => p[0]) : bars.map((b) => b[0]);
   dates.forEach((d, i) => { if (i === 0 || d.slice(5, 7) !== dates[i - 1].slice(5, 7)) months.push({ i, label: dayLabel(d).split(" ")[0] }); });
   return (
-    <svg viewBox={`0 0 ${W} ${H + VH + 18}`} className="w-full" onMouseLeave={() => setHover(null)}
+    <svg viewBox={`0 0 ${W} ${H + LANE + VH + 18}`} className="w-full" onMouseLeave={() => setHover(null)}
          onMouseMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); const i = Math.floor(((e.clientX - r.left) / r.width * W - PAD_L) / step); setHover(i >= 0 && i < n ? i : null); }}>
       {ticks.map((t, k) => (
         <g key={k}>
@@ -48,7 +54,7 @@ function Chart({ v, hover, setHover }: { v: PhSymbolView; hover: number | null; 
               <g key={`${b[0]}-${i}`}>
                 <line x1={x(i)} x2={x(i)} y1={y(b[2])} y2={y(b[3])} stroke={col} strokeWidth={1} />
                 <rect x={x(i) - step * 0.34} width={step * 0.68} y={y(Math.max(b[1], b[4]))} height={Math.max(1, Math.abs(y(b[1]) - y(b[4])))} fill={col} />
-                <rect x={x(i) - step * 0.34} width={step * 0.68} y={H + 6 + VH * (1 - b[5] / maxV)} height={Math.max(0.5, (VH * b[5]) / maxV)} fill={col} opacity={0.45} />
+                <rect x={x(i) - step * 0.34} width={step * 0.68} y={H + LANE + 6 + VH * (1 - b[5] / maxV)} height={Math.max(0.5, (VH * b[5]) / maxV)} fill={col} opacity={0.45} />
               </g>
             );
           })}
@@ -59,8 +65,28 @@ function Chart({ v, hover, setHover }: { v: PhSymbolView; hover: number | null; 
           })}
         </>
       )}
-      {months.map((m) => <text key={m.i} x={x(m.i)} y={H + VH + 14} fontSize={10} fill="currentColor" className="text-slate-500">{m.label}</text>)}
-      {hover !== null && hover < n && <line x1={x(hover)} x2={x(hover)} y1={4} y2={H + VH} stroke="currentColor" className="text-slate-500" strokeWidth={0.6} strokeDasharray="3 3" />}
+      {v.kind === "stock" && (() => {
+        // one marker per event, on the first session on or after its date; events on the same session sit side by side
+        const slot: Record<number, number> = {};
+        return events.map((e, k) => {
+          let i = bars.findIndex((b) => b[0] >= e.date);
+          if (i < 0) i = n - 1;
+          const j = (slot[i] = (slot[i] ?? -1) + 1);
+          const st = EV_STYLE[e.type];
+          const glyph = e.type === "I" ? (e.side === "sold" ? "▼" : "▲") : e.type;
+          const cx = Math.min(W - PAD_R - 6, x(i) + j * 11);
+          return (
+            <g key={`${e.edge_no}-${k}`} className={`${st.cls} cursor-pointer`} onClick={() => window.open(`https://edge.pse.com.ph/openDiscViewer.do?edge_no=${e.edge_no}`, "_blank", "noopener")}>
+              <title>{`${e.date}  ${st.name}: ${e.label}`}</title>
+              <line x1={cx} x2={cx} y1={H + 2} y2={H + 6} stroke="currentColor" strokeWidth={0.7} />
+              <circle cx={cx} cy={H + 13} r={5.5} fill="currentColor" opacity={0.18} stroke="currentColor" strokeWidth={0.8} />
+              <text x={cx} y={H + 16} fontSize={8} textAnchor="middle" fill="currentColor" fontWeight={700}>{glyph}</text>
+            </g>
+          );
+        });
+      })()}
+      {months.map((m) => <text key={m.i} x={x(m.i)} y={H + LANE + VH + 14} fontSize={10} fill="currentColor" className="text-slate-500">{m.label}</text>)}
+      {hover !== null && hover < n && <line x1={x(hover)} x2={x(hover)} y1={4} y2={H + LANE + VH} stroke="currentColor" className="text-slate-500" strokeWidth={0.6} strokeDasharray="3 3" />}
     </svg>
   );
 }
@@ -72,9 +98,9 @@ function Facts({ v }: { v: PhSymbolView }) {
     <div className="space-y-3 text-xs">
       {nm && v.kind === "stock" && (
         <div>
-          <div className="mb-1 text-[0.6rem] uppercase tracking-wide text-slate-500">Numbers{nm.liquid === false ? " · below ₱5M a day" : ""}</div>
-          <div className="grid grid-cols-4 gap-x-3 gap-y-1 tabular-nums">
-            {([["1W", "w"], ["1M", "m"], ["3M", "q"], ["YTD", "y"]] as const).map(([l, k]) => (
+          <div className="mb-1 text-[0.6rem] uppercase tracking-wide text-slate-500">Numbers{nm.liquid === false ? " · below ₱5M a day, in the list by request" : ""}</div>
+          <div className="grid grid-cols-5 gap-x-3 gap-y-1 tabular-nums">
+            {([["1D", "d"], ["1W", "w"], ["1M", "m"], ["3M", "q"], ["YTD", "y"]] as const).map(([l, k]) => (
               <div key={k}><div className="text-[0.58rem] text-slate-600">{l}</div><div style={{ color: pctColor(g(k)) }}>{pct(g(k))}</div></div>
             ))}
             <div><div className="text-[0.58rem] text-slate-600">vs 50d</div><div style={{ color: pctColor(g("vs50")) }}>{pct(g("vs50"))}</div></div>
@@ -145,6 +171,7 @@ export function PhChartDock() {
   const [err, setErr] = useState<string | null>(null);
   const [hover, setHover] = useState<number | null>(null);
   const idx = list.indexOf(selected);
+  const [off, setOff] = useState<string[]>([]);
 
   useEffect(() => {
     let off = false;
@@ -191,7 +218,18 @@ export function PhChartDock() {
             <div className="mb-1 h-4 text-[0.68rem] tabular-nums text-slate-400">
               {hb ? `${hb[0]}  O ${price(hb[1])}  H ${price(hb[2])}  L ${price(hb[3])}  C ${price(hb[4])}  ₱ ${peso(hb[5]).slice(1)}` : v.kind === "index" && hover !== null && v.line?.[hover] ? `${v.line[hover][0]}  ${v.line[hover][1].toLocaleString()}` : ""}
             </div>
-            <Chart v={v} hover={hover} setHover={setHover} />
+            <Chart v={v} hover={hover} setHover={setHover} events={(v.events ?? []).filter((e) => !off.includes(e.type))} />
+            {v.kind === "stock" && (v.events ?? []).length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.62rem] text-slate-500">
+                <span>filings on the chart (click a marker to open it on EDGE):</span>
+                {(Object.keys(EV_STYLE) as Ev["type"][]).filter((t) => (v.events ?? []).some((e) => e.type === t)).map((t) => (
+                  <label key={t} className="flex cursor-pointer items-center gap-1">
+                    <input type="checkbox" checked={!off.includes(t)} onChange={() => setOff(off.includes(t) ? off.filter((x) => x !== t) : [...off, t])} />
+                    <span className={EV_STYLE[t].cls}>{t === "I" ? "▲▼" : t}</span> {EV_STYLE[t].name} {(v.events ?? []).filter((e) => e.type === t).length}
+                  </label>
+                ))}
+              </div>
+            )}
             {v.kind === "stock" && (
               <div className="mt-1 flex gap-3 text-[0.6rem] text-slate-500">
                 {EMA_STYLE.map((e) => <span key={e.n}><span className={e.cls}>—</span> {e.n}</span>)}<span>daily bars from PSE EDGE · {v.bars?.length ?? 0} sessions · volume bars = pesos traded</span>

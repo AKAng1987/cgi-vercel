@@ -1315,7 +1315,7 @@ export type PhCalEvent = {
 };
 export type PhLeader = {
   s: string; ret: number | null; c: number; vs50: number | null; vs200: number | null; vt: number | null; ind: string | null;
-  sec: string | null; psei: number; from_high3m: number | null; w: number | null; m: number | null; q: number | null; y: number | null;
+  sec: string | null; psei: number; from_high3m: number | null; d: number | null; w: number | null; m: number | null; q: number | null; y: number | null;
 };
 export type PhSegment = { name: string; n: number; median: number; pct_up: number; top: string; top_ret: number; members: string[] };
 export type PhHorizon = {
@@ -1340,7 +1340,7 @@ export type PhDisclosure = {
   insider?: { name: string | null; position: string | null; net_shares: number; net_value: number; n: number; first: string; side: "bought" | "sold" | "flat" };
 };
 export type PhRebalRow = { s: string; ffmc: number; mc: number | null; fl: number | null; vt: number | null; ind: string | null; ret_3m: number | null; rank: number | null; vs_smallest_member?: number | null };
-export type PhScannerRow = PhLeader & { mc: number | null; v30: number | null; fl: number | null; pinned?: number };
+export type PhScannerRow = PhLeader & { mc: number | null; v30: number | null; fl: number | null; extra?: number; below_line?: boolean };
 
 export type PhResponse = {
   schema_version: number;
@@ -1359,7 +1359,7 @@ export type PhResponse = {
   macro: Record<string, PhMacroPoint>;
   calendar: { asof: string | null; events: PhCalEvent[]; late: string[]; note: string };
   breadth: unknown | null;
-  horizons: Record<"1W" | "1M" | "3M" | "YTD", PhHorizon>;
+  horizons: Record<"1D" | "1W" | "1M" | "3M" | "YTD", PhHorizon>;
   earnings: { next: PhEarningsNext[]; reported: PhResult[] };
   buybacks: PhBuyback[];
   material: PhDisclosure[];
@@ -1367,7 +1367,7 @@ export type PhResponse = {
     n_members: number; members: PhRebalRow[]; weakest_members: PhRebalRow[]; nearest_non_members: PhRebalRow[]; method: string;
   };
   scanner: PhScannerRow[];
-  pinned: PhPinned[];
+  index: PhIndex;
   freshness: {
     prices: { asof: string | null; age_days: number | null; n: number; n_liquid: number };
     edge: { built_at: string | null; age_days: number | null; last_run: { n_failed?: number } | null };
@@ -1378,16 +1378,19 @@ export type PhResponse = {
 };
 
 export type PhBar = [string, number, number, number, number, number];   // date, open, high, low, close, value traded (pesos)
-export type PhPinned = PhLeader & {
-  name: string | null; mc: number | null; v30: number | null; liquid: boolean; expected_report: { date: string; basis: string } | null;
-  last_result: PhResult | null; last_buyback: { report_date: string; shares: number; value: number; edge_no: string } | null;
-  disclosures: { announced: string; chip: string; title: string; subject?: string; insider?: PhDisclosure["insider"]; dividend?: PhDisclosure["dividend"]; edge_no: string }[];
-};
 export type PhSymbolView = {
   symbol: string; name: string | null; sector?: string | null; subsector?: string | null; kind: "stock" | "index";
-  numbers: (PhLeader & { mc: number | null; v30: number | null; fl: number | null; h3: number | null; l3: number | null; liquid: boolean; pinned: number }) | Record<string, number | null> | null;
+  numbers: (PhLeader & { mc: number | null; v30: number | null; fl: number | null; h3: number | null; l3: number | null; liquid: boolean; extra: number }) | Record<string, number | null> | null;
   bars?: PhBar[]; ema?: Record<string, number[]>; n_stored?: number; line?: [string, number][];
+  events?: { date: string; type: "R" | "B" | "I" | "D" | "M" | "C" | "O"; label: string; edge_no: string; side?: string }[];
   expected_report?: { date: string; basis: string } | null;
   results: PhResult[]; buybacks: { report_date: string; shares: number; avg_price: number; value: number; cumulative: number | null; edge_no: string }[];
   disclosures: { announced: string; chip: string; title: string; subject?: string; dividend?: PhDisclosure["dividend"]; insider?: PhDisclosure["insider"]; edge_no: string; amend?: number }[];
 };
+
+export type PhIndexCal = {
+  provider: "MSCI" | "FTSE" | "WISDOMTREE" | "PSE"; event: string; announce: string | null; effective: string | null; status: "scheduled" | "estimated" | "done";
+  note: string; source: string; days_to_announce: number | null; days_to_effective: number | null;
+};
+export type PhIndexEvent = { provider: string; date: string; kind: "add" | "delete" | "note"; index: string; symbols: string[]; effective: string | null; source_url: string; note: string };
+export type PhIndex = { calendar: PhIndexCal[]; events: PhIndexEvent[]; psei_members_as_of?: string | null; circular?: { circular: string; date: string; effective: string | null; url: string } | null; note: string };

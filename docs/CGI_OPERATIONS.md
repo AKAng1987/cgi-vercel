@@ -561,10 +561,11 @@ already holds; nothing in a request touches PSE EDGE.
 | `screener.json` | `market-dashboard/scripts/ph_prices_build.py` | per company: close, 1W/1M/3M/YTD, 50/200-day EMA, 3-month range, 30-session average value traded, float %, market cap (EDGE's own daily bars and Stock Data page) plus PSEi from Yahoo `PSEI.PS`; PSEi membership list is in the script (update after the February/August reviews) |
 | `breadth.json` | `ph_prices_build.py` (from the same EDGE bars; same arithmetic as Pulse's `phBreadthCalc`) | PH breadth (PHFD/PHTW/PHFI/PHTH, net new highs with 8/20 EMAs); falls back to the file committed in `web/data/` (Pulse export) when absent |
 | `bars.json` | `ph_prices_build.py` | last 300 daily bars (open, high, low, close, pesos traded) for the liquid names and the pinned ones; read by `GET /api/ph/symbol` for the page's chart dock |
+| `index.json` | `ph_index_watch.py` and `POST /api/ph/index_events` | PSE index-review results read from the PSE circulars (PSEi added/removed by difference of the member lists, summary lines for the sector indices), the stored PSEi member list (the price builder flags PSEi names from it), and MSCI / FTSE / WisdomTree Philippine changes posted on announcement days; the dates themselves are in `api/ph_index.py` (hand-verified; freshness flags when a provider has no dated event in 120 days or an MSCI announcement has no stored result 2 to 14 days later) |
 | `macro.json` | `POST /api/country_calendar` | S&P Global PH manufacturing PMI history, from the calendar's actuals (no ECONOMICS series exists) |
 
 Daily run: `~/market-dashboard/scripts/ph_daily.sh` from launchd (`scripts/launchd/com.arvin.ph-daily.plist`, copy to
-`~/Library/LaunchAgents/`; 18:00 and 07:30 Manila; log `~/.cgi/ph_daily.log`). EDGE first, then prices; Sundays rebuild every company.
+`~/Library/LaunchAgents/`; **Monday to Friday 15:10 Manila**, just after the PSE close at 15:00; log `~/.cgi/ph_daily.log`). Order: EDGE builder, PSE circular watcher (`ph_index_watch.py`), prices/bars/breadth; Sundays are not scheduled (weekdays only), so run `ph_prices_build.py --full --upload` by hand now and then to refresh the whole listed universe. A run before 15:05 on a trading day drops today's bar (a session in progress is not a close). Results, many filings and BSP decisions come after 15:10 and show on the next day's run.
 Zero tokens. First run: `ph_edge_build.py --days 120 --history --upload` (about 45 minutes), then `ph_prices_build.py --full --upload`.
 `/api/freshness` has a `ph` block: prices more than 3 weekdays old, EDGE not rebuilt for 3 days, or more than 30% of filings failing to parse.
 
@@ -573,7 +574,9 @@ PH macro series (`PH_CORE_CPI`, `PH_CPI_MOM`, `PH_GDP_QOQ`, `PH_UNEMPLOYMENT`, `
 (`load_country_series.py`) before the freshness worklist stops counting it as never loaded. The routine's calendar step also
 fetches PH at every importance level (PMI and the smaller releases are rated below medium).
 
-The chart dock at the bottom of `/philippines` draws the bars itself (candles, 5/10/20/50/100/200 EMAs, traded value) and steps through the list a ticker was clicked from (← → keys); TradingView's free embed does not carry PSE symbols, so TradingView opens in a new tab. **COL and CTS are pinned** (`ph_prices_build.PINNED`): always in the snapshot and shown in the Pinned strip whatever they trade. The `ph-desk` skill (`~/.claude/skills/ph-desk`) reads the same data through `mcp__cgi__get_ph`.
+The chart dock at the bottom of `/philippines` draws the bars itself (candles, 5/10/20/50/100/200 EMAs, traded value) and steps through the list a ticker was clicked from (← → keys); TradingView's free embed does not carry PSE symbols, so TradingView opens in a new tab. **COL and CTS are extra names** (`ph_prices_build.EXTRA_NAMES`): always in the snapshot and in the leaderboard, segments and scanner whatever they trade (tagged "thin" in the scanner). The dock marks filings on the chart (results R, buy-backs B, insider ▲▼, dividends D, material M, corporate C, ownership O; click opens the filing on EDGE). The `ph-desk` skill (`~/.claude/skills/ph-desk`) reads the same data through `mcp__cgi__get_ph`, whose default is a compact `digest` (about 1,500 tokens).
+
+Cold starts: `/philippines` is warmed by the keep-alive workflow (after `/countries`), `_warm_up_caches` primes the `ph` cache at startup, and every snapshot write drops the cached page so the next warm rebuilds it.
 
 PSE EDGE terms: personal, non-commercial use; storing or redistributing PSE data needs PSE's written consent. The snapshots keep only
 titles, dates, the figures shown and a link number back to the filing, never a copy of a filing. Ask PSE before sharing the page beyond

@@ -7,7 +7,6 @@ import { PhHeader } from "../components/ph/PhHeader";
 import { PhMacro } from "../components/ph/PhMacro";
 import { PhMarket } from "../components/ph/PhMarket";
 import { PhChartDock } from "../components/ph/PhChartDock";
-import { PhPinnedStrip } from "../components/ph/PhPinned";
 import { PhRebalance } from "../components/ph/PhRebalance";
 import { PhSelectProvider } from "../components/ph/PhSelect";
 import { PhScanner } from "../components/ph/PhScanner";
@@ -34,13 +33,12 @@ export default async function PhilippinesPage() {
         <p className="mb-4 rounded border border-amber-800 bg-amber-950/40 p-2 text-xs text-amber-300">Prices are {f.prices.age_days} days old: the daily PH price build has not run.</p>
       )}
       <PhHeader d={d} />
-      <PhPinnedStrip rows={d.pinned ?? []} />
       <PhMacro d={d} />
       <PhBreadthStrip data={d.breadth ?? undefined} />
       <PhMarket horizons={d.horizons} nLiquid={f.prices.n_liquid} asof={f.prices.asof} />
       <PhFeed rows={d.material} builtAt={f.edge.built_at} />
       <PhEarnings next={d.earnings.next} reported={d.earnings.reported} buybacks={d.buybacks} />
-      <PhRebalance rb={d.rebalance} />
+      <PhRebalance rb={d.rebalance} ix={d.index} />
       <PhScanner rows={d.scanner} />
       <PhChartDock />
       <p className="mt-2 text-[0.65rem] leading-relaxed text-slate-600">{d.caveats.join(" ")}</p>

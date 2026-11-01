@@ -6,7 +6,7 @@ import { pctColor } from "@/lib/regimeConstants";
 import { usePhSelect } from "./PhSelect";
 import { peso, pct, price } from "./phFormat";
 
-const HORIZONS = ["1W", "1M", "3M", "YTD"] as const;
+const HORIZONS = ["1D", "1W", "1M", "3M", "YTD"] as const;
 type H = (typeof HORIZONS)[number];
 
 function Trend({ r }: { r: PhLeader }) {
@@ -95,7 +95,7 @@ export function PhMarket({ horizons, nLiquid, asof }: { horizons: Record<H, PhHo
             <button key={x} onClick={() => setH(x)} className={`rounded px-2 py-0.5 text-xs ${h === x ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:bg-slate-800"}`}>{x}</button>
           ))}
         </div>
-        <div className="text-[0.68rem] text-slate-500">{d.leaders.n} liquid names (≥ ₱5M a day, 30-session average) · as of {asof ?? "—"}</div>
+        <div className="text-[0.68rem] text-slate-500">{d.leaders.n} names (≥ ₱5M a day, 30-session average; COL and CTS by request) · as of {asof ?? "—"}</div>
         <div className="ml-auto flex gap-1 text-xs">
           <button onClick={() => setBy("ind")} className={`rounded px-2 py-0.5 ${by === "ind" ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:bg-slate-800"}`}>PSE subsector</button>
           <button onClick={() => setBy("sec")} className={`rounded px-2 py-0.5 ${by === "sec" ? "bg-slate-700 text-slate-100" : "text-slate-400 hover:bg-slate-800"}`}>PSE sector</button>

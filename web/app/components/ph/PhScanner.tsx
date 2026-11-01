@@ -6,9 +6,9 @@ import { pctColor } from "@/lib/regimeConstants";
 import { PhTicker } from "./PhSelect";
 import { peso, pct, price } from "./phFormat";
 
-type Key = "s" | "w" | "m" | "q" | "y" | "vs50" | "vs200" | "from_high3m" | "mc" | "v30" | "fl";
+type Key = "s" | "d" | "w" | "m" | "q" | "y" | "vs50" | "vs200" | "from_high3m" | "mc" | "v30" | "fl";
 const COLS: { key: Key; label: string; kind: "text" | "pct" | "peso" | "plain" }[] = [
-  { key: "s", label: "Stock", kind: "text" }, { key: "w", label: "1W", kind: "pct" }, { key: "m", label: "1M", kind: "pct" }, { key: "q", label: "3M", kind: "pct" },
+  { key: "s", label: "Stock", kind: "text" }, { key: "d", label: "1D", kind: "pct" }, { key: "w", label: "1W", kind: "pct" }, { key: "m", label: "1M", kind: "pct" }, { key: "q", label: "3M", kind: "pct" },
   { key: "y", label: "YTD", kind: "pct" }, { key: "vs50", label: "vs 50d", kind: "pct" }, { key: "vs200", label: "vs 200d", kind: "pct" },
   { key: "from_high3m", label: "from 3M high", kind: "pct" }, { key: "mc", label: "Mkt cap", kind: "peso" }, { key: "v30", label: "Avg ₱/day", kind: "peso" }, { key: "fl", label: "Float %", kind: "plain" },
 ];
@@ -73,7 +73,7 @@ export function PhScanner({ rows }: { rows: PhScannerRow[] }) {
               <tr key={r.s} className="border-t border-slate-800/70">
                 {COLS.map((c) => {
                   const v = r[c.key as keyof PhScannerRow] as number | string | null;
-                  if (c.kind === "text") return <td key={c.key} className="py-1 pr-2 font-semibold text-slate-100"><PhTicker s={r.s} list={shown.map((x) => x.s)} className="hover:underline">{r.s}</PhTicker>{r.psei ? <span className="ml-1 text-[0.55rem] text-slate-500">PSEi</span> : null}{r.pinned ? <span className="ml-1 text-[0.55rem] text-amber-300">pinned</span> : null}</td>;
+                  if (c.kind === "text") return <td key={c.key} className="py-1 pr-2 font-semibold text-slate-100"><PhTicker s={r.s} list={shown.map((x) => x.s)} className="hover:underline">{r.s}</PhTicker>{r.psei ? <span className="ml-1 text-[0.55rem] text-slate-500">PSEi</span> : null}{r.below_line ? <span className="ml-1 text-[0.55rem] text-slate-500" title="below ₱5M a day; in the list by request">thin</span> : null}</td>;
                   if (c.kind === "pct") return <td key={c.key} className="py-1 pr-2 text-right tabular-nums" style={{ color: pctColor(v as number | null) }}>{pct(v as number | null)}</td>;
                   if (c.kind === "peso") return <td key={c.key} className="py-1 pr-2 text-right tabular-nums text-slate-400">{peso(v as number | null)}</td>;
                   return <td key={c.key} className="py-1 pr-2 text-right tabular-nums text-slate-400">{v != null ? `${Math.round(v as number)}` : "—"}</td>;

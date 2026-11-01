@@ -35,6 +35,7 @@ export const CHIPS: { key: string; label: string }[] = [
   { key: "buyback", label: "Buy-back" },
   { key: "insider", label: "Insider (13-1)" },
   { key: "dividend", label: "Dividend" },
+  { key: "index", label: "Index (MSCI, FTSE, PSEi)" },
   { key: "ownership", label: "Ownership (17-8, 17-6)" },
   { key: "corporate", label: "Corporate action" },
   { key: "meeting", label: "Meetings & briefings" },

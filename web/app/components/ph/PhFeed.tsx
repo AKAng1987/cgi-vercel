@@ -6,7 +6,7 @@ import { PhTicker } from "./PhSelect";
 import { CHIPS, dayLabel, edgeLink, num, peso, price } from "./phFormat";
 
 const CHIP_TONE: Record<string, string> = {
-  material: "text-amber-300", buyback: "text-emerald-300", insider: "text-sky-300", dividend: "text-violet-300", ownership: "text-sky-300",
+  material: "text-amber-300", buyback: "text-emerald-300", insider: "text-sky-300", dividend: "text-violet-300", index: "text-amber-300", ownership: "text-sky-300",
   corporate: "text-red-300", meeting: "text-slate-400", people: "text-slate-400", press: "text-slate-400",
 };
 

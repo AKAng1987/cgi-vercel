@@ -102,7 +102,7 @@ check("ema_series first value is the first close, then smooths", P.ema_series([1
 cs = P.chart_series([["2026-10-%02d" % d, 1, 2, 0.5, 1 + d * 0.01, 1e6] for d in range(1, 31)] * 1, show=10)
 check("chart series: last 10 bars, six EMAs of the same length", (len(cs["bars"]), sorted(cs["ema"]), {len(v) for v in cs["ema"].values()}), (10, ["10", "100", "20", "200", "5", "50"], {10}))
 tmp = tempfile.mkdtemp()
-rowsd = [row("AAA", 10, 1e7, 5, ind="Mining"), dict(row("COL", 1.19, 2.4e6, -20), pinned=1), dict(row("CTS", 0.34, 3e5, 0), pinned=1)]
+rowsd = [row("AAA", 10, 1e7, 5, ind="Mining"), dict(row("COL", 1.19, 2.4e6, -20), extra=1), dict(row("CTS", 0.34, 3e5, 0), extra=1), row("ILQ", 5, 1e5, 1)]
 edged = {"directory": {"COL": {"name": "COL Financial"}, "AAA": {"name": "A Corp", "sector": "Mining", "subsector": "Mining"}},
          "filing_dates": {"COL": ["2025-11-17"]}, "results": [], "buybacks": [], "disclosures": [
              {"symbol": "COL", "chip": "insider", "title": "Change in Shareholdings", "announced": "2026-10-09T10:00", "edge_no": "i1", "amend": 0}]}
@@ -113,13 +113,22 @@ os.environ["PH_LOCAL_DIR"] = tmp
 v = P.symbol_view("aaa", T)
 check("symbol view: stock with bars, numbers and name", (v["symbol"], v["name"], len(v["bars"]), v["numbers"]["liquid"]), ("AAA", "A Corp", 30, True))
 v = P.symbol_view("COL", T)
-check("symbol view: pinned illiquid name has no bars but numbers and disclosures", (v["bars"], v["numbers"]["liquid"], v["numbers"]["pinned"], len(v["disclosures"])), ([], False, 1, 1))
+check("symbol view: an extra name below the line has no bars here but has numbers and disclosures", (v["bars"], v["numbers"]["liquid"], v["numbers"]["extra"], len(v["disclosures"])), ([], False, 1, 1))
 check("symbol view: expected report from last year's filing date", v["expected_report"]["date"], "2026-11-17")
 v = P.symbol_view("PSEI", T)
 check("symbol view: index line", (v["kind"], len(v["line"])), ("index", 2))
-pv = P.pinned_view(rowsd, edged, T)
-check("pinned view: COL and CTS kept though illiquid", ([p["s"] for p in pv], [p["liquid"] for p in pv]), (["COL", "CTS"], [False, False]))
-check("pinned view: disclosures attached", len(pv[0]["disclosures"]), 1)
+check("lists: COL and CTS are in despite trading below the line, other illiquid names are not", sorted(r["s"] for r in P.liquid(rowsd)), ["AAA", "COL", "CTS"])
+lb1 = P.leaderboard(rowsd, "m", n_top=5)
+check("leaderboard carries COL and CTS", sorted(r["s"] for r in lb1["top"]), ["AAA", "COL", "CTS"])
+check("1D horizon exists and keys the d field", (P.HORIZONS["1D"], P._row_view(dict(rowsd[0], d=1.5), "d")["ret"]), ("d", 1.5))
+ev = P.chart_events("AAA", {"buybacks": [{"symbol": "AAA", "report_date": "2026-10-20", "shares": 5000, "avg_price": 1.5, "edge_no": "b1"}, {"symbol": "ZZ", "report_date": "2026-10-20", "shares": 1, "avg_price": 1, "edge_no": "b2"}],
+    "disclosures": [{"symbol": "AAA", "chip": "insider", "title": "t", "announced": "2026-10-22T09:00", "edge_no": "i1", "insider": {"side": "sold", "net_shares": -2000.0, "name": "J. Cruz"}},
+                    {"symbol": "AAA", "chip": "press", "title": "x", "announced": "2026-10-22T09:00", "edge_no": "p1"},
+                    {"symbol": "AAA", "chip": "dividend", "title": "d", "announced": "2026-09-01T09:00", "edge_no": "d1", "dividend": {"per_share": 0.5, "record": "2026-09-15"}}]},
+    [{"announced": "2026-10-28T10:00", "kind": "Q", "period": "2026-09-30", "edge_no": "r1", "rev_yoy": 6.0, "ni_yoy": None, "ni_loss": True}], "2026-10-01", "2026-10-30")
+check("chart events: result, buy-back and insider kept, press and out-of-range dividend dropped, newest first",
+      [(e["date"], e["type"]) for e in ev], [("2026-10-28", "R"), ("2026-10-22", "I"), ("2026-10-20", "B")])
+check("chart event labels", (ev[0]["label"], ev[1]["label"], ev[1]["side"]), ("Q to 09/26: revenue +6.0%, net income loss", "J. Cruz sold 2,000 sh", "sold"))
 del os.environ["PH_LOCAL_DIR"]
 
 # ── freshness
@@ -132,5 +141,28 @@ check("ph freshness: EDGE not rebuilt for 4 days", [p["check"] for p in fr.ph_pr
 check("ph freshness: parse failures", [p["check"] for p in fr.ph_problems(dt.date(2026, 11, 3), "2026-11-02", "2026-11-03T01:00:00+00:00", {"filings_tried": 10, "n_failed": 5}, 90)["problems"]], ["edge_parse"])
 check("ph freshness: nothing stored", [p["check"] for p in fr.ph_problems(dt.date(2026, 11, 3), None, None, None, 0)["problems"]], ["prices", "edge"])
 check("ph freshness: thin coverage", [p["check"] for p in fr.ph_problems(dt.date(2026, 11, 3), "2026-11-02", "2026-11-03T01:00:00+00:00", None, 12)["problems"]], ["prices_coverage"])
+# ── index calendar, events, PSE circular
+import ph_index as X  # noqa: E402
+
+cal = X.calendar_view(dt.date(2026, 11, 2))
+check("calendar: nearest upcoming first (MSCI 11 Nov), done events last", ([e["provider"] for e in cal[:2]], cal[0]["days_to_announce"], cal[-1]["status"]), (["FTSE", "MSCI"], 7, "done"))
+check("calendar problems: none with the table as written", X.calendar_problems(dt.date(2026, 11, 2), [])["n_problems"], 0)
+check("calendar problems: the table runs out for MSCI/FTSE/PSE in 2029", sorted(p["check"] for p in X.calendar_problems(dt.date(2029, 1, 1), [])["problems"]), ["calendar_fts" + "e", "calendar_msci", "calendar_pse"])
+check("calendar problems: MSCI announced 11 Nov, nothing stored 13 Nov -> problem; stored -> clean",
+      (X.calendar_problems(dt.date(2026, 11, 13), [])["n_problems"], X.calendar_problems(dt.date(2026, 11, 13), [{"provider": "MSCI", "date": "2026-11-11"}])["n_problems"]), (1, 0))
+good = {"events": [{"provider": "msci", "date": "2026-11-11", "kind": "add", "index": "MSCI Philippines", "symbols": ["abc", "DE F", "AB1"], "effective": "2026-12-01", "source_url": "https://example.com/x", "note": "n"},
+                   {"provider": "evil", "date": "2026-11-11", "kind": "add", "symbols": ["ABC"]},
+                   {"provider": "FTSE", "date": "2020-01-01", "kind": "note"},
+                   {"provider": "FTSE", "date": "2026-11-12", "kind": "add", "symbols": []},
+                   {"provider": "PSE", "date": "2026-11-12", "kind": "note", "note": "x" * 400, "source_url": "javascript:alert(1)"}]}
+rows, rep = X.clean_events(good, dt.date(2026, 11, 13))
+check("events: valid kept (symbols filtered), bad provider/date/empty add dropped", (rep["kept"], rep["dropped"], rows[0]["symbols"], rows[1]["note"] == "x" * 140, rows[1]["source_url"]), (2, {"provider": 1, "outside window": 1, "no symbols": 1}, ["ABC", "AB1"], True, ""))
+check("events: merge replaces same key", len(X.merge_events(rows, [dict(rows[0], note="new")])), 2)
+txt = open(os.path.join(os.path.dirname(__file__), "..", "..", "market-dashboard", "tests", "ph_edge_fixtures", "pse_cn_2026_0035.txt")).read() if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "market-dashboard", "tests", "ph_edge_fixtures", "pse_cn_2026_0035.txt")) else None
+if txt:
+    rv = X.parse_pse_review(txt)
+    check("PSE circular: number, dates, 30 PSEi members, summary lines", (rv["circular"], rv["date"], rv["effective"], len(rv["psei_members"]), rv["summary"][0]), ("2026-0035", "2026-07-27", "2026-08-03", 30, "PSEi MYNLD CNVRG"))
+    check("PSEi change by set difference", X.psei_change([m for m in rv["psei_members"] if m != "MYNLD"] + ["CNVRG"], rv["psei_members"]), {"added": ["MYNLD"], "removed": ["CNVRG"]})
+check("a non-review circular is ignored", X.parse_pse_review("CN No. 2026-0036 REMINDER on trading hours"), None)
 print("FAILS:", fails)
 sys.exit(1 if fails else 0)

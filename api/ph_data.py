@@ -6,7 +6,8 @@ Snapshots live in the same S3 folder as the other offline-built blobs (cache.PRE
   screener  built by ~/market-dashboard/scripts/ph_prices_build.py from EDGE's own daily bars (open/high/low/close/value traded)
             plus PSEi from Yahoo: returns, EMAs, 3-month range, 30-day average value traded, float and market cap
   breadth   exported from Pulse (export_ph_breadth.py)
-  bars      daily OHLC + value traded for the last 300 sessions of the liquid and pinned names (the page's chart dock)
+  bars      daily OHLC + value traded for the last 300 sessions of the liquid and extra (COL, CTS) names (the page's chart dock)
+  index     announced index changes (PSE circulars read by ph_index_watch.py; MSCI/FTSE/WisdomTree rows posted on announcement days)
   macro     PMI history, appended from the calendar's actuals (S&P Global PMI has no ECONOMICS series)
 EDGE's terms forbid storing or redistributing its data without PSE's consent: `edge` holds only titles, dates, the few
 figures the page shows and the link number back to the filing, never a copy of a filing.
@@ -18,7 +19,7 @@ import logging
 from typing import Optional
 
 _logger = logging.getLogger("cgi_api.ph")
-NAMES = ("edge", "screener", "breadth", "macro", "bars")
+NAMES = ("edge", "screener", "breadth", "macro", "bars", "index")
 
 
 def _key(name: str) -> str:
@@ -34,6 +35,11 @@ def write_blob(name: str, obj: dict) -> None:
 
     cache._s3.put_object(Bucket=cache.BUCKET, Key=_key(name), Body=json.dumps(obj, separators=(",", ":")).encode("utf-8"),
                          ContentType="application/json")
+    if name in ("edge", "screener", "breadth", "macro", "index"):
+        try:
+            cache.invalidate("ph")          # the next warm-up (not a visitor) rebuilds the page from the new snapshot
+        except Exception as e:  # noqa: BLE001 -- the snapshot is stored; the cache expires on its own within the hour
+            _logger.warning("[ph] could not drop the cached page: %s", e)
 
 
 def read_blob(name: str) -> Optional[dict]:
@@ -55,7 +61,7 @@ def read_blob(name: str) -> Optional[dict]:
 
 MAX_ROWS = 400
 LIQ_MIN = 5_000_000        # average value traded over 30 sessions, pesos a day: the line the Pulse breadth card also uses
-HORIZONS = {"1W": "w", "1M": "m", "3M": "q", "YTD": "y"}
+HORIZONS = {"1D": "d", "1W": "w", "1M": "m", "3M": "q", "YTD": "y"}
 
 
 def _f(v) -> Optional[float]:
@@ -70,8 +76,14 @@ def _f(v) -> Optional[float]:
 
 # ── views (pure) ─────────────────────────────────────────────────────────────
 
+def is_extra(r: dict) -> bool:
+    """COL and CTS: names Arvin asked for by name, kept in every list whatever they trade (`pinned` is the earlier spelling)."""
+    return bool(r.get("extra") or r.get("pinned"))
+
+
 def liquid(rows: list[dict]) -> list[dict]:
-    return [r for r in rows if r.get("c") and (r.get("v30") or 0) >= LIQ_MIN]
+    """The names every list is built from: trading at least LIQ_MIN a day (30-session average), plus the extra names."""
+    return [r for r in rows if r.get("c") and ((r.get("v30") or 0) >= LIQ_MIN or is_extra(r))]
 
 
 def _vs(c, e):
@@ -81,7 +93,7 @@ def _vs(c, e):
 def _row_view(r: dict, key: str) -> dict:
     return {"s": r["s"], "ret": r.get(key), "c": r["c"], "vs50": _vs(r["c"], r.get("e50")), "vs200": _vs(r["c"], r.get("e200")),
             "vt": r.get("vt"), "ind": r.get("ind"), "sec": r.get("sec"), "psei": r.get("psei", 0),
-            "from_high3m": _vs(r["c"], r.get("h3")), "w": r.get("w"), "m": r.get("m"), "q": r.get("q"), "y": r.get("y")}
+            "from_high3m": _vs(r["c"], r.get("h3")), "d": r.get("d"), "w": r.get("w"), "m": r.get("m"), "q": r.get("q"), "y": r.get("y")}
 
 
 def leaderboard(rows: list[dict], key: str, n_top: int = 15, n_bottom: int = 10) -> dict:
@@ -248,7 +260,7 @@ def rebalance_watch(rows: list[dict], n: int = 8) -> dict:
             "method": "free-float market cap (market cap x float %) among liquid names; PSE also weighs value traded and trading days"}
 
 
-# ── one symbol (chart dock) and the pinned names ─────────────────────────────
+# ── one symbol (chart dock) ────────────────────────────────────────────────
 
 EMA_SPANS = (5, 10, 20, 50, 100, 200)
 _bars_memo: dict = {"at": 0.0, "blob": None}
@@ -278,6 +290,38 @@ def chart_series(bars: list[list], show: int = 160) -> dict:
     return {"bars": bars[-show:], "ema": emas, "n_stored": len(bars)}
 
 
+def chart_events(sym: str, edge: dict, res: list[dict], first: str, last: str, limit: int = 70) -> list[dict]:
+    """Filings to mark on the chart: results (R), buy-back reports (B), insider buys and sells (I), dividends (D), material information
+    (M), corporate actions (C), ownership and tender reports (O). Date = the day it was announced (buy-backs: the report date). Only
+    events inside the bars shown; each carries the EDGE filing number so the page can link to it."""
+    ev = []
+    for r in res:
+        d = r["announced"][:10]
+        label = (f"{'FY' if r['kind'] == 'A' else 'Q to ' + r['period'][5:7] + '/' + r['period'][2:4]}: revenue "
+                 f"{'n/a' if r.get('rev_yoy') is None else format(r['rev_yoy'], '+.1f') + '%'}, net income "
+                 f"{'loss' if r.get('ni_loss') else 'swing to profit' if r.get('ni_swing') else 'n/a' if r.get('ni_yoy') is None else format(r['ni_yoy'], '+.1f') + '%'}")
+        ev.append({"date": d, "type": "R", "label": label, "edge_no": r["edge_no"]})
+    for b in edge.get("buybacks", []):
+        if b["symbol"] == sym:
+            ev.append({"date": b["report_date"], "type": "B", "label": f"buy-back {int(b['shares']):,} sh @ {b['avg_price']:g}", "edge_no": b["edge_no"]})
+    kind = {"material": "M", "insider": "I", "dividend": "D", "corporate": "C", "ownership": "O"}
+    for d in edge.get("disclosures", []):
+        if d["symbol"] != sym or d["chip"] not in kind:
+            continue
+        t = kind[d["chip"]]
+        label = d.get("subject") or d["title"]
+        side = None
+        if t == "I" and d.get("insider"):
+            side = d["insider"]["side"]
+            label = f"{d['insider'].get('name') or 'insider'} {side} {int(abs(d['insider']['net_shares'])):,} sh"
+        if t == "D" and d.get("dividend"):
+            label = f"dividend ₱{d['dividend']['per_share']:g} a share, record {d['dividend'].get('record') or '?'}"
+        ev.append({"date": d["announced"][:10], "type": t, "label": label[:140], "edge_no": d["edge_no"], **({"side": side} if side else {})})
+    ev = [e for e in ev if first <= e["date"] <= last]
+    ev.sort(key=lambda e: e["date"], reverse=True)
+    return ev[:limit]
+
+
 def symbol_view(sym: str, today=None) -> dict:
     """Everything the chart dock shows for one ticker: bars with EMAs, its snapshot numbers, the last results (with y/y),
     buy-backs and disclosures, and its estimated next report date. 'PSEI' returns the index close history instead."""
@@ -297,32 +341,16 @@ def symbol_view(sym: str, today=None) -> dict:
     res = results_view({"results": [r for r in edge.get("results", []) if r["symbol"] == sym]}, shot.get("rows", []), today, days=800)
     bb = [b for b in edge.get("buybacks", []) if b["symbol"] == sym][:3]
     disc = [d for d in edge.get("disclosures", []) if d["symbol"] == sym and d["chip"] != "other"][:12]
+    shown = bars[-160:]
     return {
+        "events": chart_events(sym, edge, res, shown[0][0], shown[-1][0]) if shown else [],
         "symbol": sym, "name": directory.get("name"), "sector": directory.get("sector"), "subsector": directory.get("subsector"), "kind": "stock",
         "numbers": _row_view(row, "m") | {"mc": row.get("mc"), "v30": row.get("v30"), "fl": row.get("fl"), "h3": row.get("h3"), "l3": row.get("l3"),
-                                         "liquid": bool(row.get("v30") and row["v30"] >= LIQ_MIN), "pinned": row.get("pinned", 0)} if row else None,
+                                         "liquid": bool(row.get("v30") and row["v30"] >= LIQ_MIN), "extra": 1 if is_extra(row) else 0} if row else None,
         **chart_series(bars), "expected_report": expected_report(sym, edge, today),
         "results": res[:3], "buybacks": [{k: b.get(k) for k in ("report_date", "shares", "avg_price", "value", "cumulative", "edge_no")} for b in bb],
         "disclosures": [{k: d.get(k) for k in ("announced", "chip", "title", "subject", "dividend", "insider", "edge_no", "amend")} for d in disc],
     }
-
-
-def pinned_view(rows: list[dict], edge: dict, today) -> list[dict]:
-    """The names he asked for by name (COL, CTS): shown whatever they trade, with their latest filings and a liquidity flag."""
-    out = []
-    for r in rows:
-        if not r.get("pinned"):
-            continue
-        sym = r["s"]
-        res = results_view({"results": [x for x in edge.get("results", []) if x["symbol"] == sym]}, rows, today, days=800)
-        out.append({**_row_view(r, "m"), "name": (edge.get("directory") or {}).get(sym, {}).get("name"), "mc": r.get("mc"), "v30": r.get("v30"),
-                    "liquid": bool(r.get("v30") and r["v30"] >= LIQ_MIN), "expected_report": expected_report(sym, edge, today),
-                    "last_result": res[0] if res else None,
-                    "last_buyback": next(({k: b.get(k) for k in ("report_date", "shares", "value", "edge_no")} for b in edge.get("buybacks", []) if b["symbol"] == sym), None),
-                    "disclosures": [{k: d.get(k) for k in ("announced", "chip", "title", "subject", "insider", "dividend", "edge_no")}
-                                    for d in edge.get("disclosures", []) if d["symbol"] == sym and d["chip"] != "other"][:5]})
-    out.sort(key=lambda x: x["s"])
-    return out
 
 
 # ── macro, calendar, and the response ────────────────────────────────────────
@@ -451,6 +479,57 @@ def age_days(iso: Optional[str], today) -> Optional[int]:
         return None
 
 
+def build_digest(resp: dict) -> dict:
+    """The morning read in about 1,500 tokens, so a model asking 'what is going on in PH' does not pull the whole page (about 30,000):
+    freshness, macro and the next releases, movers and segments, who reported, buy-backs, insider and dividend news, material subjects,
+    and COL and CTS in one line each. Built from the response itself, nothing new is read."""
+    def mv(h, n=5):
+        L = resp["horizons"][h]["leaders"]
+        return {"up": [[r["s"], r["ret"]] for r in L["top"][:n]], "down": [[r["s"], r["ret"]] for r in L["bottom"][:n]]}
+
+    def segs(h, n=3):
+        sg = resp["horizons"][h]["segments_industry"]
+        return {"best": [[g["name"], g["median"], g["n"]] for g in sg[:n]], "worst": [[g["name"], g["median"], g["n"]] for g in sg[-n:]]}
+
+    ins = {}
+    for m in resp["material"]:
+        if m.get("insider"):
+            k = (m["symbol"], m["insider"].get("name"))
+            if k not in ins:
+                ins[k] = [m["symbol"], m["insider"].get("name"), m["insider"]["side"], m["insider"]["net_shares"], m["announced"][:10]]
+    extra = []
+    for r in resp["scanner"]:
+        if r.get("extra"):
+            last = next((m for m in resp["material"] if m["symbol"] == r["s"]), None)
+            extra.append({"s": r["s"], "c": r["c"], "d": r.get("d"), "m": r.get("m"), "v30": r.get("v30"),
+                          "last_filing": last and [last["announced"][:10], (last.get("subject") or last["title"])[:80]]})
+    counts = {}
+    for m in resp["material"]:
+        counts[m["chip"]] = counts.get(m["chip"], 0) + 1
+    h = resp["header"]
+    return {
+        "as_of": resp["as_of"], "freshness": {"prices_asof": resp["freshness"]["prices"]["asof"], "edge_built_at": resp["freshness"]["edge"]["built_at"]},
+        "header": {"psei": h["psei"], "usdphp": h["usdphp"] and h["usdphp"].get("last"), "bsp_rate": h["policy"] and h["policy"]["latest"], "bsp_next": h["bsp"]["next"],
+                   "regime": h["regime"], "ephe_in_regime": h["equity"] and {k: h["equity"].get(k) for k in ("avg_return_pct", "hit_rate", "occurrences")}},
+        "macro": {k: [v["label"], v["latest"], v.get("prior"), v["as_of"][:7]] for k, v in resp["macro"].items()},
+        "calendar_next": [[e["date"], e["kind"], e.get("previous"), e.get("forecast")] for e in resp["calendar"]["events"] if e["days_to_go"] >= 0][:6],
+        "calendar_late": resp["calendar"]["late"],
+        "movers": {"1D": mv("1D"), "1M": mv("1M")}, "segments_1M": segs("1M"), "segments_1D": segs("1D"),
+        "reported": [[r["s"], r["period"], r["rev_yoy"], "loss" if r["ni_loss"] else "swing" if r["ni_swing"] else r["ni_yoy"], r["announced"][:10]] for r in resp["earnings"]["reported"][:8]],
+        "expected_next": [[e["s"], e["date"]] for e in resp["earnings"]["next"][:8]],
+        "buybacks_30d": [[b["s"], b["value_30d"], b["pct_outstanding_30d"], b["last_date"]] for b in resp["buybacks"][:5]],
+        "insider": list(ins.values())[:8],
+        "dividends": [[m["symbol"], m["dividend"]["per_share"], m["dividend"].get("record")] for m in resp["material"] if m.get("dividend")][:6],
+        "material_counts_14d": counts,
+        "material_latest": [[m["symbol"], (m.get("subject") or m["title"])[:90], m["announced"][:10]] for m in resp["material"] if m["chip"] == "material"][:8],
+        "extra_names": extra, "breadth": resp.get("breadth") and {k: resp["breadth"].get(k) for k in ("as_of", "colour", "net", "streak_days")},
+        "index_next": [[e["provider"], e["announce"] or e["effective"], e["event"][:40]] for e in resp.get("index", {}).get("calendar", []) if e["status"] != "done"][:4],
+        "index_announced": [[e["provider"], e["date"], e["kind"], e["index"], e["symbols"][:8]] for e in resp.get("index", {}).get("events", [])][:6],
+        "rebalance": {"weakest_members": [[x["s"], round(x["ffmc"] / 1e9, 1)] for x in resp["rebalance"]["weakest_members"][:3]],
+                      "largest_non_members": [[x["s"], round(x["ffmc"] / 1e9, 1)] for x in resp["rebalance"]["nearest_non_members"][:3]]},
+    }
+
+
 def build_ph_response() -> dict:
     import datetime as dt
 
@@ -473,7 +552,7 @@ def build_ph_response() -> dict:
     rel = {"BSP": bsp_meetings(today)}
     hz = {name: {"leaders": leaderboard(rows, key), "segments_industry": segments(rows, key, "ind"),
                  "segments_sector": segments(rows, key, "sec")} for name, key in HORIZONS.items()}
-    return {
+    resp = {
         "schema_version": SCHEMA_VERSION,
         "as_of": today.isoformat(),
         "header": {"psei": shot.get("psei_index"), "usdphp": country_data._fx("USDPHP"), "regime": f"C{compass_q}G{grid_q}",
@@ -488,21 +567,29 @@ def build_ph_response() -> dict:
         "buybacks": buyback_board(edge, today),
         "material": material_feed(edge, today),
         "rebalance": rebalance_watch(rows),
-        "pinned": pinned_view(rows, edge, today),
-        "scanner": [_row_view(r, "m") | {"mc": r.get("mc"), "v30": r.get("v30"), "fl": r.get("fl"), "pinned": r.get("pinned", 0)}
-                    for r in rows if (r.get("v30") or 0) >= LIQ_MIN or r.get("pinned")],
+        "scanner": [_row_view(r, "m") | {"mc": r.get("mc"), "v30": r.get("v30"), "fl": r.get("fl"), "extra": 1 if is_extra(r) else 0,
+                                         "below_line": bool((r.get("v30") or 0) < LIQ_MIN)} for r in liquid(rows)],
         "freshness": {"prices": {"asof": shot.get("asof"), "age_days": age_days(shot.get("asof"), today), "n": len(rows),
                                    "n_liquid": len(liquid(rows))},
                       "edge": {"built_at": edge.get("built_at"), "age_days": age_days(edge.get("built_at"), today),
                                "last_run": edge.get("last_run")},
                       "breadth": {"asof": (breadth or {}).get("asof") or (breadth or {}).get("as_of"), },
                       "macro_pmi_months": len(((mblob or {}).get("pmi")) or {})},
+        "digest": None,
         "caveats": [
-            "Leaderboard and segments cover liquid names only (close x 30-day average volume >= PHP 5M a day).",
+            "Leaderboard, segments and scanner cover names trading at least PHP 5M a day (30-session average), plus COL and CTS by request.",
             "Earnings figures are read from the filings on PSE EDGE; the link opens the filing there. Descriptive, not a forecast.",
             "PSEi membership flags and rebalance ranks are a screen on public numbers, not PSE's index method.",
         ],
     }
+    import ph_index
+
+    ix = read_blob("index") or {}
+    resp["index"] = {"calendar": ph_index.calendar_view(today)[:14], "events": (ix.get("events") or [])[:40], "psei_members_as_of": ix.get("psei_members_as_of"),
+                     "circular": ix.get("last_circular"), "note": "MSCI, FTSE and WisdomTree do not publish per-stock candidates, so there is no screen for them; "
+                     "their Philippine changes appear here after each announcement"}
+    resp["digest"] = build_digest(resp)
+    return resp
 
 
-SCHEMA_VERSION = 2   # 2: pinned names, bars blob, expected_report helper
+SCHEMA_VERSION = 3   # 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper
