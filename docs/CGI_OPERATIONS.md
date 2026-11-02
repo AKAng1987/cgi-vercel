@@ -564,13 +564,20 @@ already holds; nothing in a request touches PSE EDGE.
 | `index.json` | `ph_index_watch.py` and `POST /api/ph/index_events` | PSE index-review results read from the PSE circulars (PSEi added/removed by difference of the member lists, summary lines for the sector indices), the stored PSEi member list (the price builder flags PSEi names from it), and MSCI / FTSE / WisdomTree Philippine changes posted on announcement days; the dates themselves are in `api/ph_index.py` (hand-verified; freshness flags when a provider has no dated event in 120 days or an MSCI announcement has no stored result 2 to 14 days later) |
 | `macro.json` | `POST /api/country_calendar` | S&P Global PH manufacturing PMI history, from the calendar's actuals (no ECONOMICS series exists) |
 
-Daily run: `~/market-dashboard/scripts/ph_daily.sh` from launchd (`scripts/launchd/com.arvin.ph-daily.plist`, copy to
-`~/Library/LaunchAgents/`; the Mac's clock is Manila time). Slots: **Monday to Friday 15:10** (just after the PSE close at 15:00), **Monday to Friday
-18:30** (repeats the run: late filings, and a retry if EDGE had not published the close at 15:10), **Saturday 09:00** (with `--full`: every listed company is
-re-read, so a name that newly crosses the liquid line or a new listing enters). Order: EDGE builder, PSE circular watcher (`ph_index_watch.py`),
-prices/bars/breadth, then `ph_run_check.py` (one summary line in `~/.cgi/ph_daily.log`, `~/.cgi/ph_last_run.json`, and a macOS notification only when something is
-wrong: snapshot not stored, no bar for today after 15:10 [a PSE holiday looks the same], or many filings failing to parse). A run before 15:05 on a trading day
-drops today's bar (a session in progress is not a close). Results, many filings and BSP decisions come after 15:10 and show on the 18:30 run or the next day's. Log `~/.cgi/ph_daily.log`. Zero tokens. First run: `ph_edge_build.py --days 120 --history --upload` (about 45 minutes), then `ph_prices_build.py --full --upload`.
+Where it runs: **AWS Lambda `cgi-ph-daily`** (ap-southeast-1, Python 3.12, 512 MB, 900 s, no automatic retries; package built by
+`~/market-dashboard/lambda_ph/build_zip.sh` from the same scripts, with a small storage shim and `requests` + `pypdf`; EDGE answers from AWS about 0.2 s a
+request, the pause between requests is `PH_PAUSE=0.7`). EventBridge rules `cgi-ph-daily-1510` (Mon-Fri 15:10 Manila = 07:10 UTC, just after the PSE
+close at 15:00), `cgi-ph-daily-1830` (Mon-Fri 18:30 Manila: late filings, and a retry if EDGE had not published the close), `cgi-ph-daily-sat` (Saturday
+09:00 Manila: full refresh of every listed company; the handler runs `--full` when the Manila weekday is Saturday). One invocation does: EDGE builder,
+PSE circular watcher (`ph_index_watch.py`, PDFs read with pypdf), prices/bars/breadth, run check (`ph_run_check.assess`, printed to CloudWatch; a failed
+step makes the invocation error, and `/api/freshness` `ph` flags stale prices or EDGE). About 2 minutes and 130 MB a run, roughly 4% of Lambda's always-free
+allowance a month. Logs: CloudWatch `/aws/lambda/cgi-ph-daily`. Manual run: `aws lambda invoke --function-name cgi-ph-daily --invocation-type Event --payload
+'{"full": false}' --cli-binary-format raw-in-base64-out /tmp/out.json`. The Mac scripts (`ph_daily.sh`, `launchd/com.arvin.ph-daily.plist`) are the fallback and the
+way to run the one-off backfills (`ph_edge_build.py --days 120 --history --upload`, about 45 minutes, longer than Lambda's 15-minute limit). Do not run the Mac
+job and the Lambda schedules at the same time for long (they write the same files; harmless but wasteful). Redeploy after editing a script:
+`build_zip.sh` then `aws lambda update-function-code --function-name cgi-ph-daily --zip-file fileb://~/market-dashboard/lambda_ph/ph_lambda.zip`.
+A run before 15:05 Manila on a trading day drops today's bar (a session in progress is not a close). Results, many filings and BSP decisions come after 15:10
+and show on the 18:30 run or the next day's. Zero tokens. First run: `ph_edge_build.py --days 120 --history --upload` (about 45 minutes), then `ph_prices_build.py --full --upload`.
 `/api/freshness` has a `ph` block: prices more than 3 weekdays old, EDGE not rebuilt for 3 days, or more than 30% of filings failing to parse.
 
 PH macro series (`PH_CORE_CPI`, `PH_CPI_MOM`, `PH_GDP_QOQ`, `PH_UNEMPLOYMENT`, `PH_IP_YOY`, `PH_REMITTANCES`, `PH_FX_RESERVES`) are in
