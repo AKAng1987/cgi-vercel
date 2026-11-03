@@ -931,6 +931,7 @@ def capex_check(today: Optional[dt.date] = None) -> dict:
 
 
 CALENDAR_HORIZON_DAYS = 75     # every release type needs a scheduled date inside this window
+CALENDAR_HORIZON_BY_KIND = {"SLOOS": 100}   # quarterly: right after a release the next one is about 90 days away, which is not a gap
 
 
 def calendar_problems(today: dt.date, releases: Optional[list[dict]] = None) -> dict:
@@ -940,14 +941,15 @@ def calendar_problems(today: dt.date, releases: Optional[list[dict]] = None) -> 
     import release_calendar as rc
 
     rel = rc.RELEASES if releases is None else releases
-    end = (today + dt.timedelta(days=CALENDAR_HORIZON_DAYS)).isoformat()
     t0 = today.isoformat()
     problems, nxt = [], {}
     for kind in ("FOMC", "CPI", "GDP", "SLOOS"):
+        horizon = CALENDAR_HORIZON_BY_KIND.get(kind, CALENDAR_HORIZON_DAYS)
+        end = (today + dt.timedelta(days=horizon)).isoformat()
         dates = sorted(r["date"] for r in rel if r["type"] == kind and r["date"] >= t0)
         nxt[kind] = dates[0] if dates else None
         if not dates or dates[0] > end:
-            problems.append({"check": kind, "detail": (f"no {kind} release scheduled in the next {CALENDAR_HORIZON_DAYS} days "
+            problems.append({"check": kind, "detail": (f"no {kind} release scheduled in the next {horizon} days "
                                                        f"(next: {dates[0] if dates else 'none'}); add the new year to release_calendar.py")})
     last = max((r["date"] for r in rel), default=None)
     return {"problems": problems, "n_problems": len(problems), "next": nxt, "last_date": last}
