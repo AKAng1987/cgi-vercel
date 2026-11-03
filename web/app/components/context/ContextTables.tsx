@@ -1,5 +1,6 @@
 import { RegimeDurations } from "./RegimeDurations";
 import { ErpGauge } from "./ErpGauge";
+import { ElectionCycle } from "./ElectionCycle";
 import { BalanceSheetRegime, ContextResponse, DrawdownWindow, InversionRow, RateCycle } from "@/lib/types";
 
 /**
@@ -230,6 +231,8 @@ export function ContextTables({ ctx }: { ctx: ContextResponse }) {
       <ErpGauge e={ctx.erp} />
 
       <RegimeDurations d={ctx.regime_durations} />
+
+      <ElectionCycle />
 
       <div>
         <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">S&amp;P drawdowns</div>

@@ -1,0 +1,517 @@
+{
+ "built": "2026-11-04",
+ "audit": "pending",
+ "n": 19,
+ "last_bar": "2026-11-02",
+ "primary": {
+  "mean_event": 0.1557090830268077,
+  "mean_baseline": 0.09282165681429104,
+  "mean_excess": 0.06288742621251663,
+  "p": 0.1387986162071496,
+  "ci95": [
+   0.014939534598081049,
+   0.1152804624172479
+  ],
+  "claim": false
+ },
+ "secondary": {
+  "post_21": {
+   "mean_excess": 0.014500957754083636,
+   "p": 0.18104623126113847,
+   "ci95": [
+    -0.0027288468819861734,
+    0.02973880044815371
+   ],
+   "claim": false,
+   "n": 19
+  },
+  "post_63": {
+   "mean_excess": 0.054805729978836155,
+   "p": 0.014204843274976413,
+   "ci95": [
+    0.024912685330038604,
+    0.0839354606585784
+   ],
+   "claim": true,
+   "n": 19
+  },
+  "post_126": {
+   "mean_excess": 0.09414813912225087,
+   "p": 0.007652793793898731,
+   "ci95": [
+    0.05644344987341994,
+    0.1301390733089293
+   ],
+   "claim": true,
+   "n": 19
+  },
+  "primary_1994_2022": {
+   "mean_excess": 0.03935000647103772,
+   "p": 0.4909843799140371,
+   "ci95": [
+    -0.023588778703208586,
+    0.10354583234306139
+   ],
+   "claim": false,
+   "n": 8
+  }
+ },
+ "season": {
+  "return": {
+   "midterm_mean": -0.013272018294006628,
+   "other_mean": 0.05440099152693104,
+   "diff": -0.06767300982093767,
+   "p": 0.038196180381961806,
+   "n_mid": 19,
+   "n_other": 54
+  },
+  "max_drawdown": {
+   "midterm_mean": -0.15281925044118957,
+   "other_mean": -0.09205115120745397,
+   "diff": -0.060768099233735606,
+   "p": 0.0014998500149985001,
+   "n_mid": 19,
+   "n_other": 54
+  }
+ },
+ "state": {
+  "Correction": {
+   "n_pre_election": 8,
+   "post12m_excess_mean": 0.07012927735712218,
+   "n_season": 6,
+   "season_ret_mean": -0.03210278544257069
+  },
+  "Flat": {
+   "n_pre_election": 3,
+   "post12m_excess_mean": 0.15051748856851876,
+   "n_season": 7,
+   "season_ret_mean": -0.07823331993202613
+  },
+  "Up": {
+   "n_pre_election": 8,
+   "post12m_excess_mean": 0.02278430168441023,
+   "n_season": 6,
+   "season_ret_mean": 0.08134693409891353
+  }
+ },
+ "scenarios": {
+  "Pres party loses both (blue-wave analog)": {
+   "n": 10,
+   "years": [
+    1954,
+    1958,
+    1970,
+    1974,
+    1986,
+    1990,
+    1994,
+    1998,
+    2006,
+    2014
+   ],
+   "react": 0.005740256382087194,
+   "r5": 0.01660676593949728,
+   "r21": 0.023789709876975373,
+   "r63": 0.09182819687345219,
+   "r126": 0.16003154963067262,
+   "r252": 0.16383872208649616,
+   "excess252": 0.07202610746024192
+  },
+  "Loses House only (Dem House / GOP Senate analog)": {
+   "n": 4,
+   "years": [
+    1982,
+    2010,
+    2018,
+    2022
+   ],
+   "react": 0.019598767476207007,
+   "r5": 0.026153039529769412,
+   "r21": 0.015056822168868805,
+   "r63": 0.06163047859019019,
+   "r126": 0.11933431457003568,
+   "r252": 0.13476217814639602,
+   "excess252": 0.040368155451946656
+  },
+  "Loses Senate only (the other split)": {
+   "n": 0,
+   "years": [],
+   "react": null,
+   "r5": null,
+   "r21": null,
+   "r63": null,
+   "r126": null,
+   "r252": null,
+   "excess252": null
+  },
+  "Keeps both (red-wave analog)": {
+   "n": 5,
+   "years": [
+    1950,
+    1962,
+    1966,
+    1978,
+    2002
+   ],
+   "react": 0.0067485060869985295,
+   "r5": -6.0947594023796905e-05,
+   "r21": 0.02624644648399448,
+   "r63": 0.0638287418600674,
+   "r126": 0.11681718613174837,
+   "r252": 0.15620732881175997,
+   "excess252": 0.06262548032552195
+  }
+ },
+ "react_all": {
+  "mean": 0.008923166534773297,
+  "median": 0.008051453851804613,
+  "up": 16,
+  "n": 19
+ },
+ "live": {
+  "close_date": "2026-11-02",
+  "close": 7541.39990234375,
+  "state": "Flat",
+  "dd52w": -0.0354946606758475,
+  "ret3m": -0.025220656922609774,
+  "vol20": 0.00725764063476332,
+  "tercile": 1,
+  "baseline252_for_tercile": 0.09033315165339269,
+  "compass_hist": 1,
+  "grid_hist": 2
+ },
+ "crosscheck": {
+  "checked": 320,
+  "gaps": 0
+ },
+ "events": [
+  {
+   "year": 1950,
+   "election": "1950-11-07",
+   "state": "Up",
+   "tercile": 1,
+   "r252": 0.1751032687383205,
+   "baseline252": 0.09033315165339269,
+   "excess252": 0.0847701170849278,
+   "react": 0.010330519074667865,
+   "season_ret": 0.1295006700642285,
+   "season_dd": -0.14020615292983996,
+   "scenario": "Keeps both (red-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -28,
+   "president": "D"
+  },
+  {
+   "year": 1954,
+   "election": "1954-11-02",
+   "state": "Flat",
+   "tercile": 0,
+   "r252": 0.3318653329106247,
+   "baseline252": 0.0886173143641377,
+   "excess252": 0.243248018546487,
+   "react": 0.020446608759427942,
+   "season_ret": 0.2355641240772972,
+   "season_dd": -0.044216571651652714,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -18,
+   "president": "R"
+  },
+  {
+   "year": 1958,
+   "election": "1958-11-04",
+   "state": "Up",
+   "tercile": 0,
+   "r252": 0.1105507524519751,
+   "baseline252": 0.0886173143641377,
+   "excess252": 0.021933438087837404,
+   "react": 0.009115542930325127,
+   "season_ret": 0.22575908879174889,
+   "season_dd": -0.029356504139188222,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -50,
+   "president": "R"
+  },
+  {
+   "year": 1962,
+   "election": "1962-11-06",
+   "state": "Correction",
+   "tercile": 2,
+   "r252": 0.24781490081590718,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.15206725444110558,
+   "react": 0.006169676431289517,
+   "season_ret": -0.19568323050117686,
+   "season_dd": -0.26372077832281293,
+   "scenario": "Keeps both (red-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -6,
+   "president": "D"
+  },
+  {
+   "year": 1966,
+   "election": "1966-11-08",
+   "state": "Correction",
+   "tercile": 1,
+   "r252": 0.12894829183505507,
+   "baseline252": 0.09033315165339269,
+   "excess252": 0.038615140181662386,
+   "react": 0.008051453851804613,
+   "season_ret": -0.1607104085280605,
+   "season_dd": -0.19357281696700768,
+   "scenario": "Keeps both (red-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -47,
+   "president": "D"
+  },
+  {
+   "year": 1970,
+   "election": "1970-11-03",
+   "state": "Correction",
+   "tercile": 0,
+   "r252": 0.11124417049316437,
+   "baseline252": 0.0886173143641377,
+   "excess252": 0.02262685612902668,
+   "react": 0.010537627001642624,
+   "season_ret": -0.058100524561365274,
+   "season_dd": -0.23207360813865185,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -12,
+   "president": "R"
+  },
+  {
+   "year": 1974,
+   "election": "1974-11-05",
+   "state": "Correction",
+   "tercile": 2,
+   "r252": 0.20539127163045,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.10964362525564843,
+   "react": 0.02285164377535165,
+   "season_ret": -0.33963832769256097,
+   "season_dd": -0.3629436306754906,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -48,
+   "president": "R"
+  },
+  {
+   "year": 1978,
+   "election": "1978-11-07",
+   "state": "Correction",
+   "tercile": 2,
+   "r252": 0.06965014269748582,
+   "baseline252": 0.09574764637480158,
+   "excess252": -0.026097503677315767,
+   "react": -0.00777398334052537,
+   "season_ret": 0.17807904224452864,
+   "season_dd": -0.0603070481475485,
+   "scenario": "Keeps both (red-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -14,
+   "president": "D"
+  },
+  {
+   "year": 1982,
+   "election": "1982-11-02",
+   "state": "Up",
+   "tercile": 2,
+   "r252": 0.20594960984041522,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.11020196346561363,
+   "react": 0.05462459459514246,
+   "season_ret": 0.06462733197019155,
+   "season_dd": -0.14271367604877194,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -26,
+   "president": "R"
+  },
+  {
+   "year": 1986,
+   "election": "1986-11-04",
+   "state": "Up",
+   "tercile": 1,
+   "r252": 0.04048005217537387,
+   "baseline252": 0.09033315165339269,
+   "excess252": -0.04985309947801882,
+   "react": 0.0031733066298320622,
+   "season_ret": 0.01939013392727751,
+   "season_dd": -0.0942362919922527,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -4,
+   "president": "R"
+  },
+  {
+   "year": 1990,
+   "election": "1990-11-06",
+   "state": "Correction",
+   "tercile": 2,
+   "r252": 0.24059888528721718,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.14485123891241558,
+   "react": -0.02727355183618152,
+   "season_ret": -0.07785719881581987,
+   "season_dd": -0.18425263243569723,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -8,
+   "president": "R"
+  },
+  {
+   "year": 1994,
+   "election": "1994-11-08",
+   "state": "Flat",
+   "tercile": 1,
+   "r252": 0.2707798230617118,
+   "baseline252": 0.09033315165339269,
+   "excess252": 0.1804466714083191,
+   "react": 0.005031607608813049,
+   "season_ret": -0.00948328778191554,
+   "season_dd": -0.06822906699238795,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": -54,
+   "president": "D"
+  },
+  {
+   "year": 1998,
+   "election": "1998-11-03",
+   "state": "Up",
+   "tercile": 2,
+   "r252": 0.21243254753038765,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.11668490115558607,
+   "react": 0.006360263147404455,
+   "season_ret": -0.03080980150166479,
+   "season_dd": -0.1933599921661049,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": 4,
+   "president": "D"
+  },
+  {
+   "year": 2002,
+   "election": "2002-11-05",
+   "state": "Correction",
+   "tercile": 2,
+   "r252": 0.15952003997203135,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.06377239359722976,
+   "react": 0.01696486441775602,
+   "season_ret": -0.26334332340796696,
+   "season_dd": -0.3183740905407898,
+   "scenario": "Keeps both (red-wave analog)",
+   "compass": null,
+   "grid": null,
+   "pres_house_seat_change": 8,
+   "president": "R"
+  },
+  {
+   "year": 2006,
+   "election": "2006-11-07",
+   "state": "Up",
+   "tercile": 0,
+   "r252": 0.06946032250456025,
+   "baseline252": 0.0886173143641377,
+   "excess252": -0.01915699185957745,
+   "react": 0.004304991578459649,
+   "season_ret": 0.04309491975487578,
+   "season_dd": -0.07698985307108452,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": 4,
+   "grid": null,
+   "pres_house_seat_change": -30,
+   "president": "R"
+  },
+  {
+   "year": 2010,
+   "election": "2010-11-02",
+   "state": "Up",
+   "tercile": 1,
+   "r252": 0.058190820227610685,
+   "baseline252": 0.09033315165339269,
+   "excess252": -0.032142331425782,
+   "react": 0.011465877504434285,
+   "season_ret": 0.03323702456525668,
+   "season_dd": -0.15994677274011782,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)",
+   "compass": 2,
+   "grid": 2,
+   "pres_house_seat_change": -64,
+   "president": "D"
+  },
+  {
+   "year": 2014,
+   "election": "2014-11-04",
+   "state": "Up",
+   "tercile": 2,
+   "r252": 0.045584062819496785,
+   "baseline252": 0.09574764637480158,
+   "excess252": -0.0501635835553048,
+   "react": 0.002854524225796906,
+   "season_ret": 0.06068465990144567,
+   "season_dd": -0.03977475384036655,
+   "scenario": "Pres party loses both (blue-wave analog)",
+   "compass": 1,
+   "grid": 4,
+   "pres_house_seat_change": -13,
+   "president": "D"
+  },
+  {
+   "year": 2018,
+   "election": "2018-11-06",
+   "state": "Flat",
+   "tercile": 2,
+   "r252": 0.12360542212555181,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.027857775750750227,
+   "react": 0.027600904341412935,
+   "season_ret": 0.07375181812489706,
+   "season_dd": -0.07345596217768491,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)",
+   "compass": 3,
+   "grid": 3,
+   "pres_house_seat_change": -42,
+   "president": "R"
+  },
+  {
+   "year": 2022,
+   "election": "2022-11-08",
+   "state": "Correction",
+   "tercile": 2,
+   "r252": 0.15130286039200636,
+   "baseline252": 0.09574764637480158,
+   "excess252": 0.05555521401720477,
+   "react": -0.015296306536161652,
+   "season_ret": -0.18023105821734264,
+   "season_dd": -0.22583555540515077,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)",
+   "compass": 4,
+   "grid": 1,
+   "pres_house_seat_change": -9,
+   "president": "D"
+  }
+ ],
+ "harness": {
+  "plant15_found": "8/8",
+  "noise_false": "1/20",
+  "smallest_detectable_pts": 12
+ }
+}
