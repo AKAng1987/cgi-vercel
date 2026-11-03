@@ -47,6 +47,18 @@ CGI regime is shown for the 5 midterms it covers (compass from 2004-07, grid fro
 
 By state (exploratory): mean 12-month excess after Correction (n = 8) +7.0 pts, Flat (n = 3) +15.1, Up (n = 8) +2.3. Mar-Sep return by end-February state: Correction (n = 6) -3.2%, Flat (n = 7) -7.8%, Up (n = 6) +8.1%.
 
+## Scenario cut (added 2026-11-04 after the first run; descriptive, NOT pre-registered, no tests)
+Cells are defined relative to the president's party AFTER the vote: it lacks both chambers, lacks only the House, lacks only the Senate, or holds both. "Lacks" means the state after the election, not a change: in 1998 the president's party already lacked both. JPMorgan's four boxes map to these for a Republican president (blue wave = Dem House + Dem Senate = lacks both; Dem House / GOP Senate = lacks House only; red wave = holds both). Reaction = close of the first bar after election day vs the close before it (one to two trading days; pre-1972 the market was shut on election day).
+
+| Scenario analog | n | Years | Reaction | +5d | +21d | +63d | +126d | 12m | 12m excess |
+|---|---|---|---|---|---|---|---|---|---|
+| Lacks both (blue wave) | 10 | 1954, 58, 70, 74, 86, 90, 94, 98, 2006, 14 | +0.6% | +1.7% | +2.4% | +9.2% | +16.0% | +16.4% | +7.2 |
+| Lacks House only (Dem House / GOP Senate) | 4 | 1982, 2010, 2018, 2022 | +2.0% | +2.6% | +1.5% | +6.2% | +11.9% | +13.5% | +4.0 |
+| Lacks Senate only (the other split) | 0 | none | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| Holds both (red wave) | 5 | 1950, 62, 66, 78, 2002 | +0.7% | -0.0% | +2.6% | +6.4% | +11.7% | +15.6% | +6.3 |
+
+All 19: reaction mean +0.89%, median +0.81%, up in 16 of 19 (down in 1978, 1990, 2022). Per-midterm reaction is in `results.json` (`events[].react`) and the `run.py` printout. Read this as descriptive: 4 to 10 midterms per cell, no cell separates from the others, and the +12 point detectability limit applies to every cell. The "other split" has no historical case. JPMorgan's ordering (blue wave weakest, red wave strongest) is not visible in these 19 reactions; the day-after move was positive in every cell on average.
+
 ## Live case 2026 (not counted)
 - Election 2026-11-03. State at the 2 Nov close (7541.40): **Flat** (drawdown from the 52-week closing high -3.5%, 3-month return -2.5%), volatility tercile 1 (middle). Baseline 12-month return for that tercile: +9.0%.
 - CGI regime now (`get_regime`, 3 Nov): **C1G2** (compass C1 since 2 Nov, grid G2 since 30 Sep).

@@ -186,6 +186,304 @@
    "mean_no": -0.062431450025689436
   }
  },
+ "scenarios": {
+  "Pres party loses both (blue-wave analog)": {
+   "n": 10,
+   "years": [
+    1954,
+    1958,
+    1970,
+    1974,
+    1986,
+    1990,
+    1994,
+    1998,
+    2006,
+    2014
+   ],
+   "react": {
+    "mean": 0.005740256382087194,
+    "median": 0.005695935378108752,
+    "up": 9,
+    "min": -0.02727355183618152,
+    "max": 0.02285164377535165
+   },
+   "r5": {
+    "mean": 0.01660676593949728,
+    "median": 0.014717296181484985,
+    "up": 10,
+    "min": 0.001342562355400867,
+    "max": 0.04278076663053154
+   },
+   "r21": {
+    "mean": 0.023789709876975373,
+    "median": 0.030380395101514468,
+    "up": 8,
+    "min": -0.0775861798971097,
+    "max": 0.07518085312419975
+   },
+   "r63": {
+    "mean": 0.09182819687345219,
+    "median": 0.08979890936620216,
+    "up": 10,
+    "min": 0.011745382609695154,
+    "max": 0.15508021903729485
+   },
+   "r126": {
+    "mean": 0.16003154963067262,
+    "median": 0.1926549709739479,
+    "up": 10,
+    "min": 0.030894802751377792,
+    "max": 0.24284514741376695
+   },
+   "r252": {
+    "mean": 0.16383872208649616,
+    "median": 0.1583177210618072,
+    "up": 10,
+    "min": 0.04048005217537387,
+    "max": 0.3318653329106247
+   },
+   "excess252": {
+    "mean": 0.07202610746024192,
+    "median": 0.06613524069233756,
+    "up": 7,
+    "min": -0.0501635835553048,
+    "max": 0.243248018546487
+   },
+   "season_ret": {
+    "mean": 0.0068603786099318605,
+    "median": 0.004953423072680985,
+    "up": 5,
+    "min": -0.33963832769256097,
+    "max": 0.2355641240772972
+   },
+   "season_dd": {
+    "mean": -0.13254329051028774,
+    "median": -0.08561307253166861,
+    "up": 0,
+    "min": -0.3629436306754906,
+    "max": -0.029356504139188222
+   }
+  },
+  "Loses House only (Dem House / GOP Senate analog)": {
+   "n": 4,
+   "years": [
+    1982,
+    2010,
+    2018,
+    2022
+   ],
+   "react": {
+    "mean": 0.019598767476207007,
+    "median": 0.01953339092292361,
+    "up": 3,
+    "min": -0.015296306536161652,
+    "max": 0.05462459459514246
+   },
+   "r5": {
+    "mean": 0.026153039529769412,
+    "median": 0.03475297631350349,
+    "up": 3,
+    "min": -0.004415163963146562,
+    "max": 0.039521369455217226
+   },
+   "r21": {
+    "mean": 0.015056822168868805,
+    "median": 0.02115194040089796,
+    "up": 3,
+    "min": -0.015469434255238723,
+    "max": 0.03339284212891802
+   },
+   "r63": {
+    "mean": 0.06163047859019019,
+    "median": 0.07713691390562605,
+    "up": 3,
+    "min": -0.011780992318376149,
+    "max": 0.10402907886788482
+   },
+   "r126": {
+    "mean": 0.11933431457003568,
+    "median": 0.11616697554095679,
+    "up": 4,
+    "min": 0.04835460896541921,
+    "max": 0.19664869823280995
+   },
+   "r252": {
+    "mean": 0.13476217814639602,
+    "median": 0.13745414125877908,
+    "up": 4,
+    "min": 0.058190820227610685,
+    "max": 0.20594960984041522
+   },
+   "excess252": {
+    "mean": 0.040368155451946656,
+    "median": 0.0417064948839775,
+    "up": 3,
+    "min": -0.032142331425782,
+    "max": 0.11020196346561363
+   },
+   "season_ret": {
+    "mean": -0.0021537208892493387,
+    "median": 0.048932178267724113,
+    "up": 3,
+    "min": -0.18023105821734264,
+    "max": 0.07375181812489706
+   },
+   "season_dd": {
+    "mean": -0.15048799159293136,
+    "median": -0.15133022439444488,
+    "up": 0,
+    "min": -0.22583555540515077,
+    "max": -0.07345596217768491
+   }
+  },
+  "Loses Senate only (the other split)": {
+   "n": 0,
+   "years": [],
+   "react": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "r5": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "r21": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "r63": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "r126": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "r252": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "excess252": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "season_ret": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   },
+   "season_dd": {
+    "mean": null,
+    "median": null,
+    "up": 0,
+    "min": null,
+    "max": null
+   }
+  },
+  "Keeps both (red-wave analog)": {
+   "n": 5,
+   "years": [
+    1950,
+    1962,
+    1966,
+    1978,
+    2002
+   ],
+   "react": {
+    "mean": 0.0067485060869985295,
+    "median": 0.008051453851804613,
+    "up": 4,
+    "min": -0.00777398334052537,
+    "max": 0.01696486441775602
+   },
+   "r5": {
+    "mean": -6.0947594023796905e-05,
+    "median": 0.011891478317276771,
+    "up": 3,
+    "min": -0.03540482634326736,
+    "max": 0.02582644546677626
+   },
+   "r21": {
+    "mean": 0.02624644648399448,
+    "median": 0.016350794499389254,
+    "up": 5,
+    "min": 0.002066064406905266,
+    "max": 0.07849189290186476
+   },
+   "r63": {
+    "mean": 0.0638287418600674,
+    "median": 0.08658488261005615,
+    "up": 4,
+    "min": -0.07129405016903856,
+    "max": 0.13796063859929797
+   },
+   "r126": {
+    "mean": 0.11681718613174837,
+    "median": 0.15632348064436963,
+    "up": 5,
+    "min": 0.023416106239811052,
+    "max": 0.19982868838086976
+   },
+   "r252": {
+    "mean": 0.15620732881175997,
+    "median": 0.15952003997203135,
+    "up": 5,
+    "min": 0.06965014269748582,
+    "max": 0.24781490081590718
+   },
+   "excess252": {
+    "mean": 0.06262548032552195,
+    "median": 0.06377239359722976,
+    "up": 4,
+    "min": -0.026097503677315767,
+    "max": 0.15206725444110558
+   },
+   "season_ret": {
+    "mean": -0.062431450025689436,
+    "median": -0.1607104085280605,
+    "up": 2,
+    "min": -0.26334332340796696,
+    "max": 0.17807904224452864
+   },
+   "season_dd": {
+    "mean": -0.19523617738159976,
+    "median": -0.19357281696700768,
+    "up": 0,
+    "min": -0.3183740905407898,
+    "max": -0.0603070481475485
+   }
+  }
+ },
+ "react_all": {
+  "mean": 0.008923166534773297,
+  "median": 0.008051453851804613,
+  "up": 16,
+  "n": 19
+ },
  "live_2026": {
   "close_date": "2026-11-02",
   "close": 7541.39990234375,
@@ -227,7 +525,10 @@
    "pres_lost_senate": false,
    "divided_after": false,
    "baseline252": 0.09033315165339269,
-   "excess252": 0.0847701170849278
+   "excess252": 0.0847701170849278,
+   "react": 0.010330519074667865,
+   "r5": 0.02582644546677626,
+   "scenario": "Keeps both (red-wave analog)"
   },
   {
    "year": 1954,
@@ -257,7 +558,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.0886173143641377,
-   "excess252": 0.243248018546487
+   "excess252": 0.243248018546487,
+   "react": 0.020446608759427942,
+   "r5": 0.04278076663053154,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1958,
@@ -287,7 +591,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.0886173143641377,
-   "excess252": 0.021933438087837404
+   "excess252": 0.021933438087837404,
+   "react": 0.009115542930325127,
+   "r5": 0.027540693000851935,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1962,
@@ -317,7 +624,10 @@
    "pres_lost_senate": false,
    "divided_after": false,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.15206725444110558
+   "excess252": 0.15206725444110558,
+   "react": 0.006169676431289517,
+   "r5": 0.019023147204431545,
+   "scenario": "Keeps both (red-wave analog)"
   },
   {
    "year": 1966,
@@ -347,7 +657,10 @@
    "pres_lost_senate": false,
    "divided_after": false,
    "baseline252": 0.09033315165339269,
-   "excess252": 0.038615140181662386
+   "excess252": 0.038615140181662386,
+   "react": 0.008051453851804613,
+   "r5": 0.011891478317276771,
+   "scenario": "Keeps both (red-wave analog)"
   },
   {
    "year": 1970,
@@ -377,7 +690,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.0886173143641377,
-   "excess252": 0.02262685612902668
+   "excess252": 0.02262685612902668,
+   "react": 0.010537627001642624,
+   "r5": 0.01389050416766291,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1974,
@@ -407,7 +723,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.10964362525564843
+   "excess252": 0.10964362525564843,
+   "react": 0.02285164377535165,
+   "r5": 0.02832511826709605,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1978,
@@ -437,7 +756,10 @@
    "pres_lost_senate": false,
    "divided_after": false,
    "baseline252": 0.09574764637480158,
-   "excess252": -0.026097503677315767
+   "excess252": -0.026097503677315767,
+   "react": -0.00777398334052537,
+   "r5": -0.0216409826153362,
+   "scenario": "Keeps both (red-wave analog)"
   },
   {
    "year": 1982,
@@ -467,7 +789,10 @@
    "pres_lost_senate": false,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.11020196346561363
+   "excess252": 0.11020196346561363,
+   "react": 0.05462459459514246,
+   "r5": 0.0366870980727767,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)"
   },
   {
    "year": 1986,
@@ -497,7 +822,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.09033315165339269,
-   "excess252": -0.04985309947801882
+   "excess252": -0.04985309947801882,
+   "react": 0.0031733066298320622,
+   "r5": 0.001342562355400867,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1990,
@@ -527,7 +855,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.14485123891241558
+   "excess252": 0.14485123891241558,
+   "react": -0.02727355183618152,
+   "r5": 0.01554408819530706,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1994,
@@ -557,7 +888,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.09033315165339269,
-   "excess252": 0.1804466714083191
+   "excess252": 0.1804466714083191,
+   "react": 0.005031607608813049,
+   "r5": 0.006413719683260988,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 1998,
@@ -587,7 +921,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.11668490115558607
+   "excess252": 0.11668490115558607,
+   "react": 0.006360263147404455,
+   "r5": 0.016732616043944493,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 2002,
@@ -617,7 +954,10 @@
    "pres_lost_senate": false,
    "divided_after": false,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.06377239359722976
+   "excess252": 0.06377239359722976,
+   "react": 0.01696486441775602,
+   "r5": -0.03540482634326736,
+   "scenario": "Keeps both (red-wave analog)"
   },
   {
    "year": 2006,
@@ -647,7 +987,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.0886173143641377,
-   "excess252": -0.01915699185957745
+   "excess252": -0.01915699185957745,
+   "react": 0.004304991578459649,
+   "r5": 0.003362865492988698,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 2010,
@@ -677,7 +1020,10 @@
    "pres_lost_senate": false,
    "divided_after": true,
    "baseline252": 0.09033315165339269,
-   "excess252": -0.032142331425782
+   "excess252": -0.032142331425782,
+   "react": 0.011465877504434285,
+   "r5": 0.03281885455423028,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)"
   },
   {
    "year": 2014,
@@ -707,7 +1053,10 @@
    "pres_lost_senate": true,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": -0.0501635835553048
+   "excess252": -0.0501635835553048,
+   "react": 0.002854524225796906,
+   "r5": 0.01013472555792827,
+   "scenario": "Pres party loses both (blue-wave analog)"
   },
   {
    "year": 2018,
@@ -737,7 +1086,10 @@
    "pres_lost_senate": false,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.027857775750750227
+   "excess252": 0.027857775750750227,
+   "react": 0.027600904341412935,
+   "r5": -0.004415163963146562,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)"
   },
   {
    "year": 2022,
@@ -767,7 +1119,10 @@
    "pres_lost_senate": false,
    "divided_after": true,
    "baseline252": 0.09574764637480158,
-   "excess252": 0.05555521401720477
+   "excess252": 0.05555521401720477,
+   "react": -0.015296306536161652,
+   "r5": 0.039521369455217226,
+   "scenario": "Loses House only (Dem House / GOP Senate analog)"
   }
  ]
 }

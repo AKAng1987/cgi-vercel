@@ -102,6 +102,34 @@ for fk, fn in flags.items():
         if a and b:
             print(f"   {fk:34} {tk:15} yes n={len(a):2} {np.mean(a)*100:+5.1f}%   no n={len(b):2} {np.mean(b)*100:+5.1f}%")
 
+# ---- scenario cut (added 2026-11-04 after the first run; descriptive, NOT pre-registered) ---------------------------------------
+# Scenarios are relative to the president's party (JPM's boxes are for a Republican president: Blue wave = Dem House + Dem Senate =
+# the president's party loses both chambers).  Reaction = close of the first bar AFTER election day vs the close before it.
+for r in ev:
+    j = bisect.bisect_right(dates, r["election"])          # first bar strictly after election day
+    r["react"] = float(c[j] / c[r["i"]] - 1)
+    for h in (5, 21):
+        r[f"r{h}"] = float(c[r["i"] + h] / c[r["i"]] - 1)
+    r["scenario"] = ("Pres party loses both (blue-wave analog)" if r["pres_lost_house"] and r["pres_lost_senate"] else
+                     "Loses House only (Dem House / GOP Senate analog)" if r["pres_lost_house"] else
+                     "Loses Senate only (the other split)" if r["pres_lost_senate"] else "Keeps both (red-wave analog)")
+res["scenarios"] = {}
+print("\n== SCENARIO CUT (descriptive; president's party relative)")
+for name in ("Pres party loses both (blue-wave analog)", "Loses House only (Dem House / GOP Senate analog)",
+             "Loses Senate only (the other split)", "Keeps both (red-wave analog)"):
+    g = [r for r in ev if r["scenario"] == name]
+    row = {"n": len(g), "years": [r["year"] for r in g]}
+    for k in ("react", "r5", "r21", "r63", "r126", "r252", "excess252", "season_ret", "season_dd"):
+        v = np.array([r[k] for r in g]) if g else np.array([])
+        row[k] = {"mean": float(v.mean()) if len(v) else None, "median": float(np.median(v)) if len(v) else None,
+                  "up": int((v > 0).sum()), "min": float(v.min()) if len(v) else None, "max": float(v.max()) if len(v) else None}
+    res["scenarios"][name] = row
+    f = lambda k: "n/a" if not g else f"{row[k]['mean']*100:+5.1f}%"
+    print(f"   {name:50} n={len(g):2} react {f('react')} +5d {f('r5')} +21d {f('r21')} +63d {f('r63')} +126d {f('r126')} 12m {f('r252')} excess {f('excess252')}")
+allr = np.array([r["react"] for r in ev])
+res["react_all"] = {"mean": float(allr.mean()), "median": float(np.median(allr)), "up": int((allr > 0).sum()), "n": len(allr)}
+print(f"   all 19: reaction mean {allr.mean()*100:+.2f}% median {np.median(allr)*100:+.2f}% up in {(allr>0).sum()}/19")
+
 # ---- live case ------------------------------------------------------------------------------------------------------------
 li = len(c) - 1
 st, dd, r3 = S.state_at(c, li)
@@ -113,4 +141,4 @@ res["events"] = ev
 (HERE / "results.json").write_text(json.dumps(res, indent=1, default=float))
 print("\n== per-midterm table")
 for r in ev:
-    print(f"   {r['year']} {r['state']:10} T{r['tercile']} 12m {r['r252']*100:+6.1f}%  base {r['baseline252']*100:+5.1f}%  excess {r['excess252']*100:+6.1f}  season {r['season_ret']*100:+6.1f}% dd {r['season_dd']*100:6.1f}%  C{r['compass']}G{r['grid']}")
+    print(f"   {r['year']} react {r['react']*100:+5.2f}% {r['scenario'][:12]:12} {r['state']:10} T{r['tercile']} 12m {r['r252']*100:+6.1f}%  base {r['baseline252']*100:+5.1f}%  excess {r['excess252']*100:+6.1f}  season {r['season_ret']*100:+6.1f}% dd {r['season_dd']*100:6.1f}%  C{r['compass']}G{r['grid']}")
