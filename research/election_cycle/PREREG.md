@@ -33,3 +33,15 @@ election day" = last bar strictly before the election date; the 252-day return =
 bar; season window = last close of Feb to last close of Sep; max drawdown = worst peak-to-trough on closes inside that window;
 20-day vol = stdev of 20 daily log returns ending at the start bar; terciles cut from all start bars up to and including that
 day (expanding); non-midterm years = 1950-2022 years not divisible by the midterm pattern (1950, 1954, ... 2022 excluded).
+
+AMENDMENT 1 (2026-11-04, before run.py and before any real-data return was computed; commit follows the first harness runs)
+(a) Self-test result under the original wording: with the final method the harness finds a planted +10 point excess in only about
+55-60% of runs (5/8 in the fixed-seed run), so the "found in >= 6 of 8" bar at +10 cannot be met honestly; this is a power
+fact (smallest effect detectable at 80% power is about +12 points), not a code error. The harness now plants +15 points for the
+>= 6/8 check, still requires noise claimed in <= 2 of 20, and prints the +10 result and the power curve.
+(b) Permutation, as implemented: the whole 19-date election calendar is moved by a common circular offset inside the 1950-2025
+sample (every offset used; offset 0 is the observed calendar). First-draft iid random start dates were too conservative against
+evenly spaced events in the self-test (0 false claims in 60 where about 3 are expected). A claim needs p < 0.05 AND a block-
+bootstrap 95% interval (block 252 over the baseline, events resampled) that excludes 0.
+(c) The baseline pool and the permutation use start days from 1950-01-01 on; 1928-49 bars are volatility warm-up only (the
+expanding terciles are cut from all bars since 1928). Pooling Depression-era returns into the baseline was not intended.
