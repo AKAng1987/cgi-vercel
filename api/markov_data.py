@@ -187,6 +187,13 @@ OOS_VERDICT = {
 }
 
 
+def _fmt_driver_value(v) -> str:
+    """A driver's current reading: signed number for a numeric driver, the label itself for a categorical one (curve shape)."""
+    if isinstance(v, (int, float)):
+        return f"{v:+g}"
+    return str(v) if v is not None else "n/a"
+
+
 def _market_from_drivers(drv: Optional[dict], axis: str) -> Optional[dict]:
     """Driver-conditioned flip rate from axis_drivers (see that module):
     mean of P(flip | current tercile) across the axis's leading drivers.
@@ -209,7 +216,7 @@ def _market_from_drivers(drv: Optional[dict], axis: str) -> Optional[dict]:
         "source": (f"driver table (in-sample, descriptive -- not a market price): flip rate "
                    f"given current driver terciles ({c['n_drivers_used']} drivers, "
                    f"{c['n_windows']} windows)"),
-        "detail": (f"{lead['name']} {lead['current_value']:+g} → {round(lead['p_current']*100)}% vs base {round(c['base_rate']*100)}%" if lead else f"base {round(c['base_rate']*100)}%"),
+        "detail": (f"{lead['name']} {_fmt_driver_value(lead['current_value'])} → {round(lead['p_current']*100)}% vs base {round(c['base_rate']*100)}%" if lead else f"base {round(c['base_rate']*100)}%"),
         "experimental": True,
     }
 
