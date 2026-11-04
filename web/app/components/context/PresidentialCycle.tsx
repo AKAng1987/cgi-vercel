@@ -92,7 +92,7 @@ export function PresidentialCycle() {
       <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <ExcessBars />
         <div>
-          <div className="mb-1 text-[0.7rem] text-slate-300">What the other windows say <span className="text-slate-500">(excess over baseline; 8 pre-registered tests, 0 claims)</span></div>
+          <div className="mb-1 text-[0.7rem] text-slate-300">What the other windows say <span className="text-slate-500">(excess over baseline; 6 pre-registered tests, 0 claims; the drawdown is reported only)</span></div>
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="border-b border-slate-800 text-left text-[0.65rem] uppercase text-slate-500">
@@ -158,8 +158,9 @@ export function PresidentialCycle() {
           </table>
         </div>
         <p className="mt-1 max-w-5xl text-[0.66rem] leading-relaxed text-slate-600">
-          The widest gap is the winner&apos;s party (Democrat +8.3 vs Republican −6.5 points, about 2 standard errors), one of roughly nine groupings looked at
-          in groups of 8 and 11 with a few years doing the work: about one gap this size is expected by chance, so it is folklore on known history, not a finding.
+          The widest gap is the winner&apos;s party (Democrat +8.3 vs Republican −6.5 points: a 14.8-point gap, about 2 standard errors, ignoring that
+          neighbouring 12-month windows overlap). It is the largest of the 8 groupings looked at, in groups of 8 and 11, and no single election drives it (dropping
+          any one leaves a gap of 11.8 to 19.0 points). About 0.4 gaps this size are expected by chance across the groupings, so it is folklore on known history, not a finding.
         </p>
       </div>
 

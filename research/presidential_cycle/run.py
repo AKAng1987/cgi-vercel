@@ -73,6 +73,19 @@ def grp(name, key, order):
     res.setdefault("groups", {})[name] = out
 grp("winner", "winner", ("D", "R")); grp("party_change", "party_change", (True, False))
 grp("incumbent_ran", "incumbent_ran", (True, False)); grp("state6", "state6", ("Down", "Flat", "Up"))
+# winner's-party gap (exploratory): plain two-sample standard error (ignores the overlap between neighbouring 12-month windows)
+# and leave-one-out influence of each election on the gap
+def _gap(es):
+    return np.mean([e["excess252"] for e in es if e["winner"] == "D"]) - np.mean([e["excess252"] for e in es if e["winner"] == "R"])
+_d = [e["excess252"] for e in ev if e["winner"] == "D"]; _r = [e["excess252"] for e in ev if e["winner"] == "R"]
+_se = float(np.sqrt(np.var(_d, ddof=1) / len(_d) + np.var(_r, ddof=1) / len(_r)))
+_loo = sorted(((abs(_gap(ev) - _gap([x for x in ev if x is not e])), e["year"]) for e in ev), reverse=True)
+res["winner_gap"] = {"gap": float(_gap(ev)), "se": _se, "t": float(_gap(ev) / _se),
+                     "loo_largest_shift": [{"year": y, "shift": float(v)} for v, y in _loo[:3]],
+                     "loo_gap_range": [float(min(_gap([x for x in ev if x is not e]) for e in ev)), float(max(_gap([x for x in ev if x is not e]) for e in ev))]}
+print(f"   winner gap D-R {res['winner_gap']['gap']*100:+.1f} pts, SE {_se*100:.1f} (ignores overlap), t={res['winner_gap']['t']:.2f}; "
+      f"dropping any one election the gap stays {res['winner_gap']['loo_gap_range'][0]*100:.1f} to {res['winner_gap']['loo_gap_range'][1]*100:.1f}; "
+      f"largest single-year shifts {[(x['year'], round(x['shift']*100, 1)) for x in res['winner_gap']['loo_largest_shift']]}")
 res["react_all"] = {"mean": float(np.mean([r["react"] for r in ev])), "up": int(sum(r["react"] > 0 for r in ev)), "n": len(ev)}
 print(f"   day after vote: mean {res['react_all']['mean']*100:+.2f}%, up {res['react_all']['up']}/{len(ev)}")
 print("\n== per election")
