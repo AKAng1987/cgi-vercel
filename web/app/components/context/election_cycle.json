@@ -74,6 +74,48 @@
    "n_other": 54
   }
  },
+ "state6": {
+  "Down": {
+   "n": 6,
+   "years": [
+    1962,
+    1966,
+    1974,
+    1990,
+    2002,
+    2022
+   ],
+   "excess252_mean": 0.09408414440087776,
+   "r252_mean": 0.18892937498877785
+  },
+  "Flat": {
+   "n": 4,
+   "years": [
+    1978,
+    1998,
+    2010,
+    2018
+   ],
+   "excess252_mean": 0.02157571045080963,
+   "r252_mean": 0.11596973314525899
+  },
+  "Up": {
+   "n": 9,
+   "years": [
+    1950,
+    1954,
+    1958,
+    1970,
+    1982,
+    1986,
+    1994,
+    2006,
+    2014
+   ],
+   "excess252_mean": 0.06045037664770117,
+   "r252_mean": 0.15122415499951583
+  }
+ },
  "state": {
   "Correction": {
    "n_pre_election": 8,
@@ -174,6 +216,7 @@
   "state": "Flat",
   "dd52w": -0.0354946606758475,
   "ret3m": -0.025220656922609774,
+  "ret6m": 0.04730755856594793,
   "vol20": 0.00725764063476332,
   "tercile": 1,
   "baseline252_for_tercile": 0.09033315165339269,
@@ -200,7 +243,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -28,
-   "president": "D"
+   "president": "D",
+   "ret6m": 0.05966065272454357,
+   "state6": "Up",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1954,
@@ -217,7 +264,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -18,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.12411598810672375,
+   "state6": "Up",
+   "house_before": "R",
+   "house_after": "D"
   },
   {
    "year": 1958,
@@ -234,7 +285,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -50,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.17155199590325254,
+   "state6": "Up",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1962,
@@ -251,7 +306,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -6,
-   "president": "D"
+   "president": "D",
+   "ret6m": -0.10464937680593756,
+   "state6": "Down",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1966,
@@ -268,7 +327,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -47,
-   "president": "D"
+   "president": "D",
+   "ret6m": -0.07292143248275107,
+   "state6": "Down",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1970,
@@ -285,7 +348,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -12,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.050836804498184174,
+   "state6": "Up",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1974,
@@ -302,7 +369,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -48,
-   "president": "R"
+   "president": "R",
+   "ret6m": -0.2009621412355599,
+   "state6": "Down",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1978,
@@ -319,7 +390,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -14,
-   "president": "D"
+   "president": "D",
+   "ret6m": -0.007403535695263419,
+   "state6": "Flat",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1982,
@@ -336,7 +411,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -26,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.15332881216249938,
+   "state6": "Up",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1986,
@@ -353,7 +432,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -4,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.03608159399929023,
+   "state6": "Up",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1990,
@@ -370,7 +453,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -8,
-   "president": "R"
+   "president": "R",
+   "ret6m": -0.08017313132596604,
+   "state6": "Down",
+   "house_before": "D",
+   "house_after": "D"
   },
   {
    "year": 1994,
@@ -387,7 +474,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": -54,
-   "president": "D"
+   "president": "D",
+   "ret6m": 0.03825025713561603,
+   "state6": "Up",
+   "house_before": "D",
+   "house_after": "R"
   },
   {
    "year": 1998,
@@ -404,7 +495,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": 4,
-   "president": "D"
+   "president": "D",
+   "ret6m": -0.0034962119355109733,
+   "state6": "Flat",
+   "house_before": "R",
+   "house_after": "R"
   },
   {
    "year": 2002,
@@ -421,7 +516,11 @@
    "compass": null,
    "grid": null,
    "pres_house_seat_change": 8,
-   "president": "R"
+   "president": "R",
+   "ret6m": -0.1344843838071459,
+   "state6": "Down",
+   "house_before": "R",
+   "house_after": "R"
   },
   {
    "year": 2006,
@@ -438,7 +537,11 @@
    "compass": 4,
    "grid": null,
    "pres_house_seat_change": -30,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.041233389713111634,
+   "state6": "Up",
+   "house_before": "R",
+   "house_after": "D"
   },
   {
    "year": 2010,
@@ -455,7 +558,11 @@
    "compass": 2,
    "grid": 2,
    "pres_house_seat_change": -64,
-   "president": "D"
+   "president": "D",
+   "ret6m": 0.009185437560607301,
+   "state6": "Flat",
+   "house_before": "D",
+   "house_after": "R"
   },
   {
    "year": 2014,
@@ -472,7 +579,11 @@
    "compass": 1,
    "grid": 4,
    "pres_house_seat_change": -13,
-   "president": "D"
+   "president": "D",
+   "ret6m": 0.0803600594548024,
+   "state6": "Up",
+   "house_before": "R",
+   "house_after": "R"
   },
   {
    "year": 2018,
@@ -489,7 +600,11 @@
    "compass": 3,
    "grid": 3,
    "pres_house_seat_change": -42,
-   "president": "R"
+   "president": "R",
+   "ret6m": 0.02484735271263716,
+   "state6": "Flat",
+   "house_before": "R",
+   "house_after": "D"
   },
   {
    "year": 2022,
@@ -506,7 +621,11 @@
    "compass": 4,
    "grid": 1,
    "pres_house_seat_change": -9,
-   "president": "D"
+   "president": "D",
+   "ret6m": -0.04621118796602841,
+   "state6": "Down",
+   "house_before": "D",
+   "house_after": "R"
   }
  ],
  "harness": {

@@ -173,7 +173,8 @@ export function ElectionCycle() {
             <thead>
               <tr className="border-b border-slate-800 text-left text-[0.62rem] uppercase text-slate-500">
                 <th className="py-1 pr-2 font-medium">year</th>
-                <th className="py-1 pr-2 font-medium">going in</th>
+                <th className="py-1 pr-2 text-right font-medium">6m in</th>
+                <th className="py-1 pr-2 font-medium">House in → out</th>
                 <th className="py-1 pr-2 font-medium">vol</th>
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
@@ -188,7 +189,11 @@ export function ElectionCycle() {
               {study.events.map((e) => (
                 <tr key={e.year} className="border-b border-slate-900">
                   <td className="py-[3px] pr-2 tabular-nums text-slate-200">{e.year}</td>
-                  <td className="py-[3px] pr-2 text-slate-300">{e.state}</td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={e.ret6m} /></td>
+                  <td className="py-[3px] pr-2 text-slate-300">
+                    {e.house_before} → {e.house_after}
+                    {e.house_before !== e.house_after && <span className="ml-1 text-amber-400">flip</span>}
+                  </td>
                   <td className="py-[3px] pr-2 text-slate-500">{T[e.tercile]}</td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.react} /></td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.r252} /></td>
@@ -203,16 +208,28 @@ export function ElectionCycle() {
           </table>
         </div>
         <p className="mt-1 text-[0.66rem] text-slate-600">
-          &ldquo;Going in&rdquo; = correction (10%+ below the 52-week high), up (3-month gain of 3%+) or flat, at the close before election day.
+          &ldquo;6m in&rdquo; = S&amp;P 500 return over the 126 trading days to the close before election day (Up: +3% or more, Down: −3% or less, else Flat; split added after the main results, exploratory).
+          House = majority party entering the vote and in the new Congress (D/R); &ldquo;flip&rdquo; = the House changed hands.
           Baseline = average 12-month return from days in the same expanding 20-day-volatility band, excluding days near any election.
           CGI regime exists only from 2004 (compass) and 2008 (grid).
         </p>
       </div>
 
+      <p className="mt-2 text-[0.72rem] text-slate-400">
+        By 6-month run-up, average 12-month excess:{" "}
+        {(["Down", "Flat", "Up"] as const).map((k, i) => (
+          <span key={k}>
+            {i > 0 && " · "}
+            {k} (n={study.state6[k].n}) <Num v={study.state6[k].excess252_mean} kind="pts" />
+          </span>
+        ))}
+        . Descriptive; nothing here separates from the others at n = 19.
+      </p>
+
       <div className="mt-4 rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-[0.78rem] text-slate-300">
         <span className="text-slate-500">2026 live case (not counted): </span>
         S&amp;P 500 closed at <span className="tabular-nums text-slate-100">{live.close.toLocaleString()}</span> on {live.close_date}, the eve of the
-        vote: <span className="text-slate-100">{live.state}</span> going in ({pc(live.dd52w)} from the 52-week high, 3-month {pc(live.ret3m)}),
+        vote: <span className="text-slate-100">{live.state}</span> going in ({pc(live.dd52w)} from the 52-week high, 3-month {pc(live.ret3m)}, 6-month {pc(live.ret6m)}),
         {" "}{T[live.tercile]} volatility. CGI regime then C{live.compass_hist}G{live.grid_hist}. Tracking at +1, +3, +6 and +12 months starts as the
         dates arrive (this snapshot is static: 2 Dec 2026, 2 Feb, 3 May and 2 Nov 2027).
       </div>

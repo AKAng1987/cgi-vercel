@@ -37,6 +37,7 @@ for y in years:
     i = S.bar_before(dates, d)
     st, dd, r3 = S.state_at(c, i)
     row = {"year": y, "election": d, "start_bar": dates[i], "i": i, "state": st, "dd52w": float(dd), "ret3m": float(r3),
+           "ret6m": float(c[i] / c[i - 126] - 1), "state6": ("Up" if c[i] / c[i - 126] - 1 >= 0.03 else ("Down" if c[i] / c[i - 126] - 1 <= -0.03 else "Flat")),
            "vol20": float(V[i]), "tercile": int(T[i])}
     for h in FWD:
         row[f"r{h}"] = float(FWD[h][i])
@@ -92,6 +93,15 @@ for st in ("Correction", "Flat", "Up"):
     res["explore_state"][st] = {"n_pre_election": len(a), "post12m_excess_mean": float(np.mean([r["excess252"] for r in a])) if a else None,
                                 "n_season": len(b), "season_ret_mean": float(np.mean([r["season_ret"] for r in b])) if b else None}
     print(f"   {st:10} pre-election n={len(a):2} mean 12m excess {res['explore_state'][st]['post12m_excess_mean']}   |  end-Feb n={len(b):2} season ret {res['explore_state'][st]['season_ret_mean']}")
+# Added 2026-11-04 AFTER the primary and secondary results were seen, at Arvin's request: "going in" as the 6-month return (Up >= +3%,
+# Down <= -3%, else Flat). Exploratory, descriptive only; not part of the pre-registered tests.
+res["explore_state6"] = {}
+for st in ("Down", "Flat", "Up"):
+    a = [r for r in ev if r["state6"] == st]
+    res["explore_state6"][st] = {"n": len(a), "years": [r["year"] for r in a],
+                                 "excess252_mean": float(np.mean([r["excess252"] for r in a])) if a else None,
+                                 "r252_mean": float(np.mean([r["r252"] for r in a])) if a else None}
+    print(f"   6m going in {st:5} n={len(a):2} mean 12m excess {res['explore_state6'][st]['excess252_mean']}")
 flags = {"pres_party_lost_>=20_house_seats": lambda r: r["pres_house_seat_change"] <= -20, "pres_party_lacks_house_majority": lambda r: r["pres_lost_house"],
          "pres_party_lacks_senate_majority": lambda r: r["pres_lost_senate"], "divided_government_after": lambda r: r["divided_after"]}
 res["explore_politics"] = {}
@@ -133,7 +143,7 @@ print(f"   all 19: reaction mean {allr.mean()*100:+.2f}% median {np.median(allr)
 # ---- live case ------------------------------------------------------------------------------------------------------------
 li = len(c) - 1
 st, dd, r3 = S.state_at(c, li)
-res["live_2026"] = {"close_date": dates[li], "close": float(c[li]), "state": st, "dd52w": float(dd), "ret3m": float(r3),
+res["live_2026"] = {"close_date": dates[li], "close": float(c[li]), "state": st, "dd52w": float(dd), "ret3m": float(r3), "ret6m": float(c[li] / c[li - 126] - 1),
                     "vol20": float(V[li]), "tercile": int(T[li]), "baseline252_for_tercile": float(FWD[252][S.pool_mask(FWD[252], T, idx, FIRST) & (T == T[li])].mean()),
                     "compass_hist": regime_at(reg["compass"], dates[li]), "grid_hist": regime_at(reg["grid"], dates[li])}
 print(f"\n== LIVE 2026 (not counted): close {dates[li]} {c[li]:.2f}  state {st} (drawdown {dd*100:.1f}%, 3m {r3*100:+.1f}%), vol tercile {T[li]}, regime table C{res['live_2026']['compass_hist']}G{res['live_2026']['grid_hist']}")

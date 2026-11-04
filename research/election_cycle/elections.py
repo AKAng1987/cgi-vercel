@@ -44,7 +44,7 @@ def results(year: int) -> dict:
     house_maj = "D" if HOUSE[c][0] > HOUSE[c][1] else "R"
     house_maj_before = "D" if HOUSE[c - 1][0] > HOUSE[c - 1][1] else "R"
     sen = SENATE_MAJ[c]
-    return {"president": p, "pres_house_seat_change": seats_after - seats_before, "house_after": house_maj,
+    return {"president": p, "house_before": house_maj_before, "pres_house_seat_change": seats_after - seats_before, "house_after": house_maj,
             "house_flipped": house_maj != house_maj_before, "senate_after": sen,
             "pres_lost_house": house_maj != p, "pres_lost_senate": sen != p,
             "divided_after": not (house_maj == p and sen == p)}
