@@ -24,17 +24,17 @@ Built 2026-11-04. Pre-registered in `PREREG.md` (lock commit 839cfe4 holds PRERE
 ## Exploratory (hand-entered public facts; descriptive, not tested)
 | Cut | n | 12-month excess | Day after |
 |---|---|---|---|
-| Winner Democrat | 8 | +8.3 pts | +0.78% |
-| Winner Republican | 11 | -6.5 pts | +0.34% |
-| Party changed (incumbent party lost) | 11 | -1.8 | +0.75% |
-| Party held | 8 | +1.8 | +0.22% |
-| Incumbent ran | 11 | +0.0 | +0.28% |
-| Open seat | 8 | -0.7 | +0.87% |
+| Winner Democrat | 8 | +8.3 pts | +0.18% |
+| Winner Republican | 11 | -6.5 pts | +0.51% |
+| Party changed (incumbent party lost) | 11 | -1.8 | +0.59% |
+| Party held | 8 | +1.8 | +0.07% |
+| Incumbent ran | 11 | +0.0 | +0.37% |
+| Open seat | 8 | -0.7 | +0.37% |
 | **B splits, Jan-Jun return (pre-registered as exploratory):** incumbent ran / open seat | 11 / 8 | +1.8% / +4.8% | |
 | Jan-Jun return, party changed / held | 11 / 8 | +2.8% / +3.3% | |
 | 6-month run-up Down / Flat / Up | 1 / 7 / 11 | -2.2 / -6.5 / +3.8 | |
 
-The day after the vote averaged +0.53%, up in 13 of 19. The largest gap is winner's party (Democrat +8.3 vs Republican -6.5 pts, a 14.8-point gap). In `run.py` (`winner_gap` in `results.json`): standard error 7.4 points (t = 2.01), a plain two-sample figure that ignores the overlap between neighbouring 12-month windows, so the true uncertainty is larger. No single election drives it: dropping any one leaves a gap between 11.8 and 19.0 points (largest shifts: 1976 4.1, 2020 3.0, 2000 2.6). An earlier draft said "a handful of years (2000, 1956, 1996, 2020) doing the work"; the leave-one-out check shows that was wrong and it is withdrawn. It is the largest of the 8 groupings PREREG listed (4 groupings above plus the 2 Jan-Jun splits and the day-after and Jan-Jun outputs), in groups of 8 and 11; PREREG expected about 0.4 false positives at 5%, and this one is near that line, so it is folklore on known history, not a finding. "Down" has one case (2008).
+The day after the vote (close of the first session after Election Day vs the close before it, so Election Day plus the morning-after session) averaged +0.37%, up in 10 of 19. The largest gap is winner's party (Democrat +8.3 vs Republican -6.5 pts, a 14.8-point gap). In `run.py` (`winner_gap` in `results.json`): standard error 7.4 points (t = 2.01), a plain two-sample figure that ignores the overlap between neighbouring 12-month windows, so the true uncertainty is larger. No single election drives it: dropping any one leaves a gap between 11.8 and 19.0 points (largest shifts: 1976 4.1, 2020 3.0, 2000 2.6). An earlier draft said "a handful of years (2000, 1956, 1996, 2020) doing the work"; the leave-one-out check shows that was wrong and it is withdrawn. It is the largest of the 8 groupings PREREG listed (4 groupings above plus the 2 Jan-Jun splits and the day-after and Jan-Jun outputs), in groups of 8 and 11; PREREG expected about 0.4 false positives at 5%, and this one is near that line, so it is folklore on known history, not a finding. "Down" has one case (2008).
 
 ## Honest reading
 Where it would go: at most a descriptive CGI context note ("the 12 months after presidential elections have looked like any other 12 months, n = 19"). Never a rule. A: the smallest effect detectable at 80% power is +15 points (+12 is 78%), so anything smaller than that after the vote is not excluded. B: power at +5 points was 78% and at +7 points 92% in 40 runs; "+7" is the grid's resolution (no +6 was tried), so the true 80% point is about +5 to +6 points. B has no interval: it is a label-permutation test and is judged on p alone (the PREREG claim rule mentions an interval, which only applies to A). The 4-year presidential-cycle folklore is not visible in this narrow slice.
@@ -56,3 +56,6 @@ After the fixes `check_harness.py` printed SELFTEST OK and `run.py` changed only
 
 ## Addendum 2026-11-04 (descriptive columns, after the audit)
 At Arvin's request the CGI table also shows the House majority entering and leaving each election (hand-entered from the House Clerk party divisions; the 119th Congress, not in `election_cycle`'s table, is entered in `elections_pres.py`), the CGI regime at the vote (2004+ compass, 2008+ grid) and Mar-Sep return and drawdown (to line up with the midterm table). None of these is a test. Every test result, `primary`, `season` and `groups` in `results.json` is unchanged (checked before and after the rerun; SELFTEST OK).
+
+## Correction 2026-11-04 (after the audit)
+The "day after the vote" figure was first computed as the Election Day session alone (close before vs Election Day close), which is before any result is known, and was labelled "day after". It now uses the same definition as `election_cycle` (first session strictly after Election Day vs the close before it). Only the descriptive day-after numbers changed (mean +0.53% up 13/19 -> +0.37% up 10/19; group values above updated); every test, `primary`, `season` and the 12-month excess figures are identical (checked before and after the rerun). It is not a pre-registered test.

@@ -1,0 +1,61 @@
+{
+ "as_of": "2026-11-03",
+ "baseline_date": "2026-11-02",
+ "baseline_close": 7541.39990234375,
+ "last_close": 7568.919921875,
+ "since": 0.0036491924427315414,
+ "bars_since": 1,
+ "windows": [
+  {
+   "label": "day after",
+   "bars": null,
+   "ret": null,
+   "date": null,
+   "hist_mean": 0.008923166534773297,
+   "hist_scenario_mean": null
+  },
+  {
+   "label": "1 month",
+   "bars": 21,
+   "ret": null,
+   "date": null,
+   "hist_mean": 0.022597716835010596,
+   "hist_scenario_mean": null
+  },
+  {
+   "label": "3 months",
+   "bars": 63,
+   "ret": null,
+   "date": null,
+   "hist_mean": 0.07810250486292734,
+   "hist_scenario_mean": null
+  },
+  {
+   "label": "6 months",
+   "bars": 126,
+   "ret": null,
+   "date": null,
+   "hist_mean": 0.140091509749769,
+   "hist_scenario_mean": null
+  },
+  {
+   "label": "12 months",
+   "bars": 252,
+   "ret": null,
+   "date": null,
+   "hist_mean": 0.1557090830268077,
+   "hist_scenario_mean": null
+  }
+ ],
+ "result": {
+  "status": "pending",
+  "house_after": null,
+  "senate_after": null,
+  "house_seats_d": null,
+  "house_seats_r": null,
+  "source": null,
+  "as_of": null
+ },
+ "scenario": null,
+ "scenario_n": null
+}

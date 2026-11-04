@@ -1,4 +1,5 @@
 import study from "./election_cycle.json";
+import liveData from "./election_live.json";
 
 /**
  * Midterm elections and the S&P 500 (research/election_cycle). A static snapshot built 2026-11-04 from results.json: nothing is fetched
@@ -234,8 +235,47 @@ export function ElectionCycle() {
         <span className="text-slate-500">2026 live case (not counted): </span>
         S&amp;P 500 closed at <span className="tabular-nums text-slate-100">{live.close.toLocaleString()}</span> on {live.close_date}, the eve of the
         vote: <span className="text-slate-100">{live.state}</span> going in ({pc(live.dd52w)} from the 52-week high, 3-month {pc(live.ret3m)}, 6-month {pc(live.ret6m)}),
-        {" "}{T[live.tercile]} volatility. CGI regime then C{live.compass_hist}G{live.grid_hist}. Tracking at +1, +3, +6 and +12 months starts as the
-        dates arrive (this snapshot is static: 2 Dec 2026, 2 Feb, 3 May and 2 Nov 2027).
+        {" "}{T[live.tercile]} volatility. CGI regime then C{live.compass_hist}G{live.grid_hist}.
+        <div className="mt-2 text-[0.72rem] text-slate-400">
+          Election result:{" "}
+          {liveData.result.status === "called" ? (
+            <span className="text-slate-100">
+              House {liveData.result.house_after}
+              {liveData.result.house_seats_d != null && ` (${liveData.result.house_seats_d} D – ${liveData.result.house_seats_r} R)`}, Senate {liveData.result.senate_after}
+              {liveData.scenario && <> · closest historical box: {liveData.scenario} ({liveData.scenario_n} past midterms)</>}
+              {liveData.result.source && <span className="text-slate-500"> · {liveData.result.source}</span>}
+            </span>
+          ) : (
+            <span className="text-slate-300">not yet entered (races still being called)</span>
+          )}
+        </div>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full min-w-[480px] text-[0.72rem]">
+            <thead>
+              <tr className="border-b border-slate-800 text-left text-[0.62rem] uppercase text-slate-500">
+                <th className="py-1 pr-2 font-medium">since the {liveData.baseline_date} close</th>
+                <th className="py-1 pr-2 text-right font-medium">2026</th>
+                <th className="py-1 pr-2 text-right font-medium">average of the 19 midterms</th>
+                <th className="py-1 font-medium">as of</th>
+              </tr>
+            </thead>
+            <tbody>
+              {liveData.windows.map((w) => (
+                <tr key={w.label} className="border-b border-slate-900">
+                  <td className="py-[3px] pr-2 text-slate-300">{w.label}</td>
+                  <td className="py-[3px] pr-2 text-right">{w.ret == null ? <span className="text-slate-600">not yet</span> : <Num v={w.ret} />}</td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={w.hist_mean as number} /></td>
+                  <td className="py-[3px] text-slate-500">{w.date ?? "–"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-1 text-[0.64rem] text-slate-600">
+            Last close {liveData.last_close.toLocaleString()} on {liveData.as_of}
+            {liveData.since != null && <> ({pc(liveData.since)} since {liveData.baseline_date}, {liveData.bars_since} session{liveData.bars_since === 1 ? "" : "s"})</>}. Updated when the
+            refresh script is run; the result line is entered by hand once the races are called. Not counted in any test.
+          </div>
+        </div>
       </div>
 
       <p className="mt-2 max-w-5xl text-[0.66rem] leading-relaxed text-slate-600">

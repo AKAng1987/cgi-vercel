@@ -1,0 +1,10 @@
+{
+  "status": "pending",
+  "note": "Fill in when the House and Senate results are called (source: AP / House Clerk). status -> 'called'. house_after and senate_after are 'D' or 'R'. president is 'R' (Trump). Nothing is inferred from polls.",
+  "house_after": null,
+  "senate_after": null,
+  "house_seats_d": null,
+  "house_seats_r": null,
+  "source": null,
+  "as_of": null
+}

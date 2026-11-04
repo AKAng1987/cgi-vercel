@@ -33,7 +33,7 @@ for y in P.YEARS:
     r6 = float(c[i] / c[i - 126] - 1)
     row = {"year": y, "election": d, "start_bar": dates[i], "i": i, "ret6m": r6,
            "state6": "Up" if r6 >= 0.03 else ("Down" if r6 <= -0.03 else "Flat"),
-           "vol20": float(V[i]), "tercile": int(T[i]), "react": float(c[i + 1] / c[i] - 1)}
+           "vol20": float(V[i]), "tercile": int(T[i]), "react": float(c[bisect.bisect_right(dates, d)] / c[i] - 1)}   # first bar strictly AFTER election day vs the close before it (same as election_cycle)
     for h in FWD: row[f"r{h}"] = float(FWD[h][i])
     a, b, o = (S.bar_before(dates, f"{y}-02-01"), S.bar_before(dates, f"{y}-07-01"), S.bar_before(dates, f"{y}-11-01"))
     seg = c[a:b + 1]
