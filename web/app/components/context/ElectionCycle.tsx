@@ -136,8 +136,6 @@ export function ElectionCycle() {
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
                 <th className="py-1 pr-2 text-right font-medium">+21d</th>
                 <th className="py-1 pr-2 text-right font-medium">+126d</th>
-                <th className="py-1 pr-2 text-right font-medium">1m</th>
-                <th className="py-1 pr-2 text-right font-medium">3m</th>
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
                 <th className="py-1 text-right font-medium">12m excess</th>
               </tr>
@@ -179,6 +177,8 @@ export function ElectionCycle() {
                 <th className="py-1 pr-2 font-medium">House in → out</th>
                 <th className="py-1 pr-2 font-medium">vol</th>
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
+                <th className="py-1 pr-2 text-right font-medium">1m</th>
+                <th className="py-1 pr-2 text-right font-medium">3m</th>
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
                 <th className="py-1 pr-2 text-right font-medium">baseline</th>
                 <th className="py-1 pr-2 text-right font-medium">excess</th>

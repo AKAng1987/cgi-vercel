@@ -136,8 +136,6 @@ export function PresidentialCycle() {
                 <th className="py-1 pr-2 font-medium">group</th>
                 <th className="py-1 pr-2 text-right font-medium">n</th>
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
-                <th className="py-1 pr-2 text-right font-medium">1m</th>
-                <th className="py-1 pr-2 text-right font-medium">3m</th>
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
                 <th className="py-1 pr-2 text-right font-medium">12m excess</th>
                 <th className="py-1 text-right font-medium">Jan–Jun</th>
@@ -179,6 +177,8 @@ export function PresidentialCycle() {
                 <th className="py-1 pr-2 text-right font-medium">6m in</th>
                 <th className="py-1 pr-2 font-medium">vol</th>
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
+                <th className="py-1 pr-2 text-right font-medium">1m</th>
+                <th className="py-1 pr-2 text-right font-medium">3m</th>
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
                 <th className="py-1 pr-2 text-right font-medium">baseline</th>
                 <th className="py-1 pr-2 text-right font-medium">excess</th>
