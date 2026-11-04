@@ -1,6 +1,7 @@
 """run.py -- presidential_cycle on real history. check_harness.py must print SELFTEST OK first."""
 import sys, pathlib, json
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "election_cycle"))
+import bisect
 import numpy as np
 import election_study as S
 import elections_pres as P
@@ -20,6 +21,12 @@ tv_l = json.loads((HERE.parent / "election_cycle/data/tv_last300_closes.json").r
 res["crosscheck"] = S.crosscheck(dates, c, tv_e, tv_l)
 print(f"cross-check vs TradingView: {res['crosscheck']['checked']} closes, gaps over 0.1%: {len(res['crosscheck']['gaps'])}")
 
+reg = json.loads((HERE.parent / "election_cycle/data/regime_history.json").read_text())
+def regime_at(series, day):
+    ds = [d for d, _ in series]
+    i = bisect.bisect_right(ds, day) - 1
+    return series[i][1] if i >= 0 else None
+
 ev = []
 for y in P.YEARS:
     d = str(P.DATES[y]); i = S.bar_before(dates, d)
@@ -30,9 +37,10 @@ for y in P.YEARS:
     for h in FWD: row[f"r{h}"] = float(FWD[h][i])
     a, b, o = (S.bar_before(dates, f"{y}-02-01"), S.bar_before(dates, f"{y}-07-01"), S.bar_before(dates, f"{y}-11-01"))
     seg = c[a:b + 1]
-    row.update({"janjun_ret": float(c[b] / c[a] - 1), "janjun_dd": float((seg / np.maximum.accumulate(seg) - 1).min()),
+    _, _, msr, msd = S.season_stats(dates, c, y)   # Mar-Sep, descriptive only (not a pre-registered test here)
+    row.update({"marsep_ret": msr, "marsep_dd": msd, "janjun_ret": float(c[b] / c[a] - 1), "janjun_dd": float((seg / np.maximum.accumulate(seg) - 1).min()),
                 "julopt_ret": float(c[o] / c[b] - 1)})
-    row.update(P.facts(y)); ev.append(row)
+    row.update(P.facts(y)); row["compass"] = regime_at(reg["compass"], d); row["grid"] = regime_at(reg["grid"], d); ev.append(row)
 idx = np.array([r["i"] for r in ev]); terc = np.array([r["tercile"] for r in ev])
 mask = S.pool_mask(FWD[252], T, idx, FIRST)
 for r in ev:

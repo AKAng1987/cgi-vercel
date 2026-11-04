@@ -167,13 +167,14 @@ export function PresidentialCycle() {
       <div className="mt-4">
         <div className="mb-1 text-[0.7rem] text-slate-300">Every presidential election</div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-[0.72rem]">
+          <table className="w-full min-w-[1000px] text-[0.72rem]">
             <thead>
               <tr className="border-b border-slate-800 text-left text-[0.62rem] uppercase text-slate-500">
                 <th className="py-1 pr-2 font-medium">year</th>
                 <th className="py-1 pr-2 font-medium">won</th>
                 <th className="py-1 pr-2 font-medium">party</th>
                 <th className="py-1 pr-2 font-medium">incumbent</th>
+                <th className="py-1 pr-2 font-medium">House in → out</th>
                 <th className="py-1 pr-2 text-right font-medium">6m in</th>
                 <th className="py-1 pr-2 font-medium">vol</th>
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
@@ -182,7 +183,10 @@ export function PresidentialCycle() {
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
                 <th className="py-1 pr-2 text-right font-medium">baseline</th>
                 <th className="py-1 pr-2 text-right font-medium">excess</th>
-                <th className="py-1 text-right font-medium">Jan–Jun</th>
+                <th className="py-1 pr-2 text-right font-medium">Jan–Jun</th>
+                <th className="py-1 pr-2 text-right font-medium">Mar–Sep</th>
+                <th className="py-1 pr-2 text-right font-medium">worst DD</th>
+                <th className="py-1 font-medium">CGI</th>
               </tr>
             </thead>
             <tbody>
@@ -192,6 +196,10 @@ export function PresidentialCycle() {
                   <td className="py-[3px] pr-2 text-slate-300">{e.winner}</td>
                   <td className="py-[3px] pr-2 text-slate-500">{e.party_change ? "changed" : "held"}</td>
                   <td className="py-[3px] pr-2 text-slate-500">{e.incumbent_ran ? "ran" : "open seat"}</td>
+                  <td className="py-[3px] pr-2 text-slate-300">
+                    {e.house_before} → {e.house_after}
+                    {e.house_before !== e.house_after && <span className="ml-1 text-amber-400">flip</span>}
+                  </td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.ret6m} /></td>
                   <td className="py-[3px] pr-2 text-slate-500">{T[e.tercile]}</td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.react} /></td>
@@ -200,7 +208,10 @@ export function PresidentialCycle() {
                   <td className="py-[3px] pr-2 text-right"><Num v={e.r252} /></td>
                   <td className="py-[3px] pr-2 text-right tabular-nums text-slate-500">{pc(e.baseline252)}</td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.excess252} kind="pts" /></td>
-                  <td className="py-[3px] text-right"><Num v={e.janjun_ret} /></td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={e.janjun_ret} /></td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={e.marsep_ret} /></td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={e.marsep_dd} /></td>
+                  <td className="py-[3px] text-slate-500">{e.compass ? `C${e.compass}${e.grid ? `G${e.grid}` : ""}` : "n/a"}</td>
                 </tr>
               ))}
             </tbody>
@@ -209,6 +220,8 @@ export function PresidentialCycle() {
         <p className="mt-1 text-[0.66rem] text-slate-600">
           &ldquo;6m in&rdquo; = S&amp;P 500 return over the 126 trading days to the close before the vote. Baseline = average 12-month return from days in the same
           expanding 20-day-volatility band, excluding days near any presidential election. 2024 counts as an open seat (the incumbent withdrew).
+          House = majority party entering the vote and in the new Congress; &ldquo;flip&rdquo; = the House changed hands. Jan–Jun is the primary-season proxy tested above;
+          Mar–Sep and its worst drawdown are shown only so the table lines up with the midterm one (descriptive, not tested here). CGI regime exists only from 2004 (compass) and 2008 (grid).
         </p>
       </div>
 

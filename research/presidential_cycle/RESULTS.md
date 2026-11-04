@@ -53,3 +53,6 @@ Fresh-context audit, 2026-11-04 (a separate agent, read-only). **0 blocking, 5 m
 4. **B exploratory splits:** added to the table above (open seat +4.8% vs incumbent ran +1.8%; party changed +2.8% vs held +3.3%), marked exploratory.
 5. **B judged on p alone, B power, SELFTEST gate:** stated above. `run.py` does not enforce the SELFTEST OK gate; that rests on process (the harness was run before `run.py` and re-run after these fixes, both OK).
 After the fixes `check_harness.py` printed SELFTEST OK and `run.py` changed only `results.json`'s new `winner_gap` key (every other number identical).
+
+## Addendum 2026-11-04 (descriptive columns, after the audit)
+At Arvin's request the CGI table also shows the House majority entering and leaving each election (hand-entered from the House Clerk party divisions; the 119th Congress, not in `election_cycle`'s table, is entered in `elections_pres.py`), the CGI regime at the vote (2004+ compass, 2008+ grid) and Mar-Sep return and drawdown (to line up with the midterm table). None of these is a test. Every test result, `primary`, `season` and `groups` in `results.json` is unchanged (checked before and after the rerun; SELFTEST OK).

@@ -3,7 +3,7 @@ Facts are the public record (not fetched): winner's party, party of the presiden
 2024 is counted as an open seat: the incumbent withdrew and the incumbent party ran a different candidate."""
 import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "election_cycle"))
-from elections import election_day
+from elections import election_day, HOUSE, congress_after
 
 YEARS = list(range(1952, 2025, 4))
 DATES = {y: election_day(y) for y in YEARS}
@@ -15,6 +15,17 @@ INCUMBENT_RAN = {1952: False, 1956: True, 1960: False, 1964: True, 1968: False, 
                  1992: True, 1996: True, 2000: False, 2004: True, 2008: False, 2012: True, 2016: False, 2020: True, 2024: False}
 
 
+# 119th Congress (elected 2024), House Clerk party divisions at the start of the Congress (D, R, other); not in election_cycle's table.
+H119 = (215, 220, 0)
+
+
+def house_maj(c):
+    d, r, _ = H119 if c == 119 else HOUSE[c]
+    return "D" if d > r else "R"
+
+
 def facts(y):
-    return {"winner": WINNER[y], "incumbent_party": INCUMBENT_PARTY[y], "party_change": WINNER[y] != INCUMBENT_PARTY[y],
+    c = congress_after(y)
+    return {"house_before": house_maj(c - 1), "house_after": house_maj(c), "house_flipped": house_maj(c - 1) != house_maj(c),
+            "winner": WINNER[y], "incumbent_party": INCUMBENT_PARTY[y], "party_change": WINNER[y] != INCUMBENT_PARTY[y],
             "incumbent_ran": INCUMBENT_RAN[y]}
