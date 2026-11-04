@@ -136,6 +136,8 @@ export function ElectionCycle() {
                 <th className="py-1 pr-2 text-right font-medium">day after</th>
                 <th className="py-1 pr-2 text-right font-medium">+21d</th>
                 <th className="py-1 pr-2 text-right font-medium">+126d</th>
+                <th className="py-1 pr-2 text-right font-medium">1m</th>
+                <th className="py-1 pr-2 text-right font-medium">3m</th>
                 <th className="py-1 pr-2 text-right font-medium">12m</th>
                 <th className="py-1 text-right font-medium">12m excess</th>
               </tr>
@@ -169,7 +171,7 @@ export function ElectionCycle() {
       <div className="mt-4">
         <div className="mb-1 text-[0.7rem] text-slate-300">Every midterm</div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-[0.72rem]">
+          <table className="w-full min-w-[840px] text-[0.72rem]">
             <thead>
               <tr className="border-b border-slate-800 text-left text-[0.62rem] uppercase text-slate-500">
                 <th className="py-1 pr-2 font-medium">year</th>
@@ -196,6 +198,8 @@ export function ElectionCycle() {
                   </td>
                   <td className="py-[3px] pr-2 text-slate-500">{T[e.tercile]}</td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.react} /></td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={e.r21} /></td>
+                  <td className="py-[3px] pr-2 text-right"><Num v={e.r63} /></td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.r252} /></td>
                   <td className="py-[3px] pr-2 text-right tabular-nums text-slate-500">{pc(e.baseline252)}</td>
                   <td className="py-[3px] pr-2 text-right"><Num v={e.excess252} kind="pts" /></td>

@@ -3,7 +3,7 @@
 import json, pathlib
 HERE = pathlib.Path(__file__).resolve().parent
 r = json.loads((HERE / "results.json").read_text())
-keep = ("year", "winner", "party_change", "incumbent_ran", "ret6m", "state6", "tercile", "r252", "baseline252", "excess252", "react", "janjun_ret")
+keep = ("year", "winner", "party_change", "incumbent_ran", "ret6m", "state6", "tercile", "r21", "r63", "r252", "baseline252", "excess252", "react", "janjun_ret")
 out = {
     "built": "2026-11-04", "audit": "done, 0 blocking", "n": r["primary"]["n"], "last_bar": r["last"],
     "primary": {k: r["primary"][k] for k in ("mean_event", "mean_baseline", "mean_excess", "p", "ci95", "claim")},

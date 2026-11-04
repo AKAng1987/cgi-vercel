@@ -3,7 +3,7 @@
 import json, pathlib
 HERE = pathlib.Path(__file__).resolve().parent
 r = json.loads((HERE / "results.json").read_text())
-keep = ("year", "election", "state", "tercile", "r252", "baseline252", "excess252", "react", "season_ret", "season_dd",
+keep = ("year", "election", "state", "tercile", "r21", "r63", "r252", "baseline252", "excess252", "react", "season_ret", "season_dd",
         "scenario", "compass", "grid", "pres_house_seat_change", "president", "ret6m", "state6", "house_before", "house_after")
 out = {
     "built": "2026-11-04", "audit": "done, 0 blocking", "n": r["primary"]["n"], "last_bar": r["last"],
