@@ -63,10 +63,11 @@ All 19: reaction mean +0.89%, median +0.81%, up in 16 of 19 (down in 1978, 1990,
 ## Live case 2026 (not counted)
 - Election 2026-11-03. State at the 2 Nov close (7541.40): **Flat** (drawdown from the 52-week closing high -3.5%, 3-month return -2.5%), volatility tercile 1 (middle). Baseline 12-month return for that tercile: +9.0%.
 - CGI regime now (`get_regime`, 3 Nov): **C1G2** (compass C1 since 2 Nov, grid G2 since 30 Sep).
-- Tracking (fill in as they arrive; return from the 2 Nov close):
+- Tracking (filled automatically by `research/election_live/run.py` when each date's final bar exists; return from the 2 Nov close):
 
 | Horizon | Date | SPX | Return |
 |---|---|---|---|
+| Day after | 2026-11-04 | 7,688.62 | +2.0% |
 | +1 month | 2026-12-02 | | |
 | +3 months | 2027-02-02 | | |
 | +6 months | 2027-05-03 | | |
