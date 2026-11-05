@@ -1,0 +1,10 @@
+planted cross-group correlation gap +/-0.35: found 8/8
+no regime information (gap 0): false claim 0/20
+  gap +/-0.02: found 0/8
+  gap +/-0.04: found 0/8
+  gap +/-0.06: found 4/8
+  gap +/-0.1: found 8/8
+  gap +/-0.2: found 8/8
+(information) the ORIGINAL drawdown primary on the same plants: gap 0.20 found 0/8, gap 0.35 found 0/8 -- why PREREG Amendment 1 moved the primary to volatility
+smallest planted gap found in 6/8: +/-0.1
+SELFTEST OK
