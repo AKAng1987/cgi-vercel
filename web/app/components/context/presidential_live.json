@@ -1,0 +1,6 @@
+{
+ "kind": "presidential",
+ "status": "dormant",
+ "next_election": "2028-11-07",
+ "note": "No live case until Election Day; run.py fills this file after the vote. Descriptive addendum, not part of any pre-registered test."
+}

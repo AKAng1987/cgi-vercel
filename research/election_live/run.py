@@ -237,6 +237,7 @@ def run(cfg):
                 c["json"].write_text(json.dumps(dormant_stub(k, today), indent=1))
             log(cfg, f"{k}: dormant, next election {cal.next_upcoming(today, k)}; placeholder {'would be ' if dry else ''}written")
             summary["wrote"].append(str(c["json"]))
+    stub_paths = [c["json"] for _, c in stubs] if not dry else []
     if not active:
         log(cfg, "no election under 13 months old; nothing to refresh")
         if stubs and not dry:
@@ -294,11 +295,14 @@ def run(cfg):
         if paths:
             msg = (f"election live case ({k} {e.year}): " + (", ".join(filled) + " filled" if filled else "snapshot refreshed")
                    + f" (last final bar {js['as_of']}); automatic, not pushed")
-            commit_paths(cfg, paths, msg, summary)
+            commit_paths(cfg, paths + [s for s in stub_paths if s not in paths], msg, summary)
+            stub_paths = []
             if filled:
                 detail = "; ".join(f"{r['label']} {r['ret'] * 100:+.1f}%" for r in ms if r["label"] in filled)
                 cfg["notify"]("Election live case", f"{k} {e.year}: {detail}. Committed locally, not pushed.")
                 summary["notified"].append("filled:" + ",".join(filled))
+    if stub_paths:
+        commit_paths(cfg, stub_paths, "election live case: dormant placeholder (presidential 2028)", summary)
     return summary
 
 
