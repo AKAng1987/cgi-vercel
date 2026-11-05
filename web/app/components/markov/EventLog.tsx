@@ -177,10 +177,10 @@ export function EventLog({ events, pending, summary }: { events: MarkovEvent[]; 
                   <td className={`${TD} text-right text-slate-200`}>{pct(e.p_flip)}</td>
                   <td className={`${TD} text-right text-slate-200`} title={e.market_source ?? ""}>{pct(e.p_market)}</td>
                   <td className={`${TD} text-right text-slate-200`} title={e.p_drivers_note ?? ""}>{pct(e.p_drivers ?? null)}</td>
-                  <td className={`${TD} font-bold ${e.flipped ? "text-[var(--cgi-gold)]" : "text-slate-400"}`} title={e.flip_recorded_on ? `recorded in model-history on ${e.flip_recorded_on}` : ""}>{e.flipped ? "FLIP" : "hold"}</td>
+                  <td className={`${TD} font-bold ${e.flipped ? "text-[var(--cgi-gold)]" : "text-slate-400"}`} title={e.flip_recorded_on ? `recorded in model-history on ${e.flip_recorded_on}` : ""}>{e.flipped ? "FLIP" : "hold"}{e.fomc_note && <div className="text-[0.62rem] font-normal text-slate-400">{e.fomc_note}</div>}</td>
                   <td className={`${TD} text-slate-200`} title={qTitle(e.model, e.quadrant_after)}>{q(e.model, e.quadrant_after)}</td>
                   <td className={`${TD} text-right text-slate-300`}>{brier(e.brier)} <span className="text-slate-600">/</span> {brier(e.brier_market)} <span className="text-slate-600">/</span> {brier(e.brier_drivers ?? null)}</td>
-                  <td className={TD} title="above the base rate is a flip call, at or below is a no-change call"><CallCell e={e} p={e.p_market} /></td>
+                  <td className={TD} title="above the base rate is a flip call, at or below is a no-change call"><CallCell e={e} p={e.p_market} />{e.market_note && <div className="max-w-[14rem] whitespace-normal text-[0.62rem] text-[var(--cgi-gold)]">{e.market_note}</div>}</td>
                   <td className={TD} title="above the base rate is a flip call, at or below is a no-change call"><CallCell e={e} p={e.p_drivers ?? null} /></td>
                   <td className={`${TD} text-[0.68rem]`}>
                     {e.consensus_implied == null ? <span className="text-slate-600">—</span> : (

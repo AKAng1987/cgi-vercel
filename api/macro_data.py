@@ -63,7 +63,7 @@ FOMC_2026 = [
 # Bumped whenever the shape or the METHOD of the fomc_probabilities payload
 # changes, and read by cache.SCHEMA_FROM_MODULE so the bump lands in the same
 # edit as the change rather than in a table in another file.
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4   # 4: last_move and the next meeting's p_smaller_hike
 
 # The most a monthly contract quote may be magnified to back out a
 # post-meeting rate before we stop trusting the result and reach for the
@@ -755,13 +755,47 @@ def build_fomc_probabilities(meetings_iso: list[dict]) -> dict:
 
     futures = fetch_futures_for_meetings(meetings)
     probs = compute_fomc_probs(meetings, effr_records, upper_target, lower_target, futures)
+    moves = policy_moves(fed_funds)
+    last = moves[-1] if moves else None
+    if probs and probs[0].get("available") and last:
+        probs[0]["p_smaller_hike"] = p_smaller_hike(probs[0].get("buckets") or [], last["bp"])
 
     return {
         "upper_target": upper_target,
         "lower_target": lower_target,
         "effr_latest": effr_records[-1]["value"] if effr_records else None,
+        "last_move": last,
         "probabilities": probs,
     }
+
+
+def policy_moves(fed_funds: list[dict]) -> list[dict]:
+    """Every change in the target upper bound (DFEDTARU), oldest first: {date (effective, the day after the
+    decision), bp}. bp is rounded to whole basis points."""
+    out, prev = [], None
+    for r in fed_funds:
+        u = r.get("upper")
+        if u is None:
+            continue
+        if prev is not None and abs(u - prev) > 1e-9:
+            out.append({"date": r["date"], "bp": int(round((u - prev) * 100))})
+        prev = u
+    return out
+
+
+def is_smaller_hike(bp: int, prev_bp: Optional[int]) -> bool:
+    """A hike smaller than the previous move, when that previous move was also a hike (75 -> 50, 50 -> 25).
+    Still a hike, so the compass still reads Tightening; this is a note beside the rule, not a change to it."""
+    return bp > 0 and prev_bp is not None and prev_bp > 0 and bp < prev_bp
+
+
+def p_smaller_hike(buckets: list[dict], last_bp: int) -> Optional[float]:
+    """P(the next meeting hikes, but by less than the last move), from the 25bp futures buckets. None when a
+    smaller hike is impossible (the last move was not a hike, or was 25bp)."""
+    last_steps = int(round(last_bp / 25))
+    if last_steps < 2:
+        return None
+    return round(sum(b["prob"] for b in buckets if 0 < b["steps"] < last_steps), 4)
 
 
 # ── lending_standards (48h TTL) ────────────────────────────────────────

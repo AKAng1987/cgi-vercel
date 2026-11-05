@@ -138,6 +138,35 @@ def liquidity_flip_p(p: dict, state: int) -> float:
     return float(p["p_hike"]) if state == 1 else float(p["p_hold"]) + float(p["p_cut"])
 
 
+def fomc_size_note(release_date: str, moves: list[dict]) -> Optional[str]:
+    """'smaller hike (75 -> 50bp): still Tightening' when this FOMC's move was a hike smaller than the hike before it.
+    DFEDTARU dates a move by its effective day (the day after the decision), so look 0-3 days after the release."""
+    d0 = dt.date.fromisoformat(release_date)
+    for i, m in enumerate(moves):
+        if 0 <= (dt.date.fromisoformat(m["date"]) - d0).days <= 3:
+            prev = moves[i - 1]["bp"] if i > 0 else None
+            if macro_data.is_smaller_hike(m["bp"], prev):
+                return f"smaller hike ({prev} -> {m['bp']}bp): still Tightening"
+            return None
+    return None
+
+
+def old_formula_note(state_before: int, p_market: Optional[float], detail: Optional[str]) -> Optional[str]:
+    """Stored FOMC figures written before the Lambda fix used P(cut) when liquidity was tight; the rule is 1 - P(hike).
+    The stored number stays as the audit trail; this says what the right formula gave, from the same stored odds."""
+    import re
+
+    if state_before != 0 or p_market is None or not detail:
+        return None
+    m = re.search(r"hike (\d+) / hold (\d+) / cut (\d+)", detail)
+    if not m:
+        return None
+    right = 1 - int(m.group(1)) / 100
+    if abs(right - p_market) <= 0.02:
+        return None
+    return f"stored with the old formula (P(cut) only); 1 - P(hike) from the same odds was {round(right * 100)}%"
+
+
 def _market_liquidity(fomc_date: str, state: int) -> Optional[dict]:
     try:
         meetings = macro_data._filter_meetings_by_horizon(
@@ -146,13 +175,16 @@ def _market_liquidity(fomc_date: str, state: int) -> Optional[dict]:
         probs = cache.get_or_fetch("fomc_probabilities", lambda: macro_data.build_fomc_probabilities(meetings))
     except Exception:  # noqa: BLE001 -- market read is additive; never break the page
         return None
+    last = probs.get("last_move") or {}
     for p in probs.get("probabilities", []):
         if p.get("date") == fomc_date:
+            smaller = (f" · smaller hike than the last {last['bp']}bp {round(p['p_smaller_hike'] * 100)}% (still a hike: Tightening)"
+                       if p.get("p_smaller_hike") is not None and last.get("bp") else "")
             return {
                 "p_flip": round(liquidity_flip_p(p, state), 3),
                 "label": "Market",          # a real price: the only one of the three
                 "source": "fed funds futures (FedWatch method)",
-                "detail": f"{p.get('most_likely')} {round(float(p.get('prob_most_likely', 0)) * 100)}% · hike {round(p['p_hike']*100)} / hold {round(p['p_hold']*100)} / cut {round(p['p_cut']*100)}",
+                "detail": f"{p.get('most_likely')} {round(float(p.get('prob_most_likely', 0)) * 100)}% · hike {round(p['p_hike']*100)} / hold {round(p['p_hold']*100)} / cut {round(p['p_cut']*100)}{smaller}",
                 "experimental": False,
             }
     return None
@@ -453,6 +485,10 @@ def build_markov_response() -> dict:
     yesterday = (dt.date.fromisoformat(today) - dt.timedelta(days=1)).isoformat()
     log = []
     pending: list[dict] = []
+    try:
+        moves = macro_data.policy_moves(cache.get_or_fetch("fed_funds_range", macro_data.fetch_fed_funds_range))
+    except Exception:  # noqa: BLE001 -- the size note is additive
+        moves = []
     for r in cal.releases_between(TRACK_START, yesterday):
         if r["date"] < TRACK_START:
             continue
@@ -474,9 +510,10 @@ def build_markov_response() -> dict:
             p_hist = float(stored["history"]["p_flip"])
             p_mkt = float(stored["market"]["p_flip"]) if stored.get("market") else None
             mkt_src = stored["market"]["source"] if stored.get("market") else None
+            mkt_detail = stored["market"].get("detail") if stored.get("market") else None
             registered = stored.get("written_at") or stored["row_date"]
         else:
-            p_hist, p_mkt, mkt_src, registered = rates[axis][s0]["p_flip"], None, None, None
+            p_hist, p_mkt, mkt_src, mkt_detail, registered = rates[axis][s0]["p_flip"], None, None, None, None
         log.append({
             "date": r["date"],
             "type": r["type"],
@@ -490,6 +527,8 @@ def build_markov_response() -> dict:
             "market_source": mkt_src,
             "pre_registered_on": registered,  # null = history recomputed after the fact
             "pre_registration_note": stored.get("note") if stored else None,
+            "market_note": old_formula_note(s0, p_mkt, mkt_detail) if r["type"] == "FOMC" else None,
+            "fomc_note": fomc_size_note(r["date"], moves) if r["type"] == "FOMC" else None,
             "flipped": flipped,
             "flip_recorded_on": matched["date"] if matched else None,
             "quadrant_after": _quadrant_with(q0, axis, 1 - s0) if flipped else q0,

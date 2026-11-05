@@ -252,6 +252,10 @@ export interface MarkovEvent {
   /** The consensus-implied read, stored before the release, and whether it matched the outcome. */
   consensus_implied?: boolean | null;
   consensus_hit?: boolean | null;
+  /** FOMC rows: the stored futures figure used the old formula (P(cut) only) when liquidity was tight; the corrected figure. */
+  market_note?: string | null;
+  /** FOMC rows: "smaller hike (75 -> 50bp): still Tightening" when the hike was smaller than the hike before it. */
+  fomc_note?: string | null;
 }
 
 export interface AxisDriver {
