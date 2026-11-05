@@ -1,0 +1,16 @@
+arm 1 regime tilt (group drift gap per day): plant 0.0006 found 8/8; no effect: false claim 0/20
+    effect 0.0001: found 0/8
+    effect 0.0002: found 2/8
+    effect 0.0004: found 8/8
+    smallest effect found in 6/8 of those tried: 0.0004
+arm 3 regime correlations (hedge gap): plant 0.35 found 8/8; no effect: false claim 0/20
+    effect 0.05: found 0/8
+    effect 0.1: found 7/8
+    effect 0.2: found 8/8
+    smallest effect found in 6/8 of those tried: 0.1
+arm 2 volatility sizing (vol ratio - 1): plant 4.0 found 0/8; no effect: false claim 0/20
+    effect 1.0: found 2/8
+    effect 2.0: found 2/8
+    smallest effect found in 6/8 of those tried: above 2.0
+    (information only: P2 is descriptive after PREREG Amendment 1; a Sharpe test cannot see vol timing of this size in 17 years)
+SELFTEST OK
