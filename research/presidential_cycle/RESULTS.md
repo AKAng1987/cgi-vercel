@@ -43,7 +43,18 @@ Where it would go: at most a descriptive CGI context note ("the 12 months after 
 - 2024 counted as an open seat (the incumbent withdrew); changing it moves one case between the "incumbent ran" and "open seat" cuts only.
 - IB cross-check not used (PREREG says why); TradingView covers all 19 election closes.
 - B's windows are fixed calendar proxies (Jan-Jun, Jul-Oct), not the actual nomination or convention dates, so B cannot say anything about specific primaries or conventions.
-- No live case: the next presidential election is 2028.
+- No live case until the next presidential election, 2028-11-07: a dormant tracking table is under "Live case 2028" below, filled automatically by `research/election_live/run.py` after the vote. Descriptive addendum only; PREREG is unchanged and nothing there is counted.
+
+## Live case 2028 (not counted; dormant until 2028-11-07)
+- Descriptive addendum, not pre-registered and not part of any test. `research/election_live/run.py` fills these rows (return from the last close before Election Day) when each date's final bar exists; the web snapshot is `web/app/components/context/presidential_live.json`.
+
+| Horizon | Date | SPX | Return |
+|---|---|---|---|
+| Day after | | | |
+| +1 month | | | |
+| +3 months | | | |
+| +6 months | | | |
+| +12 months | | | |
 
 ## Audit
 Fresh-context audit, 2026-11-04 (a separate agent, read-only). **0 blocking, 5 minor; no unresolved finding.** It reproduced `results.json` byte for byte and confirmed PREREG was locked (839cfe4) before any return and never edited. How each minor finding was handled:

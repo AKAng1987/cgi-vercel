@@ -1,0 +1,8 @@
+{
+  "election": "2028-11-07",
+  "status": "pending",
+  "note": "Fill in when the presidential race is called (source: AP / Federal Register). status -> 'called'. winner is 'D' or 'R'. Nothing is inferred from polls.",
+  "winner": null,
+  "source": null,
+  "as_of": null
+}
