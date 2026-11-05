@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { HudGroup } from "@/lib/types";
 import { HKey, HORIZONS, isPriceGroup, isStale, num } from "@/lib/tapeMath";
 import { pctColor } from "@/lib/regimeConstants";
 import { fmtPct } from "./format";
 
 type Row = { symbol: string; group: string; v: number; price: number | null };
+
+const MOVERS_N = 20; // each side
+const PHONE_N = 10; // each side, below the md breakpoint, until "Show 20 each" is tapped
 
 // Same 4 significant figures the table uses for its Price column.
 function fmtPrice(v: number | null): string {
@@ -16,11 +20,13 @@ export function TapeMovers({
   groups,
   latest,
   horizon,
+  selected,
   onSelect,
 }: {
   groups: HudGroup[];
   latest: string;
   horizon: HKey;
+  selected?: string;
   onSelect: (symbol: string) => void;
 }) {
   const rows: Row[] = [];
@@ -40,20 +46,25 @@ export function TapeMovers({
     }
   }
   rows.sort((a, b) => b.v - a.v);
-  const top = rows.slice(0, 10);
-  const bottom = rows.slice(-10).reverse();
+  const n = Math.min(MOVERS_N, Math.floor(rows.length / 2)); // never let the two lists overlap
+  const top = rows.slice(0, n);
+  const bottom = rows.slice(rows.length - n).reverse();
   const label = HORIZONS.find((h) => h.key === horizon)?.label ?? "";
+  const [expanded, setExpanded] = useState(false); // phones show 10 a side until asked
 
   const col = (title: string, list: Row[]) => (
     <div className="min-w-0 flex-1">
       <div className="mb-1 text-[0.65rem] font-bold uppercase tracking-[2px] text-[color:var(--cgi-accent)]">{title}</div>
       <ul className="text-[0.76rem]">
-        {list.map((r) => (
-          <li key={r.symbol}>
+        {list.map((r, i) => (
+          <li key={r.symbol} className={i >= PHONE_N && !expanded ? "hidden md:block" : undefined}>
             <button
               type="button"
               onClick={() => onSelect(r.symbol)}
-              className="flex w-full items-baseline gap-2 px-1 py-0.5 text-left hover:bg-slate-800/50"
+              aria-pressed={r.symbol === selected}
+              className={`flex w-full items-baseline gap-2 px-1 py-0.5 text-left hover:bg-slate-800/50 ${
+                r.symbol === selected ? "bg-slate-800/60 ring-1 ring-inset ring-[color:var(--cgi-accent)]" : ""
+              }`}
             >
               <span className="w-14 shrink-0 font-medium text-slate-200">{r.symbol}</span>
               <span className="w-16 shrink-0 text-right text-slate-300">{fmtPrice(r.price)}</span>
@@ -80,6 +91,15 @@ export function TapeMovers({
         {col("Up most", top)}
         {col("Down most", bottom)}
       </div>
+      {n > PHONE_N && (
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="mt-2 text-[0.68rem] font-medium text-[color:var(--cgi-accent)] md:hidden"
+        >
+          {expanded ? `Show ${PHONE_N} each` : `Show ${n} each`}
+        </button>
+      )}
     </section>
   );
 }

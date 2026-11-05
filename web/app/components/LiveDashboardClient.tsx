@@ -50,13 +50,17 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
 
   function select(symbol: string) {
     setSelectedSymbol(symbol);
-    // The chart sits under the views; bring it into sight when a tile, dot or mover is chosen.
-    if (view !== "table") {
-      requestAnimationFrame(() => document.getElementById("tape-chart")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-    }
+    // Bring the chart into sight when a row, tile, dot or mover is chosen.
+    requestAnimationFrame(() => document.getElementById("tape-chart")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   const groupsByName = new Map(data.hud_groups.map((g) => [g.name, g]));
+  const chart = (
+    <div id="tape-chart">
+      <TradingViewChart symbol={selectedSymbol} />
+    </div>
+  );
+  const hasMovers = view === "table" || view === "heatmap"; // the chart sits right under the movers when they show
 
   return (
     <>
@@ -66,8 +70,11 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
         onView={(v) => { setView(v); remember(v, horizon); }}
         onHorizon={(h) => { setHorizon(h); remember(view, h); }}
       />
-      {(view === "table" || view === "heatmap") && (
-        <TapeMovers groups={data.hud_groups} latest={common} horizon={horizon} onSelect={select} />
+      {hasMovers && (
+        <>
+          <TapeMovers groups={data.hud_groups} latest={common} horizon={horizon} selected={selectedSymbol} onSelect={select} />
+          {chart}
+        </>
       )}
       {view === "table" &&
         data.hud_group_order.map((name) => {
@@ -82,9 +89,7 @@ export function LiveDashboardClient({ data }: { data: LiveResponse }) {
       {view === "stretch" && (
         <TapeStretch groups={data.hud_groups} order={data.hud_group_order} latest={common} onSelect={select} group={grp} onGroup={(g) => { setGrp(g); remember(view, horizon, g); }} />
       )}
-      <div id="tape-chart">
-        <TradingViewChart symbol={selectedSymbol} />
-      </div>
+      {!hasMovers && chart}
     </>
   );
 }
