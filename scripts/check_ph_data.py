@@ -205,5 +205,10 @@ if txt:
     check("PSE circular: number, dates, 30 PSEi members, summary lines", (rv["circular"], rv["date"], rv["effective"], len(rv["psei_members"]), rv["summary"][0]), ("2026-0035", "2026-07-27", "2026-08-03", 30, "PSEi MYNLD CNVRG"))
     check("PSEi change by set difference", X.psei_change([m for m in rv["psei_members"] if m != "MYNLD"] + ["CNVRG"], rv["psei_members"]), {"added": ["MYNLD"], "removed": ["CNVRG"]})
 check("a non-review circular is ignored", X.parse_pse_review("CN No. 2026-0036 REMINDER on trading hours"), None)
+# one spelling per sector label (LTL: "PROPERTY" beside "Property")
+_m = X.merge_labels([{"s": "A", "ind": "Property", "sec": "Property"}, {"s": "B", "ind": "Property", "sec": "Property"},
+                     {"s": "LTL", "ind": "PROPERTY", "sec": "PROPERTY"}, {"s": "P", "ind": "Power & Water", "sec": "Industrial"},
+                     {"s": "Q", "ind": "Power and Water", "sec": "Industrial"}, {"s": "R", "ind": "Power and Water", "sec": "Industrial"}])
+check("labels: caps variant joins Property; & joins and", ([r["ind"] for r in _m[:3]], {r["ind"] for r in _m[3:]}), (["Property"] * 3, {"Power and Water"}))
 print("FAILS:", fails)
 sys.exit(1 if fails else 0)
