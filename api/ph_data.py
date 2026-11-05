@@ -43,6 +43,36 @@ def write_blob(name: str, obj: dict) -> None:
             _logger.warning("[ph] could not drop the cached page: %s", e)
 
 
+def _label_key(v: str) -> str:
+    import re
+
+    return re.sub(r"[^a-z0-9]+", " ", v.lower().replace("&", " and ")).strip()
+
+
+def merge_labels(rows: list[dict]) -> list[dict]:
+    """EDGE spells the same sector two ways (LTL: "PROPERTY" beside "Property"; "Power & Water" beside "Power and Water"), which splits a
+    segment in two. Rows get the most common spelling of each, ties going to the one that is not all capitals."""
+    from collections import Counter
+
+    for field in ("ind", "sec"):
+        seen: dict[str, Counter] = {}
+        for r in rows:
+            if r.get(field):
+                seen.setdefault(_label_key(r[field]), Counter())[r[field]] += 1
+        pick = {k: max(c, key=lambda v: (c[v], not v.isupper())) for k, c in seen.items()}
+        for r in rows:
+            if r.get(field):
+                r[field] = pick[_label_key(r[field])]
+    return rows
+
+
+def screener_blob() -> dict:
+    shot = read_blob("screener") or {}
+    if shot.get("rows"):
+        merge_labels(shot["rows"])
+    return shot
+
+
 def read_blob(name: str) -> Optional[dict]:
     import os
 
@@ -330,7 +360,7 @@ def symbol_view(sym: str, today=None) -> dict:
 
     today = today or dt.datetime.now(dt.timezone.utc).date()
     sym = sym.upper()
-    shot = read_blob("screener") or {}
+    shot = screener_blob()
     edge = read_blob("edge") or {}
     if sym == "PSEI":
         hist = shot.get("psei_history") or {}
@@ -621,7 +651,7 @@ def build_ph_response() -> dict:
     import regime_matrix
 
     today = dt.datetime.now(dt.timezone.utc).date()
-    shot = read_blob("screener") or {}
+    shot = screener_blob()
     edge = read_blob("edge") or {}
     mblob = read_blob("macro")
     breadth = read_blob("breadth")
@@ -677,4 +707,4 @@ def build_ph_response() -> dict:
     return resp
 
 
-SCHEMA_VERSION = 5   # 5: BSP notes; 4: digest units, preferred dividends, extra-name filings, penny marks; 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper
+SCHEMA_VERSION = 6   # 6: one spelling per sector/subsector; 5: BSP notes; 4: digest units, preferred dividends, extra-name filings, penny marks; 3: 1D return, COL/CTS as list names (no pinned strip); 2: bars blob, expected_report helper
