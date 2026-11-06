@@ -49,7 +49,7 @@ import erp_data
 
 # See cache.py SCHEMA_FROM_MODULE: bumping this invalidates the cached payload,
 # so a shape change and its version bump are the same edit.
-SCHEMA_VERSION = 4  # 4: erp.history.spx (S&P 500 overlay).  # 3: erp block (Damodaran implied ERP).  # 2: regime_durations block
+SCHEMA_VERSION = 5  # 5: drawdowns_nasdaq (Nasdaq Composite) + now.from_here + QQQ line + as-of.  # 4: erp.history.spx (S&P 500 overlay).  # 3: erp block (Damodaran implied ERP).  # 2: regime_durations block
 
 # How far either side of an inversion to look for the market top it belongs to.
 # Module-level because joins() needs them too -- they previously lived inside
@@ -226,11 +226,55 @@ def _drawdown_window(dates, vals, label: str) -> dict:
     }
 
 
-def drawdowns() -> dict:
-    dates, vals = _series("SPX")
-    full = _drawdown_window(dates, vals, "full history")
-    i0 = next((i for i, d in enumerate(dates) if d >= POSTWAR_START), 0)
-    post = _drawdown_window(dates[i0:], vals[i0:], "post-war")
+NAMES = {"SPX": "S&P 500", "IXIC": "Nasdaq Composite"}
+
+
+def _regain_days(dates: list[str], vals: list[float], peak_d: str, peak_v: float, after: str) -> Optional[int]:
+    """Calendar days from the peak to the first close back at or above it, looking only after the trough.
+    None while the peak has not been regained."""
+    for d, v in zip(dates, vals):
+        if d > after and v >= peak_v:
+            return (dt.date.fromisoformat(d) - dt.date.fromisoformat(peak_d)).days
+    return None
+
+
+def from_here(dates: list[str], vals: list[float], now_dd: float) -> Optional[dict]:
+    """Of the past declines that got as deep as today's, how many went further, and how long they took to regain the
+    peak. Every depth is counted exactly as the table counts it (its own reversal threshold; a single zigzag at the
+    floor would chop one long decline into pieces and inflate the deeper counts), so "went on to -10%" is the table's
+    -10% count divided by its count at today's depth. Today's own open decline is left out of every count, and each
+    row carries its n. None when the index is less than 5% off its high."""
+    if now_dd > -5:
+        return None
+
+    def closed(t: float) -> list[dict]:
+        eps = [e for e in declines(dates, vals, t) if abs(e["depth_pct"]) >= t]
+        return eps[:-1] if eps and not eps[-1]["recovered"] else eps
+
+    floor = max(5, int(abs(now_dd) // 5) * 5)
+    base = closed(floor)
+    if not base:
+        return None
+    deeper = []
+    for t in LEVELS:
+        if t > floor:
+            k = len(closed(t))
+            deeper.append({"level_pct": t, "n": k, "share_pct": round(100 * k / len(base))})
+    peak_at = dict(zip(dates, vals))
+    days = [r for r in (_regain_days(dates, vals, e["peak_date"], peak_at[e["peak_date"]], e["trough_date"]) for e in base)
+            if r is not None]
+    return {
+        "reached_pct": floor, "n": len(base), "deeper": deeper,
+        "median_days_to_regain_peak": int(st.median(days)) if days else None, "n_regained": len(days),
+    }
+
+
+def drawdowns(sym: str = "SPX", postwar: bool = True) -> dict:
+    dates, vals = _series(sym)
+    windows = [_drawdown_window(dates, vals, "full history")]
+    if postwar:
+        i0 = next((i for i, d in enumerate(dates) if d >= POSTWAR_START), 0)
+        windows.append(_drawdown_window(dates[i0:], vals[i0:], "post-war"))
 
     # Where we are now, so the base rate is anchored to today rather than
     # floating free. Running high, not all-time high, is the honest reference
@@ -242,19 +286,43 @@ def drawdowns() -> dict:
     now_dd = (vals[-1] / peak - 1) * 100
     band = next((b for b, lo, hi, _ in BUCKETS if lo <= abs(now_dd) < (hi or 1e9)), None)
 
+    now = {
+        "as_of": dates[-1], "symbol": sym, "name": NAMES.get(sym, sym), "value": round(vals[-1], 2),
+        "running_high": round(peak, 2), "running_high_date": peak_d,
+        "drawdown_pct": round(now_dd, 2),
+        "band": band or "at or near the high",
+        "from_here": from_here(dates, vals, now_dd),
+    }
+    if sym == "SPX":
+        now["spx"] = now["value"]  # the key the page used before the Nasdaq view existed
     return {
-        "windows": [full, post],
-        "now": {
-            "as_of": dates[-1], "spx": round(vals[-1], 2),
-            "running_high": round(peak, 2), "running_high_date": peak_d,
-            "drawdown_pct": round(now_dd, 2),
-            "band": band or "at or near the high",
-        },
+        "windows": windows,
+        "now": now,
         "method": ("Each depth is counted with its own reversal threshold; an episode "
                    "closes when price rallies that same percentage off the trough. "
                    "The 5-9.9% count is sensitive to that rule -- both windows are "
                    "shown so the difference is visible."),
     }
+
+
+def _qqq_line() -> Optional[dict]:
+    """QQQ is the instrument he holds, but only about 21 years are stored, too few for base rates: shown as a where-it-is-now line."""
+    try:
+        d, v = _series("QQQ")
+        peak, peak_d = max(zip(v, d))
+        return {"symbol": "QQQ", "as_of": d[-1], "value": round(v[-1], 2), "running_high": round(peak, 2),
+                "running_high_date": peak_d, "drawdown_pct": round((v[-1] / peak - 1) * 100, 2), "since": d[0]}
+    except Exception:  # noqa: BLE001 -- additive; never take the rest of the table down
+        return None
+
+
+def drawdowns_nasdaq() -> Optional[dict]:
+    try:
+        out = drawdowns("IXIC", postwar=False)
+    except Exception:  # noqa: BLE001
+        return None
+    out["qqq"] = _qqq_line()
+    return out
 
 
 def _crossings(sym: str) -> list[dict]:
@@ -577,6 +645,7 @@ def build_context() -> dict:
         "schema_version": SCHEMA_VERSION,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "drawdowns": drawdowns(),
+        "drawdowns_nasdaq": drawdowns_nasdaq(),
         "inversions": inversions(),
         "rate_cycles": rate_cycles(),
         "balance_sheet": balance_sheet_regimes(),

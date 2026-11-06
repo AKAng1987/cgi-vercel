@@ -2,7 +2,8 @@ import { RegimeDurations } from "./RegimeDurations";
 import { ErpGauge } from "./ErpGauge";
 import { ElectionCycle } from "./ElectionCycle";
 import { PresidentialCycle } from "./PresidentialCycle";
-import { BalanceSheetRegime, ContextResponse, DrawdownWindow, InversionRow, RateCycle } from "@/lib/types";
+import { DrawdownTabs } from "./DrawdownTabs";
+import { BalanceSheetRegime, ContextResponse, DrawdownNow, DrawdownWindow, InversionRow, RateCycle } from "@/lib/types";
 
 /**
  * Historical context at the bottom of CGI.
@@ -29,13 +30,13 @@ function val(v: number | null, fmt: (n: number) => string) {
                     : <span className="tabular-nums text-slate-300">{fmt(v)}</span>;
 }
 
-function Now({ now }: { now: ContextResponse["drawdowns"]["now"] }) {
+function Now({ now, qqq }: { now: DrawdownNow; qqq?: ContextResponse["drawdowns"]["qqq"] }) {
   const d = now.drawdown_pct;
   const tone = d <= -20 ? "border-rose-800 bg-rose-950/30" : d <= -10 ? "border-amber-800 bg-amber-950/30" : "border-slate-800 bg-slate-900/50";
   return (
     <div className={`mb-3 rounded border px-3 py-2 text-sm ${tone}`}>
-      <span className="text-slate-400">SPX </span>
-      <span className="tabular-nums text-slate-100">{now.spx.toLocaleString()}</span>
+      <span className="text-slate-400">{now.symbol === "IXIC" ? "Nasdaq Composite" : "SPX"} </span>
+      <span className="tabular-nums text-slate-100">{(now.value ?? now.spx ?? 0).toLocaleString()}</span>
       <span className="text-slate-400"> is </span>
       {pct(d, 2)}
       <span className="text-slate-400"> from its running high of </span>
@@ -43,7 +44,44 @@ function Now({ now }: { now: ContextResponse["drawdowns"]["now"] }) {
       <span className="text-slate-500"> ({now.running_high_date})</span>
       <span className="text-slate-400"> — currently </span>
       <span className="text-slate-200">{now.band}</span>
-      <span className="text-slate-500">.</span>
+      <span className="text-slate-500">. Closes as of {now.as_of}.</span>
+      {qqq && (
+        <div className="mt-1 text-[0.78rem]">
+          <span className="text-slate-400">QQQ </span>
+          <span className="tabular-nums text-slate-200">{qqq.value.toLocaleString()}</span>
+          <span className="text-slate-400"> is </span>
+          {pct(qqq.drawdown_pct, 2)}
+          <span className="text-slate-400"> from its high of </span>
+          <span className="tabular-nums text-slate-300">{qqq.running_high.toLocaleString()}</span>
+          <span className="text-slate-500"> ({qqq.running_high_date}); stored since {qqq.since.slice(0, 4)}, too short for base rates.</span>
+        </div>
+      )}
+      {now.from_here && (
+        <div className="mt-1 text-[0.78rem] text-slate-300">
+          Past declines that reached {now.from_here.reached_pct}% ({now.from_here.n} of them, today&apos;s excluded):{" "}
+          {now.from_here.deeper.map((x, i) => (
+            <span key={x.level_pct}>{i > 0 && " · "}went on to {x.level_pct}%: {x.share_pct}% ({x.n})</span>
+          ))}
+          {now.from_here.median_days_to_regain_peak !== null && <> · median {now.from_here.median_days_to_regain_peak} days to regain the peak</>}
+          <span className="text-slate-500">. Describes past declines, not a forecast.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DrawdownPanel({ d }: { d: ContextResponse["drawdowns"] }) {
+  return (
+    <div>
+      <Now now={d.now} qqq={d.qqq} />
+      <div className={`grid gap-5 ${d.windows.length > 1 ? "lg:grid-cols-2" : ""}`}>
+        {d.windows.map((w) => <Window key={w.label} w={w} />)}
+      </div>
+      <p className="mt-2 text-[0.68rem] text-slate-500">{d.method}</p>
+      <div className="mt-2 text-[0.7rem] text-slate-500">
+        Deepest on record:{" "}
+        {d.windows[0].deepest.slice(0, 5).map((x) => `${x.peak_date.slice(0, 7)} ${x.depth_pct.toFixed(0)}%`).join(" · ")}
+      </div>
     </div>
   );
 }
@@ -238,16 +276,11 @@ export function ContextTables({ ctx }: { ctx: ContextResponse }) {
       <PresidentialCycle />
 
       <div>
-        <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">S&amp;P drawdowns</div>
-        <Now now={ctx.drawdowns.now} />
-        <div className="grid gap-5 lg:grid-cols-2">
-          {ctx.drawdowns.windows.map((w) => <Window key={w.label} w={w} />)}
-        </div>
-        <p className="mt-2 text-[0.68rem] text-slate-500">{ctx.drawdowns.method}</p>
-        <div className="mt-2 text-[0.7rem] text-slate-500">
-          Deepest on record:{" "}
-          {ctx.drawdowns.windows[0].deepest.slice(0, 5).map((d) => `${d.peak_date.slice(0, 7)} ${d.depth_pct.toFixed(0)}%`).join(" · ")}
-        </div>
+        <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-slate-400">Index drawdowns</div>
+        <DrawdownTabs
+          spx={<DrawdownPanel d={ctx.drawdowns} />}
+          nasdaq={ctx.drawdowns_nasdaq ? <DrawdownPanel d={ctx.drawdowns_nasdaq} /> : null}
+        />
       </div>
 
       <div>

@@ -938,6 +938,16 @@ export interface DrawdownBucket {
   median_depth_pct: number | null;
   recent: { trough: string; depth_pct: number }[];
 }
+export interface DrawdownNow {
+  as_of: string; symbol?: string; name?: string; value?: number; spx?: number;
+  running_high: number; running_high_date: string; drawdown_pct: number; band: string;
+  /** Past declines that got as deep as today's: how many went further, and how long to regain the peak. Null within 5% of the high. */
+  from_here?: {
+    reached_pct: number; n: number;
+    deeper: { level_pct: number; n: number; share_pct: number }[];
+    median_days_to_regain_peak: number | null; n_regained: number;
+  } | null;
+}
 export interface DrawdownWindow {
   label: string;
   start: string;
@@ -994,9 +1004,12 @@ export interface ContextResponse {
   generated_at: string;
   drawdowns: {
     windows: DrawdownWindow[];
-    now: { as_of: string; spx: number; running_high: number; running_high_date: string; drawdown_pct: number; band: string };
+    now: DrawdownNow;
     method: string;
+    qqq?: { symbol: string; as_of: string; value: number; running_high: number; running_high_date: string; drawdown_pct: number; since: string } | null;
   };
+  /** Same shape as `drawdowns`, for the Nasdaq Composite (one window, from 1971) plus a QQQ line. Null when it could not be built. */
+  drawdowns_nasdaq?: ContextResponse["drawdowns"] | null;
   inversions: Record<string, InversionRow[]>;
   rate_cycles: {
     cycles: RateCycle[];
